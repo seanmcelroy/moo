@@ -7,7 +7,7 @@
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/moo.csproj"
+                "${workspaceFolder}/moo.console/moo.csproj"
             ],
             "problemMatcher": "$msCompile"
         }
