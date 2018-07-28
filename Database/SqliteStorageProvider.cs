@@ -11,12 +11,12 @@ public class SqliteStorageProvider : IStorageProvider
         {
             connection.Open();
 
-            using (SqliteCommand command = new SqliteCommand("CREATE TABLE IF NOT EXISTS changelog (version int)", connection))
+            using (var command = new SqliteCommand("CREATE TABLE IF NOT EXISTS changelog (version int)", connection))
             {
                 command.ExecuteNonQuery();
             }
 
-            using (SqliteCommand command = new SqliteCommand("CREATE TABLE IF NOT EXISTS objects ([id] INTEGER PRIMARY KEY NOT NULL, [type] TEXT NOT NULL, [data] TEXT NOT NULL)", connection))
+            using (var command = new SqliteCommand("CREATE TABLE IF NOT EXISTS objects ([id] INTEGER PRIMARY KEY NOT NULL, [type] TEXT NOT NULL, [data] TEXT NOT NULL)", connection))
             {
                 command.ExecuteNonQuery();
             }
@@ -38,7 +38,7 @@ public class SqliteStorageProvider : IStorageProvider
         {
             await connection.OpenAsync();
 
-            using (SqliteCommand command = new SqliteCommand("SELECT [type], [data] FROM [objects] WHERE [id]=@id;", connection))
+            using (var command = new SqliteCommand("SELECT [type], [data] FROM [objects] WHERE [id]=@id;", connection))
             {
                 command.Parameters.AddWithValue("@id", id);
                 SqliteDataReader reader = await  command.ExecuteReaderAsync(cancellationToken);
@@ -61,7 +61,7 @@ public class SqliteStorageProvider : IStorageProvider
             await connection.OpenAsync();
 
             int updated = 0;
-            using (SqliteCommand command = new SqliteCommand("INSERT OR REPLACE INTO [objects] ([id], [type], [data]) VALUES (@id, @type, @data);", connection))
+            using (var command = new SqliteCommand("INSERT OR REPLACE INTO [objects] ([id], [type], [data]) VALUES (@id, @type, @data);", connection))
             {
                 command.Parameters.AddWithValue("@id", id);
                 command.Parameters.AddWithValue("@type", type);

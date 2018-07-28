@@ -41,7 +41,7 @@ namespace moo
                         return;
 
                     await Console.Out.WriteLineAsync($"{player.name}(#{player.id}): {command.raw}");
-                    await CommandHandler.handleHumanCommand(player, command, cts.Token);
+                    await CommandHandler.HandleHumanCommandAsync(player, command, cts.Token);
                 });
 
             } while (!cts.IsCancellationRequested);
@@ -59,10 +59,14 @@ namespace moo
 
         static Player LoadSandbox()
         {
-            Room aether = Room.make("The Aether");
+            Room aether = Room.Make("The Aether");
             aether.internalDescription = "You see a massless, infinite black void stretching forever in all directions and across all time.";
             HostPlayer.make("God", aether);
-            return ConsolePlayer.make("Intrepid Hero", aether);
+            var player = ConsolePlayer.make("Intrepid Hero", aether);
+
+            Script.Make("foo", "\"foo\" \"bar\" POP POP");
+
+            return player;
         }
     }
 }

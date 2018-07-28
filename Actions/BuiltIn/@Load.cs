@@ -5,24 +5,24 @@ using static ThingRepository;
 
 public class @Load : Action
 {
-    public sealed override bool canProcess(Player player, CommandResult command)
+    public sealed override bool CanProcess(Player player, CommandResult command)
     {
-        string verb = command.getVerb().ToLowerInvariant();
+        var verb = command.getVerb().ToLowerInvariant();
         return (verb == "@load" && command.hasDirectObject());
     }
 
-    public sealed override async Task<VerbResult> process(Player player, CommandResult command, CancellationToken cancellationToken)
+    public override ActionType Type => ActionType.BuiltIn;
+
+    public sealed override async Task<VerbResult> Process(Player player, CommandResult command, CancellationToken cancellationToken)
     {
-        int? targetId = command.resolveDirectObject(player);
+        var targetId = command.resolveDirectObject(player);
         if (targetId == null)
         {
             await player.sendOutput("I don't see that here.");
             return new VerbResult(false, "Target not found");
         }
 
-        ThingRepository.
-
-        GetResult<Thing> lookup = await ThingRepository.GetAsync<Thing>(targetId.Value, cancellationToken);
+        var lookup = await ThingRepository.GetAsync<Thing>(targetId.Value, cancellationToken);
         if (lookup.isSuccess)
         {
             var target = lookup.value;

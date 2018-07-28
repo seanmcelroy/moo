@@ -8,7 +8,7 @@ public abstract class Player : Container {
     private static ConcurrentDictionary<int, Player> _cache = new ConcurrentDictionary<int, Player>();
 
     public static IEnumerable<Player> all() {
-        foreach (Player player in _cache.Values) {
+        foreach (var player in _cache.Values) {
             yield return player;
         }
     }

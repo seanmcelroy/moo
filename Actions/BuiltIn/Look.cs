@@ -5,13 +5,15 @@ using static ThingRepository;
 
 public class Look : Action
 {
-    public sealed override bool canProcess(Player player, CommandResult command)
+    public override ActionType Type => ActionType.BuiltIn;
+
+    public sealed override bool CanProcess(Player player, CommandResult command)
     {
-        string verb = command.getVerb().ToLowerInvariant();
+        var verb = command.getVerb().ToLowerInvariant();
         return (verb == "l" || verb == "look");
     }
 
-    public sealed override async Task<VerbResult> process(Player player, CommandResult command, CancellationToken cancellationToken)
+    public sealed override async Task<VerbResult> Process(Player player, CommandResult command, CancellationToken cancellationToken)
     {
         if ((!command.hasDirectObject() && !command.hasIndirectObject())
             || (command.hasDirectObject() && string.Compare("here", command.getDirectObject()) == 0))
@@ -26,17 +28,17 @@ public class Look : Action
 
     private async Task lookAtRoom(Player player, int locationId, CancellationToken cancellationToken)
     {
-        GetResult<Container> locationLookup = await ThingRepository.GetAsync<Container>(locationId, cancellationToken);
+        var locationLookup = await ThingRepository.GetAsync<Container>(locationId, cancellationToken);
         if (locationLookup.isSuccess)
         {
-            Container location = locationLookup.value;
+            var location = locationLookup.value;
             await player.sendOutput($"{location.name}(#{location.id})");
             await player.sendOutput(location.internalDescription);
 
-            StringBuilder otherHumans = new StringBuilder();
+            var otherHumans = new StringBuilder();
             otherHumans.Append("You see ");
             int count = 0;
-            foreach (HumanPlayer peer in location.GetVisibleHumanPlayersForAsync(player, cancellationToken))
+            foreach (var peer in location.GetVisibleHumanPlayersForAsync(player, cancellationToken))
             {
                 otherHumans.Append(count == 0 ? peer.name : ", " + peer.name);
                 count++;

@@ -43,7 +43,7 @@ public class Container : Thing
 
         var loopResult = Parallel.ForEach(contents.Keys, async peer =>
         {
-            GetResult<Thing> thing = await ThingRepository.GetAsync<Thing>(peer, cancellationToken);
+            var thing = await ThingRepository.GetAsync<Thing>(peer, cancellationToken);
             if (thing.isSuccess && typeof(HumanPlayer).IsAssignableFrom(thing.value.GetType()))
                 results.Add((HumanPlayer)thing.value);
         });

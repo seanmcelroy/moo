@@ -70,7 +70,7 @@ public class Thing : IStorable<Thing>
         if (serialized.StartsWith("<null/>"))
         {
             var substring = serialized.Substring("<null/>".Length);
-             yield return Tuple.Create<object, string>(null, substring);
+            yield return Tuple.Create<object, string>(null, substring);
         }
         else if (serialized.StartsWith("<string/>"))
         {
@@ -79,8 +79,8 @@ public class Thing : IStorable<Thing>
         }
         else if (serialized.StartsWith("<string>"))
         {
-            Regex r = new Regex(@"<string>(?<value>(?:.*?))<\/string>(?:.*?)");
-            Match m = r.Match(serialized);
+            var r = new Regex(@"<string>(?<value>(?:.*?))<\/string>(?:.*?)");
+            var m = r.Match(serialized);
 
             var substring = serialized.Substring(m.Length);
             yield return Tuple.Create<object, string>(m.Groups["value"].Value, substring);
@@ -92,17 +92,19 @@ public class Thing : IStorable<Thing>
         }
         else if (serialized.StartsWith("<integer>"))
         {
-            Regex r = new Regex(@"<integer>(?<value>(?:.*?))<\/integer>(?:.*?)");
-            Match m = r.Match(serialized);
+            var r = new Regex(@"<integer>(?<value>(?:.*?))<\/integer>(?:.*?)");
+            var m = r.Match(serialized);
 
             var substring = serialized.Substring(m.Length);
             yield return Tuple.Create<object, string>(int.Parse(m.Groups["value"].Value), substring);
         }
-        else if (serialized.StartsWith("<array>")) {
+        else if (serialized.StartsWith("<array>"))
+        {
             var array = new List<object>();
             var substring = serialized.Substring("<array>".Length);
 
-            while (!substring.StartsWith("</array>")) {
+            while (!substring.StartsWith("</array>"))
+            {
                 var valueResult = DeserializePart(substring).Single();
                 substring = valueResult.Item2;
 
@@ -112,11 +114,13 @@ public class Thing : IStorable<Thing>
 
             yield return Tuple.Create<object, string>(array, substring);
         }
-        else if (serialized.StartsWith("<dict>")) {
+        else if (serialized.StartsWith("<dict>"))
+        {
             var dict = new Dictionary<string, object>();
             var substring = serialized.Substring("<dict>".Length);
 
-            while (!substring.StartsWith("</dict>")) {
+            while (!substring.StartsWith("</dict>"))
+            {
                 var keyResult = DeserializePart(substring).Single();
                 substring = keyResult.Item2;
                 var valueResult = DeserializePart(substring).Single();
@@ -156,13 +160,18 @@ public class Thing : IStorable<Thing>
 
     public string Serialize()
     {
-        return Serialize(new Dictionary<string, object> {
+        return Serialize(GetSerializedElements());
+    }
+
+    protected virtual Dictionary<string, object> GetSerializedElements()
+    {
+        return new Dictionary<string, object> {
             { "id", id},
             { "name", name},
             { "location", location },
             { "templates", templates },
             { "externalDescription", externalDescription },
-        });
+        };
     }
 
     protected string Serialize(Dictionary<string, object> value)
