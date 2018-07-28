@@ -4,7 +4,8 @@ public struct ForthDatum
     {
         String = 1,
         Integer = 2,
-        Primitive = 3
+        Primitive = 3,
+        Marker = 4
     }
 
     public object Value;

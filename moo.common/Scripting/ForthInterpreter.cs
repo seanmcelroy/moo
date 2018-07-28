@@ -22,7 +22,7 @@ public class ForthInterpreter
         // Parse the program onto the stack
         var lines = program.Split(new string[] { "\r\n", "\r" }, StringSplitOptions.RemoveEmptyEntries);
 
-        var regex = new Regex(@"(?:(?<comment>\([^\)]*\))|(?<string>""[^""\r\n]*"")|(?<int>\-?\d+)|(?<prim>[\w\.\-\+\?=@;:]+))", RegexOptions.Compiled);
+        var regex = new Regex(@"(?:(?<comment>\([^\)]*\))|(?<string>""[^""\r\n]*"")|(?<int>\-?\d+)|(?<prim>[\w\.\-\+\?!><=@;:{}]+))", RegexOptions.Compiled);
         foreach (var line in lines)
         {
             var lineData = new List<ForthDatum>();

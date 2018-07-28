@@ -197,6 +197,47 @@ public class ForthExecutionContext
                                     return result;
                                 break;
                             }
+                        case "reverse":
+                            {
+                                var result = Reverse.Execute(stack);
+                                if (default(ForthProgramResult).Equals(result))
+                                    continue;
+                                if (!result.isSuccessful)
+                                    return result;
+                                break;
+                            }
+                        case "lreverse":
+                            {
+                                var result = LReverse.Execute(stack);
+                                if (default(ForthProgramResult).Equals(result))
+                                    continue;
+                                if (!result.isSuccessful)
+                                    return result;
+                                break;
+                            }
+                        case "depth":
+                            {
+                                // DEPTH ( -- i ) 
+                                // Returns the number of items currently on the stack.
+                                stack.Push(new ForthDatum(stack.Count));
+                                break;
+                            }
+                        case "{":
+                            {
+                                // { ( -- marker) 
+                                // Pushes a marker onto the stack, to be used with } or }list or }dict.
+                                stack.Push(new ForthDatum("{", DatumType.Marker));
+                                break;
+                            }
+                        case "}":
+                            {
+                                var result = MarkerEnd.Execute(stack);
+                                if (default(ForthProgramResult).Equals(result))
+                                    continue;
+                                if (!result.isSuccessful)
+                                    return result;
+                                break;
+                            }
                     }
                 }
             }

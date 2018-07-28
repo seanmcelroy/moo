@@ -74,6 +74,9 @@ namespace moo
             Script.Make("test-rotate1", "\"a\" \"b\" \"c\" \"d\" 4 rotate");
             Script.Make("test-rotate2", "\"a\" \"b\" \"c\" \"d\" -4 rotate");
             Script.Make("test-put", "\"a\" \"b\" \"c\" \"d\" \"e\" 3 put");
+            Script.Make("test-reverse", "\"a\" \"b\" \"c\" \"d\" \"e\" 4 reverse");
+            Script.Make("test-lreverse", "\"a\" \"b\" \"c\" \"d\" \"e\" 4 lreverse");
+            Script.Make("test-marker", "{ \"a\" \"b\" \"c\" }");
 
             return player;
         }
