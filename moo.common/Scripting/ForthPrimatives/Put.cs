@@ -16,8 +16,8 @@ public static class Put
         would return on the stack:
             "a"  "e"  "c"  "d"
         */
-        if (stack.Count < 4)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "PUT requires at least four parameters on the stack");
+        if (stack.Count < 3)
+            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "PUT requires at least three parameters");
 
         var si = stack.Pop();
         if (si.Type != DatumType.Integer)

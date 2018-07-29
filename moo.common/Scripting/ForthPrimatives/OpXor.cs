@@ -18,7 +18,7 @@ public static class OpXor
             String       ""
         */
         if (stack.Count < 2)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "XOR requires at least two parameters on the stack");
+            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "XOR requires two parameters");
 
         var n1 = stack.Pop();
         var n2 = stack.Pop();

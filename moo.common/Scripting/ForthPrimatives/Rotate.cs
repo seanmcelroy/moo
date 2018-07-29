@@ -19,7 +19,7 @@ public static class Rotate
             "d" "a" "b" "c" on the stack.
         */
         if (stack.Count == 0)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "ROTATE requires at least one parameter on the stack");
+            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "ROTATE requires at least one parameter");
 
         var si = stack.Pop();
         if (si.Type != DatumType.Integer)

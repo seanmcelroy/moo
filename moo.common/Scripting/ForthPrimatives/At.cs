@@ -13,7 +13,7 @@ public static class At
         Retrieves variable v's value x.
         */
         if (stack.Count < 1)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "@ requires at least one parameter on the stack");
+            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "@ requires one parameter");
 
         var reference = stack.Pop();
         if (reference.Type != DatumType.Unknown)

@@ -16,7 +16,7 @@ public static class MathDivide
         second argument is an integer. In those cases, this will return a dbref or variable number, respectively.
         */
         if (stack.Count < 2)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "* requires at least two parameters on the stack");
+            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "* requires two parameters");
 
         var n2 = stack.Pop();
         var n1 = stack.Pop();
@@ -49,7 +49,7 @@ public static class MathDivide
             if (n2v == 0)
                 return new ForthProgramResult(ForthProgramErrorResult.DIVISION_BY_ZERO, "Attempt to divide by zero was aborted");
 
-            stack.Push(new ForthDatum(new Dbref((int)n1.Value / n2v)));
+            stack.Push(new ForthDatum(new Dbref((int)n1.Value / n2v), 0));
             return default(ForthProgramResult);
         }
 

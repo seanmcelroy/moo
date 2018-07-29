@@ -13,7 +13,7 @@ public static class MathInt
         Converts variable, float, or dbref x to integer i.
         */
         if (stack.Count < 1)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "INT requires one parameter on the stack");
+            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "INT requires one parameter");
 
         ForthDatum datum;
 

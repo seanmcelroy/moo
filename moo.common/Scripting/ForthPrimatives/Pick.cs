@@ -13,7 +13,7 @@ public static class Pick
         Takes the i'th thing from the top of the stack and pushes it on the top. 1 pick is equivalent to dup, and 2 pick is equivalent to over.
         */
         if (stack.Count == 0)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "PICK requires at least one parameter on the stack");
+            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "PICK requires at least one parameter");
 
         var si = stack.Pop();
         if (si.Type != DatumType.Integer)

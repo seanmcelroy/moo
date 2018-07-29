@@ -16,7 +16,7 @@ public static class TimeSplit
         Weekday starts with sunday as 1, and yearday is the day of the year (1-366).
         */
         if (stack.Count < 1)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "TIMESPLIT requires one parameter on the stack");
+            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "TIMESPLIT requires one parameter");
 
         var si = stack.Pop();
         if (si.Type != DatumType.Integer)

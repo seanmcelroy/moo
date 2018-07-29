@@ -18,7 +18,7 @@ public static class OpNot
             String       ""
         */
         if (stack.Count < 1)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "NOT requires at least one parameter on the stack");
+            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "NOT requires at least one parameter");
 
         var n1 = stack.Pop();
         stack.Push(new ForthDatum(n1.isFalse() ? 1 : 0));

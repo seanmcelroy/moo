@@ -22,6 +22,12 @@ public struct ForthDatum
         this.Type = type;
     }
 
+     public ForthDatum(Dbref value, byte dud)
+    {
+        this.Value = value;
+        this.Type = DatumType.DbRef;
+    }
+
     public ForthDatum(string value)
     {
         this.Value = value;

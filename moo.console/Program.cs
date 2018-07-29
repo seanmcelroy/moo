@@ -79,15 +79,16 @@ namespace moo.console
             Script.Make("test-lreverse", "\"a\" \"b\" \"c\" \"d\" \"e\" 4 lreverse");
             Script.Make("test-marker", "{ \"a\" \"b\" \"c\" }");
             Script.Make("test-@", "me @ loc @ trigger @ command @ POP POP POP POP");
-            Script.Make("test-vars","LVAR test\r\n1234 test !\r\ntest @");
-            Script.Make("test-math","3 5 1.1 2 2 1.01 9 2 1 2 3 + + * / - * > + INT + %");
+            Script.Make("test-vars", "LVAR test\r\n1234 test !\r\ntest @");
+            Script.Make("test-math", "3 5 1.1 2 2 1.01 9 2 1 2 3 + + * / - * > + INT + %");
 
             Script.Make("cmd-uptime", LoadScriptFile("scripts/cmd-upload.muf"));
 
             return player;
         }
 
-        private static string LoadScriptFile(string path) {
+        private static string LoadScriptFile(string path)
+        {
             return System.IO.File.ReadAllText(path);
         }
     }

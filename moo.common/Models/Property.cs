@@ -1,0 +1,132 @@
+using System;
+using System.Collections.Generic;
+
+public struct Property
+{
+    public enum PropertyType
+    {
+        Unknown = 0,
+        String = 1,
+        Integer = 2,
+        DbRef = 3,
+        Float = 4,
+        Directory = 5
+    }
+
+    public string Name;
+    private object value;
+    public object Value
+    {
+        get
+        {
+            if (Type == PropertyType.DbRef)
+            {
+                if (value != null && value.GetType() == typeof(string))
+                    return new Dbref((string)value);
+            }
+            return value;
+        }
+        set {
+            this.value = value;
+        }
+    }
+
+    public PropertyType Type;
+
+    public Property(string name, string value)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new System.ArgumentNullException(nameof(name));
+
+        this.Name = name;
+        this.value = value;
+        this.Type = PropertyType.String;
+    }
+
+    public Property(string name, int value)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new System.ArgumentNullException(nameof(name));
+
+        this.Name = name;
+        this.value = value;
+        this.Type = PropertyType.Integer;
+    }
+
+    public Property(string name, Dbref value)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new System.ArgumentNullException(nameof(name));
+        if (default(Dbref).Equals(value))
+            throw new System.ArgumentNullException(nameof(value));
+
+        this.Name = name;
+        this.value = value;
+        this.Type = PropertyType.DbRef;
+    }
+    public Property(string name, float value)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new System.ArgumentNullException(nameof(name));
+
+        this.Name = name;
+        this.value = value;
+        this.Type = PropertyType.Float;
+    }
+    public Property(string name, PropertyDirectory value)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new System.ArgumentNullException(nameof(name));
+        if (value == null)
+            throw new System.ArgumentNullException(nameof(value));
+
+        this.Name = name;
+        this.value = value;
+        this.Type = PropertyType.Directory;
+    }
+
+    public string Serialize()
+    {
+        if (string.IsNullOrWhiteSpace(Name))
+            throw new System.InvalidOperationException("Property name is not set");
+
+        switch (Type)
+        {
+            case PropertyType.String:
+                return Serialize((string)Value);
+            case PropertyType.Integer:
+                return Serialize((int)Value);
+            case PropertyType.DbRef:
+                return Serialize((Dbref)Value, 0);
+            case PropertyType.Float:
+                return Serialize((float)Value);
+            case PropertyType.Directory:
+                return PropertyDirectory.Serialize((PropertyDirectory)Value);
+            default:
+                throw new System.InvalidOperationException($"Unknown property type for {Name}: " + Type);
+        }
+    }
+
+    public static string Serialize(Property prop)
+    {
+        if (PropertyType.DbRef == prop.Type)
+            return $"<prop><name>{prop.Name}</name>" + Serialize((Dbref)prop.Value, 0) + "</prop>";
+        if (typeof(string).IsAssignableFrom(prop.Value.GetType()))
+            return $"<prop><name>{prop.Name}</name>" + Serialize((string)prop.Value) + "</prop>";
+        if (typeof(int).IsAssignableFrom(prop.Value.GetType()))
+            return $"<prop><name>{prop.Name}</name>" + Serialize((int)prop.Value) + "</prop>";
+        if (typeof(long).IsAssignableFrom(prop.Value.GetType()))
+            return $"<prop><name>{prop.Name}</name>" + Serialize(Convert.ToInt32((long)prop.Value)) + "</prop>";
+        if (typeof(float).IsAssignableFrom(prop.Value.GetType()))
+            return $"<prop><name>{prop.Name}</name>" + Serialize((float)prop.Value) + "</prop>";
+        if (typeof(double).IsAssignableFrom(prop.Value.GetType()))
+            return $"<prop><name>{prop.Name}</name>" + Serialize(Convert.ToSingle((double)prop.Value)) + "</prop>";
+
+        throw new System.InvalidOperationException($"Cannot handle object of type {prop.Type}");
+    }
+
+    public static string Serialize(Dbref value, byte dud) => Thing.Serialize(value, 0);
+    public static string Serialize(string value) => Thing.Serialize(value);
+    public static string Serialize(float value) => Thing.Serialize(value);
+    public static string Serialize(int value) => Thing.Serialize(value);
+}

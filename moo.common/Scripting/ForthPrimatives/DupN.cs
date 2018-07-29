@@ -11,7 +11,7 @@ public static class DupN
         // DUPN ( ?n..?1 i -- ?n..?1 ?n..?1 ) 
         // Duplicates the top i stack items.
         if (stack.Count == 0)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "DUPN requires at least one parameter on the stack");
+            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "DUPN requires at least one parameter");
 
         var si = stack.Pop();
         if (si.Type != DatumType.Integer)

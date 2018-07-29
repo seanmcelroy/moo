@@ -14,7 +14,7 @@ public static class MarkerEnd
         Finds the topmost marker in the stack, and counts how many stack items are between it and the top of the stack. The marker is removed from the stack, and the count is pushed onto the stack.
         */
         if (stack.Count < 1)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "} requires at least one parameter on the stack");
+            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "} requires at least one parameter");
 
         var temp = new Stack<ForthDatum>();
         bool found = false;

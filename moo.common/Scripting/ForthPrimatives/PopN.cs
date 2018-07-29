@@ -11,7 +11,7 @@ public static class PopN
         // POPN ( ?n..?1 i -- ) 
         // Pops the top i stack items.
         if (stack.Count == 0)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "POPN requires at least one parameter on the stack");
+            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "POPN requires at least one parameter");
 
         var si = stack.Pop();
         if (si.Type != DatumType.Integer)

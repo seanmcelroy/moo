@@ -17,7 +17,7 @@ public static class Reverse
             "a"  "e"  "d"  "c"  "b"
         */
         if (stack.Count < 1)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "REVERSE requires at least one parameter on the stack");
+            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "REVERSE requires at least one parameter");
 
         var si = stack.Pop();
         if (si.Type != DatumType.Integer)

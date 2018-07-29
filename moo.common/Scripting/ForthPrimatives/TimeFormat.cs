@@ -78,7 +78,7 @@ public static class TimeFormat
         %Z -- Time zone. "GMT", "EDT", "PST", etc.
         */
         if (stack.Count < 2)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "TIMEFMT requires two parameters on the stack");
+            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "TIMEFMT requires two parameters");
 
         var si = stack.Pop();
         if (si.Type != DatumType.Integer)

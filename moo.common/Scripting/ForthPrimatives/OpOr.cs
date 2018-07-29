@@ -18,7 +18,7 @@ public static class OpOr
             String       ""
         */
         if (stack.Count < 2)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "OR requires at least two parameters on the stack");
+            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "OR requires two parameters");
 
         var n1 = stack.Pop();
         var n2 = stack.Pop();

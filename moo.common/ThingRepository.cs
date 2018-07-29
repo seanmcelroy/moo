@@ -57,7 +57,7 @@ public static class ThingRepository
 
     public static async Task<GetResult<T>> GetAsync<T>(Dbref id, CancellationToken cancellationToken) where T : Thing, new()
     {
-        if (id < 0)
+        if ((int)id < 0)
             return new GetResult<T>($"Invalid dbref: {id}");
 
         // Is it in cache?
@@ -78,7 +78,7 @@ public static class ThingRepository
 
     public static async Task<GetResult<T>> LoadFromDatabaseAsync<T>(Dbref id, CancellationToken cancellationToken) where T : Thing, new()
     {
-        if (id < 0)
+        if ((int)id < 0)
             return new GetResult<T>($"Invalid dbref: {id}");
 
         if (storageProvider == null)

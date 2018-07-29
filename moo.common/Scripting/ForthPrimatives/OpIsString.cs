@@ -14,7 +14,7 @@ public static class OpIsString
         Returns true if x is a string.
         */
         if (stack.Count < 1)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "STRING? requires at least one parameter on the stack");
+            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "STRING? requires at least one parameter");
 
         var n1 = stack.Pop();
 

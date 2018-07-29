@@ -15,7 +15,7 @@ public static class MathModulo
         Floats cannot use the % modulo function. For them, use either the FMOD or MODF primitives.
         */
         if (stack.Count < 2)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "% requires at least two parameters on the stack");
+            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "% requires two parameters");
 
         var n2 = stack.Pop();
         var n1 = stack.Pop();

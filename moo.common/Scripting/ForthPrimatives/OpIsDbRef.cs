@@ -14,7 +14,7 @@ public static class OpIsDbRef
         Returns true if x is a dbref.
         */
         if (stack.Count < 1)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "DBREF? requires at least one parameter on the stack");
+            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "DBREF? requires one parameter");
 
         var n1 = stack.Pop();
 

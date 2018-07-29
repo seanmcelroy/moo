@@ -11,7 +11,7 @@ public static class Swap
         // SWAP ( x y -- y x ) 
         // Takes objects x and y on the stack and reverses their order.
         if (stack.Count < 2)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "SWAP requires at least two parameters on the stack");
+            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "SWAP requires two parameters");
 
         var y = stack.Pop();
         var x = stack.Pop();

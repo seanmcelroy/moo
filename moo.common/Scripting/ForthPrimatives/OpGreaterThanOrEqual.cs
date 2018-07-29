@@ -14,7 +14,7 @@ public static class OpGreaterThanOrEqual
         Compares two numbers and returns 1 if n1 is greater than or equal to n2, and 0 otherwise.
         */
         if (stack.Count < 2)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, ">= requires at least two parameters on the stack");
+            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, ">= requires two parameters");
 
         var n2 = stack.Pop();
         if (n2.Type != DatumType.Integer && n2.Type != DatumType.Float)

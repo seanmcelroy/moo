@@ -16,7 +16,7 @@ public static class MathMultiply
         long as the second argument is an integer. In those cases, this will return a dbref or variable number, respectively.
         */
         if (stack.Count < 2)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "* requires at least two parameters on the stack");
+            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "* requires two parameters");
 
         var n2 = stack.Pop();
         var n1 = stack.Pop();
@@ -37,7 +37,7 @@ public static class MathMultiply
         if ((n1.Type == DatumType.Integer && n2.Type == DatumType.DbRef) ||
            (n1.Type == DatumType.DbRef || n2.Type == DatumType.Integer))
         {
-            stack.Push(new ForthDatum(new Dbref((int)n1.Value * (int)n2.Value)));
+            stack.Push(new ForthDatum(new Dbref((int)n1.Value * (int)n2.Value), 0));
             return default(ForthProgramResult);
         }
 

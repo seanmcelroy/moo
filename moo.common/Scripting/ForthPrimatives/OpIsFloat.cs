@@ -14,7 +14,7 @@ public static class OpIsFloat
         Returns true if the item on the stack is a floating point value.
         */
         if (stack.Count < 1)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "FLOAT? requires at least one parameter on the stack");
+            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "FLOAT? requires at least one parameter");
 
         var n1 = stack.Pop();
 

@@ -17,11 +17,11 @@ public static class LReverse
             "a"  "e"  "d"  "c"  "b"
         */
         if (stack.Count < 1)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "LREVERSE requires at least one parameter on the stack");
+            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "LREVERSE requires at least one parameter");
 
         var si = stack.Pop();
         if (si.Type != DatumType.Integer)
-            return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "LREVERSE requires the top parameter on the stack to be an integer");
+            return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "LREVERSE requires the top parameter to be an integer");
 
         int i = (int)si.Value;
         if (i < 1)

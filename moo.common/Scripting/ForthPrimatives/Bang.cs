@@ -13,7 +13,7 @@ public static class Bang
         Sets variable v's value to x.
         */
         if (stack.Count < 2)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "! requires at least two parameters on the stack");
+            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "! requires two parameters");
 
         var svar = stack.Pop();
         var sval = stack.Pop();

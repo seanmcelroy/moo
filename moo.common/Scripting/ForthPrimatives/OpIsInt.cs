@@ -14,7 +14,7 @@ public static class OpIsInt
         Returns true if x is a int.
         */
         if (stack.Count < 1)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "INT? requires at least one parameter on the stack");
+            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "INT? requires at least one parameter");
 
         var n1 = stack.Pop();
 
