@@ -12,7 +12,8 @@ public struct ForthProgramResult
         VARIABLE_NOT_FOUND,
         UNKNOWN_TYPE,
         INTERNAL_ERROR,
-        VARIABLE_ALREADY_DEFINED
+        VARIABLE_ALREADY_DEFINED,
+        DIVISION_BY_ZERO
     }
 
     public bool isSuccessful;

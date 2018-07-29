@@ -6,7 +6,7 @@ using static ForthProgramResult;
 
 public static class Bang
 {
-    public static ForthProgramResult Execute(Stack<ForthDatum> stack, Dictionary<string, object> variables, Player player, int trigger, string command)
+    public static ForthProgramResult Execute(Stack<ForthDatum> stack, Dictionary<string, object> variables, Player player, Dbref trigger, string command)
     {
         /*
         ! ( x v -- ) 

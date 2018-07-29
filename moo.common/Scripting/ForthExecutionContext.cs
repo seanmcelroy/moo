@@ -8,14 +8,14 @@ using static ForthProgramResult;
 
 public class ForthExecutionContext
 {
-    private static readonly Dictionary<string, Func<Stack<ForthDatum>, Dictionary<string, object>, Player, int, string, ForthProgramResult>> callTable = new Dictionary<string, Func<Stack<ForthDatum>, Dictionary<string, object>, Player, int, string, ForthProgramResult>>();
+    private static readonly Dictionary<string, Func<Stack<ForthDatum>, Dictionary<string, object>, Player, Dbref, string, ForthProgramResult>> callTable = new Dictionary<string, Func<Stack<ForthDatum>, Dictionary<string, object>, Player, Dbref, string, ForthProgramResult>>();
     private readonly List<List<ForthDatum>> programLines;
     private readonly Stack<ForthDatum> stack = new Stack<ForthDatum>();
     private readonly Dictionary<string, object> outerScopeVariables = new Dictionary<string, object>();
     private readonly Dictionary<string, object> contextScopedVariables = new Dictionary<string, object>();
     // KEY = scopeId:scriptId, VALUE = dictionary of variables
     private static readonly Dictionary<string, Dictionary<string, object>> programLocalVariables = new Dictionary<string, Dictionary<string, object>>();
-    private readonly int scriptId;
+    private readonly Dbref scriptId;
     private readonly Player me;
     private readonly String scopeId;
     private readonly String outerScopeId;
@@ -74,18 +74,32 @@ public class ForthExecutionContext
         callTable.Add("=", (stack, variables, me, trigger, command) => OpEquals.Execute(stack));
         callTable.Add("<=", (stack, variables, me, trigger, command) => OpLessThanOrEqual.Execute(stack));
         callTable.Add(">=", (stack, variables, me, trigger, command) => OpGreaterThanOrEqual.Execute(stack));
-        callTable.Add("NOT", (stack, variables, me, trigger, command) => OpNot.Execute(stack));
-        callTable.Add("AND", (stack, variables, me, trigger, command) => OpAnd.Execute(stack));
-        callTable.Add("OR", (stack, variables, me, trigger, command) => OpOr.Execute(stack));
-        callTable.Add("XOR", (stack, variables, me, trigger, command) => OpXor.Execute(stack));
-        callTable.Add("STRING?", (stack, variables, me, trigger, command) => OpIsString.Execute(stack));
-        callTable.Add("INT?", (stack, variables, me, trigger, command) => OpIsInt.Execute(stack));
-        callTable.Add("FLOAT?", (stack, variables, me, trigger, command) => OpIsFloat.Execute(stack));
-        callTable.Add("DBREF?", (stack, variables, me, trigger, command) => OpIsDbRef.Execute(stack));
+        callTable.Add("not", (stack, variables, me, trigger, command) => OpNot.Execute(stack));
+        callTable.Add("and", (stack, variables, me, trigger, command) => OpAnd.Execute(stack));
+        callTable.Add("or", (stack, variables, me, trigger, command) => OpOr.Execute(stack));
+        callTable.Add("xor", (stack, variables, me, trigger, command) => OpXor.Execute(stack));
+        callTable.Add("string?", (stack, variables, me, trigger, command) => OpIsString.Execute(stack));
+        callTable.Add("int?", (stack, variables, me, trigger, command) => OpIsInt.Execute(stack));
+        callTable.Add("float?", (stack, variables, me, trigger, command) => OpIsFloat.Execute(stack));
+        callTable.Add("dbref?", (stack, variables, me, trigger, command) => OpIsDbRef.Execute(stack));
+        // TODO ARRAY?
+        // TODO DICTIONARY/
+        // TODO ADDRESS?
+        // TODO LOCK?
+
+        // MATHEMATICAL OPERATORS
+        callTable.Add("int", (stack, variables, me, trigger, command) => MathInt.Execute(stack, variables, me, trigger, command));
+        callTable.Add("+", (stack, variables, me, trigger, command) => MathAdd.Execute(stack));
+        callTable.Add("-", (stack, variables, me, trigger, command) => MathSubtract.Execute(stack));
+        callTable.Add("*", (stack, variables, me, trigger, command) => MathMultiply.Execute(stack));
+        callTable.Add("/", (stack, variables, me, trigger, command) => MathDivide.Execute(stack));
+        callTable.Add("%", (stack, variables, me, trigger, command) => MathModulo.Execute(stack));
+
+        callTable.Add("version", (stack, variables, me, trigger, command) => Version.Execute(stack));
     }
 
     public ForthExecutionContext(
-        int scriptId,
+        Dbref scriptId,
         List<List<ForthDatum>> programLines,
         Player me,
         string outerScopeId = null,
@@ -113,7 +127,7 @@ public class ForthExecutionContext
         return callTable.Keys;
     }
 
-    private static Dictionary<string, object> GetProgramLocalVariables(string scopeId, int scriptId)
+    private static Dictionary<string, object> GetProgramLocalVariables(string scopeId, Dbref scriptId)
     {
         var lvarKey = scopeId + ":" + scriptId;
         Dictionary<string, object> lvarDictionary = null;
@@ -123,7 +137,7 @@ public class ForthExecutionContext
         return lvarDictionary;
     }
 
-    public async Task<ForthProgramResult> RunAsync(int trigger, string command, object[] args, CancellationToken cancellationToken)
+    public async Task<ForthProgramResult> RunAsync(Dbref trigger, string command, object[] args, CancellationToken cancellationToken)
     {
         if (hasRan)
         {
@@ -157,7 +171,7 @@ public class ForthExecutionContext
                     return new ForthProgramResult(ForthProgramErrorResult.VARIABLE_ALREADY_DEFINED, $"Variable '{varKey}' is already defined.");
 
                 lvarDictionary.Add(varKey, null);
-                await me.sendOutput(line.Select(d => d.Value.ToString()).Aggregate((c,n) => c + " " + n));
+                await me.sendOutput(line.Select(d => d.Value.ToString()).Aggregate((c, n) => c + " " + n));
                 continue;
             }
 
@@ -169,7 +183,7 @@ public class ForthExecutionContext
                     return new ForthProgramResult(ForthProgramErrorResult.VARIABLE_ALREADY_DEFINED, $"Variable '{varKey}' is already defined.");
 
                 contextScopedVariables.Add(varKey, null);
-                await me.sendOutput(line.Select(d => d.Value.ToString()).Aggregate((c,n) => c + " " + n));
+                await me.sendOutput(line.Select(d => d.Value.ToString()).Aggregate((c, n) => c + " " + n));
                 continue;
             }
 
@@ -181,7 +195,7 @@ public class ForthExecutionContext
                     return new ForthProgramResult(ForthProgramErrorResult.VARIABLE_ALREADY_DEFINED, $"Variable '{varKey}' is already defined.");
 
                 contextScopedVariables.Add(varKey, stack.Count > 0 ? (object)stack.Pop() : null);
-                await me.sendOutput(line.Select(d => d.Value.ToString()).Aggregate((c,n) => c + " " + n));
+                await me.sendOutput(line.Select(d => d.Value.ToString()).Aggregate((c, n) => c + " " + n));
                 continue;
             }
 
@@ -243,6 +257,9 @@ public class ForthExecutionContext
                             return result;
                     }
                 }
+
+                // Unable to handle!
+                return new ForthProgramResult(ForthProgramErrorResult.INTERNAL_ERROR, $"Unable to handle datum: {datum}");
             }
         }
 

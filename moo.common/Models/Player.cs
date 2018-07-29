@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 public abstract class Player : Container {
 
-    private static ConcurrentDictionary<int, Player> _cache = new ConcurrentDictionary<int, Player>();
+    private static ConcurrentDictionary<Dbref, Player> _cache = new ConcurrentDictionary<Dbref, Player>();
 
     public static IEnumerable<Player> all() {
         foreach (var player in _cache.Values) {

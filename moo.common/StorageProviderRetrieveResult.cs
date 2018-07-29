@@ -2,7 +2,7 @@ public struct StorageProviderRetrieveResult
 {
     public bool isSuccess;
 
-    public int id;
+    public Dbref id;
 
     public string serialized;
 
@@ -10,7 +10,7 @@ public struct StorageProviderRetrieveResult
 
     public string reason;
 
-    public StorageProviderRetrieveResult(int id, string type, string serialized) {
+    public StorageProviderRetrieveResult(Dbref id, string type, string serialized) {
         this.isSuccess = true;
         this.id = id;
         this.type = type;
@@ -20,7 +20,7 @@ public struct StorageProviderRetrieveResult
 
     public StorageProviderRetrieveResult(string reason) {
         this.isSuccess = false;
-        this.id = -1;
+        this.id = Dbref.NOT_FOUND;
         this.type = null;
         this.serialized = null;
         this.reason = reason;

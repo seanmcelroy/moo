@@ -8,7 +8,7 @@ public interface IStorageProvider {
 
     void Overwrite(Dictionary<int, string> serialized);
 
-    Task<StorageProviderRetrieveResult> LoadAsync(int id, CancellationToken cancellationToken);
+    Task<StorageProviderRetrieveResult> LoadAsync(Dbref id, CancellationToken cancellationToken);
 
-    Task<bool> SaveAsync(int id, string type, string serialized, CancellationToken cancellationToken);
+    Task<bool> SaveAsync(Dbref id, string type, string serialized, CancellationToken cancellationToken);
 }

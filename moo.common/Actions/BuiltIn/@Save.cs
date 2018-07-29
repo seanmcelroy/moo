@@ -19,14 +19,20 @@ public class @Save : Action
 
     public sealed override async Task<VerbResult> Process(Player player, CommandResult command, CancellationToken cancellationToken)
     {
-        int? targetId = command.resolveDirectObject(player);
-        if (targetId == null)
+        var targetId = command.resolveDirectObject(player);
+        if (targetId == Dbref.NOT_FOUND)
         {
             await player.sendOutput("I don't see that here.");
             return new VerbResult(false, "Target not found");
         }
 
-        GetResult<Thing> lookup = await ThingRepository.GetAsync<Thing>(targetId.Value, cancellationToken);
+        if (targetId == Dbref.AMBIGUOUS)
+        {
+            await player.sendOutput("I don't know which one you mean.");
+            return new VerbResult(false, "Multiple targets found");
+        }
+
+        GetResult<Thing> lookup = await ThingRepository.GetAsync<Thing>(targetId, cancellationToken);
         if (lookup.isSuccess)
         {
             var target = lookup.value;

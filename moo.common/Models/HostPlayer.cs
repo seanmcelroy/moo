@@ -7,7 +7,7 @@ public class HostPlayer : Player{
         var host = ThingRepository.Make<HostPlayer>();
         host.name = name;
         host.location = location.id;
-        Console.WriteLine($"Created new host {name}(#{host.id})");
+        Console.WriteLine($"Created new host {name}({host.id})");
         return host;
     }    
 

@@ -11,12 +11,12 @@ using System.Threading.Tasks;
 
 public class Thing : IStorable<Thing>
 {
-    public int id;
+    public Dbref id;
     public string name;
 
-    public List<int> templates = new List<int>();
+    public List<Dbref> templates = new List<Dbref>();
 
-    public int location;
+    public Dbref location;
     public string externalDescription;
 
     public async Task<VerbResult> MoveToAsync(Container target, CancellationToken cancellationToken)
@@ -84,6 +84,19 @@ public class Thing : IStorable<Thing>
 
             var substring = serialized.Substring(m.Length);
             yield return Tuple.Create<object, string>(m.Groups["value"].Value, substring);
+        }
+        else if (serialized.StartsWith("<dbref/>"))
+        {
+            var substring = serialized.Substring("<dbref/>".Length);
+            yield return Tuple.Create<object, string>(Dbref.NOT_FOUND, substring);
+        }
+        else if (serialized.StartsWith("<dbref>"))
+        {
+            var r = new Regex(@"<dbref>(?<value>(?:.*?))<\/dbref>(?:.*?)");
+            var m = r.Match(serialized);
+
+            var substring = serialized.Substring(m.Length);
+            yield return Tuple.Create<object, string>(new Dbref(m.Groups["value"].Value), substring);
         }
         else if (serialized.StartsWith("<integer/>"))
         {
@@ -207,10 +220,10 @@ public class Thing : IStorable<Thing>
     protected string Serialize(object value)
     {
         if (value == null)
-        {
             return "<null/>";
-        }
-        else if (typeof(string).IsAssignableFrom(value.GetType()))
+        if (typeof(Dbref) == value.GetType())
+            return Serialize((Dbref)value);
+        if (typeof(string).IsAssignableFrom(value.GetType()))
             return Serialize((String)value);
         if (typeof(int?).IsAssignableFrom(value.GetType()))
             return Serialize((int?)value);
@@ -226,6 +239,12 @@ public class Thing : IStorable<Thing>
 
         throw new System.InvalidOperationException($"Cannot handle object of type {value.GetType().Name}");
     }
+
+     protected string Serialize(Dbref value)
+    {
+        return $"<dbref>{value}</dbref>";
+    }
+
 
     protected string Serialize(string value)
     {

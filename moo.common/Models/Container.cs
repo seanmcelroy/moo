@@ -7,11 +7,11 @@ using static ThingRepository;
 public class Container : Thing
 {
 
-    private ConcurrentDictionary<int, byte> contents = new ConcurrentDictionary<int, byte>();
+    private ConcurrentDictionary<Dbref, byte> contents = new ConcurrentDictionary<Dbref, byte>();
 
     public string internalDescription;
 
-    public VerbResult add(int id)
+    public VerbResult add(Dbref id)
     {
         if (id == this.id)
         {
@@ -28,7 +28,7 @@ public class Container : Thing
         return new VerbResult(false, "Item is already in that container");
     }
 
-    public bool contains(int id)
+    public bool contains(Dbref id)
     {
         return contents.ContainsKey(id);
     }
@@ -51,7 +51,7 @@ public class Container : Thing
         return results;
     }
 
-    public VerbResult remove(int id)
+    public VerbResult remove(Dbref id)
     {
         if (id == this.id)
         {

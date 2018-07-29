@@ -10,7 +10,7 @@ public class ConsolePlayer : HumanPlayer {
         var player = ThingRepository.Make<ConsolePlayer>();
         player.name = name;
         player.location = location.id;
-        Console.WriteLine($"Created new player {name}(#{player.id})");
+        Console.WriteLine($"Created new player {name}({player.id})");
         Player.playerConnected(player);
         return player;
     }    

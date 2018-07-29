@@ -25,13 +25,13 @@ public class Look : Action
         return new VerbResult(false, "No reference");
     }
 
-    private async Task lookAtRoom(Player player, int locationId, CancellationToken cancellationToken)
+    private async Task lookAtRoom(Player player, Dbref locationId, CancellationToken cancellationToken)
     {
         var locationLookup = await ThingRepository.GetAsync<Container>(locationId, cancellationToken);
         if (locationLookup.isSuccess)
         {
             var location = locationLookup.value;
-            await player.sendOutput($"{location.name}(#{location.id})");
+            await player.sendOutput($"{location.name}({location.id})");
             await player.sendOutput(location.internalDescription);
 
             var otherHumans = new StringBuilder();

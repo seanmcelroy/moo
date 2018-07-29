@@ -36,7 +36,7 @@ public struct CommandResult
         return !string.IsNullOrWhiteSpace(match.Groups["doI"].Value) ? match.Groups["doI"].Value : match.Groups["doD"].Value;
     }
 
-    public int? resolveDirectObject(Player context)
+    public Dbref resolveDirectObject(Player context)
     {
         var dobj = getDirectObject();
 
@@ -45,8 +45,8 @@ public struct CommandResult
         if (String.Compare("here", dobj, true) == 0)
             return context.location;
         if (Regex.IsMatch(dobj, @"#\d+"))
-            return int.Parse(dobj.Substring(1));
+            return new Dbref(int.Parse(dobj.Substring(1)));
 
-        return default(int?);
+        return Dbref.NOT_FOUND;
     }
 }

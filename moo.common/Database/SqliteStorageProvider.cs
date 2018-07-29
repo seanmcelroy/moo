@@ -30,7 +30,7 @@ public class SqliteStorageProvider : IStorageProvider
         throw new System.NotImplementedException();
     }
 
-    public async Task<StorageProviderRetrieveResult> LoadAsync(int id, CancellationToken cancellationToken)
+    public async Task<StorageProviderRetrieveResult> LoadAsync(Dbref id, CancellationToken cancellationToken)
     {
         StorageProviderRetrieveResult result = default(StorageProviderRetrieveResult);
 
@@ -40,7 +40,7 @@ public class SqliteStorageProvider : IStorageProvider
 
             using (var command = new SqliteCommand("SELECT [type], [data] FROM [objects] WHERE [id]=@id;", connection))
             {
-                command.Parameters.AddWithValue("@id", id);
+                command.Parameters.AddWithValue("@id", (int)id);
                 SqliteDataReader reader = await  command.ExecuteReaderAsync(cancellationToken);
                 if (await reader.ReadAsync()) {
                     result = new StorageProviderRetrieveResult(id, reader.GetString(0), reader.GetString(1));
@@ -54,7 +54,7 @@ public class SqliteStorageProvider : IStorageProvider
         return default(StorageProviderRetrieveResult).Equals(result) ? new StorageProviderRetrieveResult("Not found.") : result;
     }
 
-    public async Task<bool> SaveAsync(int id, string type, string serialized, CancellationToken cancellationToken)
+    public async Task<bool> SaveAsync(Dbref id, string type, string serialized, CancellationToken cancellationToken)
     {
         using (var connection = new SqliteConnection("Data Source=./objects.db"))
         {
@@ -63,7 +63,7 @@ public class SqliteStorageProvider : IStorageProvider
             int updated = 0;
             using (var command = new SqliteCommand("INSERT OR REPLACE INTO [objects] ([id], [type], [data]) VALUES (@id, @type, @data);", connection))
             {
-                command.Parameters.AddWithValue("@id", id);
+                command.Parameters.AddWithValue("@id", (int)id);
                 command.Parameters.AddWithValue("@type", type);
                 command.Parameters.AddWithValue("@data", serialized);
                 updated = await command.ExecuteNonQueryAsync(cancellationToken);

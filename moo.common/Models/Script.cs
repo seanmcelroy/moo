@@ -37,7 +37,7 @@ public class Script : Action
 
         CommandHandler.actions.TryAdd(script.id, script);
 
-        Console.WriteLine($"Created new script {name}(#{script.id})");
+        Console.WriteLine($"Created new script {name}({script.id})");
         return script;
     }
 }

@@ -16,15 +16,15 @@ public static class OpLessThan
         if (stack.Count < 2)
             return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "< requires at least two parameters on the stack");
 
-        var n1 = stack.Pop();
-        if (n1.Type != DatumType.Integer || n1.Type != DatumType.Float)
-            return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "< requires the top parameter on the stack to be a number");
-
         var n2 = stack.Pop();
-        if (n2.Type != DatumType.Integer || n2.Type != DatumType.Float)
+        if (n2.Type != DatumType.Integer && n2.Type != DatumType.Float)
             return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "< requires the second-to-top parameter on the stack to be a number");
 
-        stack.Push(new ForthDatum((float)n1.Value < (float)n2.Value ? 1 : 0));
+        var n1 = stack.Pop();
+        if (n1.Type != DatumType.Integer && n1.Type != DatumType.Float)
+            return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "< requires the top parameter on the stack to be a number");
+
+        stack.Push(new ForthDatum(Convert.ToSingle(n1.Value) < Convert.ToSingle(n2.Value) ? 1 : 0));
         return default(ForthProgramResult);
     }
 }

@@ -1,3 +1,5 @@
+using System;
+
 public struct ForthDatum
 {
     public enum DatumType
@@ -55,7 +57,27 @@ public struct ForthDatum
         return false;
     }
 
-    public bool isTrue() {
+    public bool isTrue()
+    {
         return !isFalse();
+    }
+
+    public ForthDatum ToInteger()
+    {
+        switch (Type)
+        {
+            case DatumType.Float:
+                return new ForthDatum(Convert.ToInt32((float)Value), DatumType.Integer);
+            case DatumType.Integer:
+                return this;
+            case DatumType.DbRef:
+                return new ForthDatum((Dbref)Value, DatumType.Integer);
+        }
+
+        return new ForthDatum(0);
+    }
+
+    public override string ToString() {
+        return $"({Enum.GetName(typeof(DatumType), Type)}){Value}";
     }
 }

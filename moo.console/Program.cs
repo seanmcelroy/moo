@@ -40,7 +40,7 @@ namespace moo
                     if (default(CommandResult).Equals(command))
                         return;
 
-                    await Console.Out.WriteLineAsync($"{player.name}(#{player.id}): {command.raw}");
+                    await Console.Out.WriteLineAsync($"{player.name}({player.id}): {command.raw}");
 
                     var result = await CommandHandler.HandleHumanCommandAsync(player, command, cts.Token);
                     if (!result.isSuccess)
@@ -79,6 +79,8 @@ namespace moo
             Script.Make("test-marker", "{ \"a\" \"b\" \"c\" }");
             Script.Make("test-@", "me @ loc @ trigger @ command @ POP POP POP POP");
             Script.Make("test-vars","LVAR test\r\n1234 test !\r\ntest @");
+            Script.Make("test-math","3 5 1.1 2 2 1.01 9 2 1 2 3 + + * / - * > + INT + %");
+
 
             return player;
         }

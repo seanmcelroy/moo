@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 public static class CommandHandler {
 
-    public static readonly ConcurrentDictionary<int, Action> actions = new ConcurrentDictionary<int, Action>();
+    public static readonly ConcurrentDictionary<Dbref, Action> actions = new ConcurrentDictionary<Dbref, Action>();
 
     public static async Task<VerbResult> HandleHumanCommandAsync(Player player, CommandResult command, CancellationToken cancellationToken) {
 
