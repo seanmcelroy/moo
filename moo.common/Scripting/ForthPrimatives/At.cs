@@ -6,7 +6,7 @@ using static ForthProgramResult;
 
 public static class At
 {
-    public static ForthProgramResult Execute(Stack<ForthDatum> stack, Dictionary<string, object> variables)
+    public static ForthProgramResult Execute(Stack<ForthDatum> stack, Dictionary<string, object> variables, Player player, int trigger, string command)
     {
         /*
         @ ( v -- x ) 
@@ -15,28 +15,56 @@ public static class At
         if (stack.Count < 1)
             return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "@ requires at least one parameter on the stack");
 
-        var si = stack.Pop();
-        if (si.Type != DatumType.Integer)
-            return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "LREVERSE requires the top parameter on the stack to be an integer");
+        var reference = stack.Pop();
+        if (reference.Type != DatumType.Unknown)
+            return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "@ requires the top parameter on the stack to be a variable");
 
-        int i = (int)si.Value;
-        if (i < 1)
-            return new ForthProgramResult(ForthProgramErrorResult.INVALID_VALUE, "LREVERSE requires the top parameter to be greater than or equal to 1");
+        var variableName = reference.Value.ToString().ToLowerInvariant();
 
-        if (stack.Count < i)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, $"LREVERSE would reverse the top {Math.Abs(i)} items from the top of the stack, but only {stack.Count} were present.");
-
-        var temp = new Queue<ForthDatum>();
-        for (int n = 0; n < i; n++)
+        // Handle built-in variables.
+        if (string.Compare("me", variableName) == 0)
         {
-            temp.Enqueue(stack.Pop());
+            stack.Push(new ForthDatum(player.id, DatumType.DbRef));
+            return default(ForthProgramResult);
         }
 
-        while (temp.Count > 0)
-            stack.Push(temp.Dequeue());
+        if (string.Compare("loc", variableName) == 0)
+        {
+            stack.Push(new ForthDatum(player.location, DatumType.DbRef));
+            return default(ForthProgramResult);
+        }
 
-        stack.Push(si);
+        if (string.Compare("trigger", variableName) == 0)
+        {
+            stack.Push(new ForthDatum(trigger, DatumType.DbRef));
+            return default(ForthProgramResult);
+        }
 
-        return default(ForthProgramResult);
+        if (string.Compare("command", variableName) == 0)
+        {
+            stack.Push(new ForthDatum(command, DatumType.String));
+            return default(ForthProgramResult);
+        }
+
+        if (!variables.ContainsKey(variableName))
+            return new ForthProgramResult(ForthProgramErrorResult.VARIABLE_NOT_FOUND, $"No variable named {variableName} was found");
+
+        var variableValue = variables[variableName];
+        if (variableValue == null)
+            return default(ForthProgramResult);
+
+        if (variableValue.GetType() == typeof(int))
+        {
+            stack.Push(new ForthDatum((int)variableValue));
+            return default(ForthProgramResult);
+        }
+
+        if (variableValue.GetType() == typeof(string))
+        {
+            stack.Push(new ForthDatum((string)variableValue));
+            return default(ForthProgramResult);
+        }
+
+        return new ForthProgramResult(ForthProgramErrorResult.UNKNOWN_TYPE, $"Unable to determine data type for: " + variableValue);
     }
 }

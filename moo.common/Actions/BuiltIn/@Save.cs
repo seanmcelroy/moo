@@ -7,10 +7,12 @@ using static ThingRepository;
 
 public class @Save : Action
 {
-    public sealed override bool CanProcess(Player player, CommandResult command)
+    public sealed override Tuple<bool, string> CanProcess(Player player, CommandResult command)
     {
-        string verb = command.getVerb().ToLowerInvariant();
-        return (verb == "@save" && command.hasDirectObject());
+        var verb = command.getVerb().ToLowerInvariant();
+        if (verb == "@save" && command.hasDirectObject())
+            return new Tuple<bool, string>(true, verb);
+        return new Tuple<bool, string>(false, null);
     }
 
     public override ActionType Type => ActionType.BuiltIn;

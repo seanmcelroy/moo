@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,7 +23,7 @@ public class ForthInterpreter
         // Parse the program onto the stack
         var lines = program.Split(new string[] { "\r\n", "\r" }, StringSplitOptions.RemoveEmptyEntries);
 
-        var regex = new Regex(@"(?:(?<comment>\([^\)]*\))|(?<string>""[^""\r\n]*"")|(?<int>\-?\d+)|(?<prim>[\w\.\-\+\?!><=@;:{}]+))", RegexOptions.Compiled);
+        var regex = new Regex(@"(?:(?<comment>\([^\)]*\))|(?<string>""[^""\r\n]*"")|(?<int>\-?\d+)|(?<dbref>#\d+)|(?<prim>[\w\.\-\+\?!><=@;:{}]+))", RegexOptions.Compiled);
         foreach (var line in lines)
         {
             var lineData = new List<ForthDatum>();
@@ -45,9 +46,18 @@ public class ForthInterpreter
                     continue;
                 }
 
+                if (!string.IsNullOrWhiteSpace(match.Groups["dbref"].Value))
+                {
+                    lineData.Add(new ForthDatum(match.Groups["string"].Value, ForthDatum.DatumType.DbRef));
+                    continue;
+                }
+
                 if (!string.IsNullOrWhiteSpace(match.Groups["prim"].Value))
                 {
-                    lineData.Add(new ForthDatum(match.Groups["prim"].Value, ForthDatum.DatumType.Primitive));
+                    if (ForthExecutionContext.GetPrimatives().Any(s => string.Compare(s, match.Groups["prim"].Value, true) == 0))
+                        lineData.Add(new ForthDatum(match.Groups["prim"].Value, ForthDatum.DatumType.Primitive));
+                    else // Could be a variable name
+                        lineData.Add(new ForthDatum(match.Groups["prim"].Value, ForthDatum.DatumType.Unknown));
                     continue;
                 }
 
@@ -58,15 +68,15 @@ public class ForthInterpreter
         }
     }
 
-    public async Task<ForthProgramResult> SpawnAsync(Player player, CancellationToken cancellationToken)
+    public async Task<ForthProgramResult> SpawnAsync(int scriptId, Player player, int trigger, string command, object[] args, CancellationToken cancellationToken)
     {
         if (programLines.Count == 0)
             Parse();
 
-        var task = new ForthExecutionContext(programLines, player);
+        var task = new ForthExecutionContext(scriptId, programLines, player);
         tasks.Add(task);
 
-        var programResult = await task.RunAsync(null, cancellationToken);
+        var programResult = await task.RunAsync(trigger, command, args, cancellationToken);
         return programResult;
     }
 }

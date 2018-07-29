@@ -77,6 +77,8 @@ namespace moo
             Script.Make("test-reverse", "\"a\" \"b\" \"c\" \"d\" \"e\" 4 reverse");
             Script.Make("test-lreverse", "\"a\" \"b\" \"c\" \"d\" \"e\" 4 lreverse");
             Script.Make("test-marker", "{ \"a\" \"b\" \"c\" }");
+            Script.Make("test-@", "me @ loc @ trigger @ command @ POP POP POP POP");
+            Script.Make("test-vars","LVAR test\r\n1234 test !\r\ntest @");
 
             return player;
         }

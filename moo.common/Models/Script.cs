@@ -20,7 +20,7 @@ public class Script : Action
             forth = new ForthInterpreter(programText);
 
         // TODO: Right now we block on programs
-        var result = await forth.SpawnAsync(player, cancellationToken);
+        var result = await forth.SpawnAsync(this.id, player, player.id, command.getVerb(), null, cancellationToken);
         return new VerbResult(result.isSuccessful, result.reason?.ToString());
     }
 

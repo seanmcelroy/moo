@@ -1,3 +1,4 @@
+using System;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -5,10 +6,12 @@ using static ThingRepository;
 
 public class @Load : Action
 {
-    public sealed override bool CanProcess(Player player, CommandResult command)
+    public sealed override Tuple<bool, string> CanProcess(Player player, CommandResult command)
     {
         var verb = command.getVerb().ToLowerInvariant();
-        return (verb == "@load" && command.hasDirectObject());
+        if (verb == "@load" && command.hasDirectObject())
+            return new Tuple<bool, string>(true, verb);
+        return new Tuple<bool, string>(false, null);
     }
 
     public override ActionType Type => ActionType.BuiltIn;

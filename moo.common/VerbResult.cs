@@ -7,7 +7,7 @@ public struct VerbResult
     public VerbResult(bool isSuccess, string reason)
     {
         if (!isSuccess && reason == null)
-            throw new System.ArgumentNullException(nameof(reason));
+            throw new System.ArgumentNullException(nameof(reason), "Success was false, but reason was also null!");
 
         this.isSuccess = isSuccess;
         this.reason = reason;

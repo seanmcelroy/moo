@@ -1,3 +1,4 @@
+using System;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -7,10 +8,8 @@ public class Look : Action
 {
     public override ActionType Type => ActionType.BuiltIn;
 
-    public sealed override bool CanProcess(Player player, CommandResult command)
-    {
-        var verb = command.getVerb().ToLowerInvariant();
-        return (verb == "l" || verb == "look");
+    public Look() {
+        this.aliases.Add("l");
     }
 
     public sealed override async Task<VerbResult> Process(Player player, CommandResult command, CancellationToken cancellationToken)

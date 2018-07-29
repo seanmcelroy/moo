@@ -9,7 +9,8 @@ public static class CommandHandler {
     public static async Task<VerbResult> HandleHumanCommandAsync(Player player, CommandResult command, CancellationToken cancellationToken) {
 
         foreach (Action action in actions.Values) {
-            if (action.CanProcess(player, command))
+            var result = action.CanProcess(player, command);
+            if (result.Item1)
             {
                 return await action.Process(player, command, cancellationToken);
             }

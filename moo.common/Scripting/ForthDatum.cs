@@ -7,6 +7,7 @@ public struct ForthDatum
         Integer = 2,
         Primitive = 3,
         Marker = 4,
+        DbRef = 5
     }
 
     public object Value;
