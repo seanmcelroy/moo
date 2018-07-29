@@ -95,6 +95,16 @@ public class ForthExecutionContext
         callTable.Add("/", (stack, variables, me, trigger, command) => MathDivide.Execute(stack));
         callTable.Add("%", (stack, variables, me, trigger, command) => MathModulo.Execute(stack));
 
+        // TIME MANIPULATION
+        callTable.Add("time", (stack, variables, me, trigger, command) => Time.Execute(stack));
+        callTable.Add("date", (stack, variables, me, trigger, command) => Date.Execute(stack));
+        callTable.Add("systime", (stack, variables, me, trigger, command) => SysTime.Execute(stack));
+        callTable.Add("systime_precise", (stack, variables, me, trigger, command) => SysTimePrecise.Execute(stack));
+        callTable.Add("gmtoffset", (stack, variables, me, trigger, command) => GmtOffset.Execute(stack));
+        callTable.Add("timesplit", (stack, variables, me, trigger, command) => TimeSplit.Execute(stack));
+        callTable.Add("timefmt", (stack, variables, me, trigger, command) => TimeFormat.Execute(stack));
+
+        // MISCELLANEOUS
         callTable.Add("version", (stack, variables, me, trigger, command) => Version.Execute(stack));
     }
 
@@ -147,6 +157,7 @@ public class ForthExecutionContext
 
         // For each line
         int lineCount = 0;
+        Dictionary<string, object> lvarDictionary = GetProgramLocalVariables(scopeId, scriptId);
         foreach (var line in programLines)
         {
             lineCount++;
@@ -157,7 +168,6 @@ public class ForthExecutionContext
             // Line-level items
 
             // LVAR
-            Dictionary<string, object> lvarDictionary = GetProgramLocalVariables(scopeId, scriptId);
             if (line.Count == 2 && string.Compare(line[0].Value.ToString(), "LVAR", true) == 0)
             {
                 if (lvarDictionary == null)

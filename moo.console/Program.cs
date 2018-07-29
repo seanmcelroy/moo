@@ -1,8 +1,9 @@
 ﻿using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace moo
+namespace moo.console
 {
     class Program
     {
@@ -62,7 +63,7 @@ namespace moo
             }
         }
 
-        static Player LoadSandbox()
+        private static Player LoadSandbox()
         {
             Room aether = Room.Make("The Aether");
             aether.internalDescription = "You see a massless, infinite black void stretching forever in all directions and across all time.";
@@ -81,8 +82,13 @@ namespace moo
             Script.Make("test-vars","LVAR test\r\n1234 test !\r\ntest @");
             Script.Make("test-math","3 5 1.1 2 2 1.01 9 2 1 2 3 + + * / - * > + INT + %");
 
+            Script.Make("cmd-uptime", LoadScriptFile("scripts/cmd-upload.muf"));
 
             return player;
+        }
+
+        private static string LoadScriptFile(string path) {
+            return System.IO.File.ReadAllText(path);
         }
     }
 }

@@ -21,7 +21,8 @@ public class ForthInterpreter
     private void Parse()
     {
         // Parse the program onto the stack
-        var lines = program.Split(new string[] { "\r\n", "\r" }, StringSplitOptions.RemoveEmptyEntries);
+        var lines = program.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+        Console.Out.WriteLine($"Parsed {lines.Length} lines");
 
         var regex = new Regex(@"(?:(?<comment>\([^\)]*\))|(?<string>""[^""\r\n]*"")|(?<float>\-?(?:\d+\.\d*|\d*\.\d+))|(?<int>\-?\d+)|(?<dbref>#\d+)|(?<prim>[\w\.\-\+\*\/%\?!><=@;:{}]+))", RegexOptions.Compiled);
         foreach (var line in lines)

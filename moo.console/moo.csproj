@@ -10,4 +10,10 @@
     <ProjectReference Include="..\moo.common\moo.common.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="scripts/*.*">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>  
+  </ItemGroup>
+
 </Project>
