@@ -23,6 +23,12 @@ public static class Pick
         if (i < 1)
             return new ForthProgramResult(ForthProgramErrorResult.INVALID_VALUE, "PICK requires the top parameter to be greater than or equal to 1");
 
+        // Shortcut for DUP.
+        if (i == 1) {
+            stack.Push(stack.Peek());
+            return default(ForthProgramResult);
+        }
+
         if (stack.Count < i)
             return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, $"PICK would have the {Math.Abs(i)}th item from the top of the stack, but only {stack.Count} were present.");
 

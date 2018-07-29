@@ -1,9 +1,0 @@
-/Users/smcelroy/src/personal/moo/moo.common/bin/Debug/netstandard2.0/moo.common.deps.json
-/Users/smcelroy/src/personal/moo/moo.common/bin/Debug/netstandard2.0/moo.common.dll
-/Users/smcelroy/src/personal/moo/moo.common/bin/Debug/netstandard2.0/moo.common.pdb
-/Users/smcelroy/src/personal/moo/moo.common/obj/Debug/netstandard2.0/moo.common.csprojAssemblyReference.cache
-/Users/smcelroy/src/personal/moo/moo.common/obj/Debug/netstandard2.0/moo.common.csproj.CoreCompileInputs.cache
-/Users/smcelroy/src/personal/moo/moo.common/obj/Debug/netstandard2.0/moo.common.AssemblyInfoInputs.cache
-/Users/smcelroy/src/personal/moo/moo.common/obj/Debug/netstandard2.0/moo.common.AssemblyInfo.cs
-/Users/smcelroy/src/personal/moo/moo.common/obj/Debug/netstandard2.0/moo.common.dll
-/Users/smcelroy/src/personal/moo/moo.common/obj/Debug/netstandard2.0/moo.common.pdb

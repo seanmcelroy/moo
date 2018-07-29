@@ -2,10 +2,11 @@ public struct ForthDatum
 {
     public enum DatumType
     {
+        Unknown = 0,
         String = 1,
         Integer = 2,
         Primitive = 3,
-        Marker = 4
+        Marker = 4,
     }
 
     public object Value;

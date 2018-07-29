@@ -8,9 +8,61 @@ using static ForthProgramResult;
 
 public class ForthExecutionContext
 {
+    private static readonly Dictionary<string, Func<Stack<ForthDatum>, Dictionary<string, object>, ForthProgramResult>> callTable = new Dictionary<string, Func<Stack<ForthDatum>, Dictionary<string, object>, ForthProgramResult>>();
     private readonly List<List<ForthDatum>> programLines;
     private readonly Stack<ForthDatum> stack = new Stack<ForthDatum>();
+
+    private readonly Dictionary<string, object> variables = new Dictionary<string, object>();
     private readonly Player me;
+
+    static ForthExecutionContext()
+    {
+        // Setup call table
+        callTable.Add("pop", (s, v) => Pop.Execute(s));
+        callTable.Add("popn", (s, v) => PopN.Execute(s));
+        callTable.Add("dup", (stack, v) =>
+        {
+            // DUP is the same as 1 pick.
+            stack.Push(new ForthDatum(1));
+            return Pick.Execute(stack);
+        });
+        callTable.Add("dupn", (s, v) => DupN.Execute(s));
+        callTable.Add("ldup", (s, v) => LDup.Execute(s));
+        callTable.Add("swap", (s, v) => Swap.Execute(s));
+        callTable.Add("over", (stack, v) =>
+        {
+            // OVER is the same as 2 pick.
+            stack.Push(new ForthDatum(2));
+            return Pick.Execute(stack);
+        });
+        callTable.Add("rot", (stack, v) =>
+        {
+            // ROT is the same as 3 rotate
+            stack.Push(new ForthDatum(3));
+            return Rotate.Execute(stack);
+        });
+        callTable.Add("rotate", (s, v) => Rotate.Execute(s));
+        callTable.Add("pick", (s, v) => Pick.Execute(s));
+        callTable.Add("put", (s, v) => Put.Execute(s));
+        callTable.Add("reverse", (s, v) => Reverse.Execute(s));
+        callTable.Add("lreverse", (s, v) => LReverse.Execute(s));
+        callTable.Add("depth", (stack, v) =>
+        {
+            // DEPTH ( -- i ) 
+            // Returns the number of items currently on the stack.
+            stack.Push(new ForthDatum(stack.Count));
+            return default(ForthProgramResult);
+        });
+        callTable.Add("{", (stack, v) =>
+        {
+            // { ( -- marker) 
+            // Pushes a marker onto the stack, to be used with } or }list or }dict.
+            stack.Push(new ForthDatum("{", DatumType.Marker));
+            return default(ForthProgramResult);
+        });
+        callTable.Add("}", (s, v) => MarkerEnd.Execute(s));
+        callTable.Add("@", (s, v) => At.Execute(s, v));
+    }
 
     public ForthExecutionContext(List<List<ForthDatum>> programLines, Player me)
     {
@@ -53,191 +105,14 @@ public class ForthExecutionContext
                 // Primatives
                 if (datum.Type == ForthDatum.DatumType.Primitive)
                 {
-
-                    switch (((string)datum.Value).ToLowerInvariant())
+                    var primative = ((string)datum.Value).ToLowerInvariant();
+                    if (callTable.ContainsKey(primative))
                     {
-                        case "pop":
-                            {
-                                // POP ( x -- ) 
-                                // Pops the top of the stack into oblivion.
-                                if (stack.Count == 0)
-                                    return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "POP requires at least one item on the stack, but the stack is empty.");
-
-                                stack.Pop();
-                                break;
-                            }
-                        case "popn":
-                            {
-                                // POPN ( ?n..?1 i -- ) 
-                                // Pops the top i stack items.
-                                if (stack.Count == 0)
-                                    return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "POPN requires at least one parameter on the stack");
-
-                                var si = stack.Pop();
-                                if (si.Type != DatumType.Integer)
-                                    return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "POPN requires the top parameter on the stack to be an integer");
-
-                                int i = (int)si.Value;
-                                if (stack.Count < i)
-                                    return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, $"POPN would have removed {i} items on the stack, but only {stack.Count} were present.");
-
-                                for (int n = 0; n < i; n++)
-                                    stack.Pop();
-
-                                break;
-                            }
-                        case "dup":
-                            {
-                                // DUP ( x -- x x ) 
-                                // Duplicates the item at the top of the stack.
-                                if (stack.Count == 0)
-                                    return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "DUP requires a parameter on the stack");
-
-                                var x = stack.Peek();
-                                stack.Push(x);
-
-                                break;
-                            }
-                        case "dupn":
-                            {
-                                // DUPN ( ?n..?1 i -- ?n..?1 ?n..?1 ) 
-                                // Duplicates the top i stack items.
-                                if (stack.Count == 0)
-                                    return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "DUPN requires at least one parameter on the stack");
-
-                                var si = stack.Pop();
-                                if (si.Type != DatumType.Integer)
-                                    return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "DUPN requires the top parameter on the stack to be an integer");
-
-                                int i = (int)si.Value;
-                                if (stack.Count < i)
-                                    return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, $"DUPN would have duplicated {i} items on the stack, but only {stack.Count} were present.");
-
-                                foreach (var source in stack.Reverse().Take(i))
-                                    stack.Push(source);
-
-                                break;
-                            }
-                        case "ldup":
-                            {
-                                // LDUP ( {?} -- {?} {?} ) 
-                                // Duplicates a stackrange on top of the stack.
-                                foreach (var source in stack.ToArray())
-                                {
-                                    stack.Push(source);
-                                }
-                                break;
-                            }
-                        case "swap":
-                            {
-                                // SWAP ( x y -- y x ) 
-                                // Takes objects x and y on the stack and reverses their order.
-                                if (stack.Count < 2)
-                                    return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "SWAP requires at least two parameters on the stack");
-
-                                var y = stack.Pop();
-                                var x = stack.Pop();
-                                stack.Push(y);
-                                stack.Push(x);
-
-                                break;
-                            }
-                        case "over":
-                            {
-                                // OVER ( x y -- x y x ) 
-                                // Duplicates the second-to-top thing on the stack. This is the same as 2 pick.
-                                if (stack.Count < 2)
-                                    return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "OVER requires at least two parameters on the stack");
-
-                                var x = stack.Reverse().Skip(1).Take(1).Single();
-                                stack.Push(x);
-
-                                break;
-                            }
-                        case "rot":
-                            {
-                                // ROT ( x y z -- y z x ) 
-                                // Rotates the top three things on the stack. This is equivalent to 3 rotate.
-                                if (stack.Count < 3)
-                                    return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "ROT requires at least three parameters on the stack");
-
-                                var z = stack.Pop();
-                                var y = stack.Pop();
-                                var x = stack.Pop();
-                                stack.Push(y);
-                                stack.Push(z);
-                                stack.Push(x);
-
-                                break;
-                            }
-                        case "rotate":
-                            {
-                                var result = Rotate.Execute(stack);
-                                if (default(ForthProgramResult).Equals(result))
-                                    continue;
-                                if (!result.isSuccessful)
-                                    return result;
-                                break;
-                            }
-                        case "pick":
-                            {
-                                var result = Pick.Execute(stack);
-                                if (default(ForthProgramResult).Equals(result))
-                                    continue;
-                                if (!result.isSuccessful)
-                                    return result;
-                                break;
-                            }
-                        case "put":
-                            {
-                                var result = Put.Execute(stack);
-                                if (default(ForthProgramResult).Equals(result))
-                                    continue;
-                                if (!result.isSuccessful)
-                                    return result;
-                                break;
-                            }
-                        case "reverse":
-                            {
-                                var result = Reverse.Execute(stack);
-                                if (default(ForthProgramResult).Equals(result))
-                                    continue;
-                                if (!result.isSuccessful)
-                                    return result;
-                                break;
-                            }
-                        case "lreverse":
-                            {
-                                var result = LReverse.Execute(stack);
-                                if (default(ForthProgramResult).Equals(result))
-                                    continue;
-                                if (!result.isSuccessful)
-                                    return result;
-                                break;
-                            }
-                        case "depth":
-                            {
-                                // DEPTH ( -- i ) 
-                                // Returns the number of items currently on the stack.
-                                stack.Push(new ForthDatum(stack.Count));
-                                break;
-                            }
-                        case "{":
-                            {
-                                // { ( -- marker) 
-                                // Pushes a marker onto the stack, to be used with } or }list or }dict.
-                                stack.Push(new ForthDatum("{", DatumType.Marker));
-                                break;
-                            }
-                        case "}":
-                            {
-                                var result = MarkerEnd.Execute(stack);
-                                if (default(ForthProgramResult).Equals(result))
-                                    continue;
-                                if (!result.isSuccessful)
-                                    return result;
-                                break;
-                            }
+                        var result = callTable[primative].Invoke(stack, variables);
+                        if (default(ForthProgramResult).Equals(result))
+                            continue;
+                        if (!result.isSuccessful)
+                            return result;
                     }
                 }
             }
