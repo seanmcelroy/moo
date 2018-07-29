@@ -23,7 +23,7 @@ public class ForthInterpreter
         // Parse the program onto the stack
         var lines = program.Split(new string[] { "\r\n", "\r" }, StringSplitOptions.RemoveEmptyEntries);
 
-        var regex = new Regex(@"(?:(?<comment>\([^\)]*\))|(?<string>""[^""\r\n]*"")|(?<int>\-?\d+)|(?<dbref>#\d+)|(?<prim>[\w\.\-\+\?!><=@;:{}]+))", RegexOptions.Compiled);
+        var regex = new Regex(@"(?:(?<comment>\([^\)]*\))|(?<string>""[^""\r\n]*"")|(?<float>\-?(?:\d+\.\d*|\d*\.\d+))|(?<int>\-?\d+)|(?<dbref>#\d+)|(?<prim>[\w\.\-\+\?!><=@;:{}]+))", RegexOptions.Compiled);
         foreach (var line in lines)
         {
             var lineData = new List<ForthDatum>();
@@ -37,6 +37,12 @@ public class ForthInterpreter
                 if (!string.IsNullOrWhiteSpace(match.Groups["string"].Value))
                 {
                     lineData.Add(new ForthDatum(match.Groups["string"].Value, ForthDatum.DatumType.String));
+                    continue;
+                }
+
+                if (!string.IsNullOrWhiteSpace(match.Groups["float"].Value))
+                {
+                    lineData.Add(new ForthDatum(int.Parse(match.Groups["float"].Value), ForthDatum.DatumType.Float));
                     continue;
                 }
 

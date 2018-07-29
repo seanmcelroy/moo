@@ -7,7 +7,8 @@ public struct ForthDatum
         Integer = 2,
         Primitive = 3,
         Marker = 4,
-        DbRef = 5
+        DbRef = 5,
+        Float = 6
     }
 
     public object Value;
@@ -25,9 +26,36 @@ public struct ForthDatum
         this.Type = DatumType.String;
     }
 
-     public ForthDatum(int? value)
+    public ForthDatum(int? value)
     {
         this.Value = value;
         this.Type = DatumType.Integer;
+    }
+
+    public ForthDatum(float? value)
+    {
+        this.Value = value;
+        this.Type = DatumType.Float;
+    }
+
+    public bool isFalse()
+    {
+        switch (Type)
+        {
+            case DatumType.Integer:
+                return (int)Value == 0;
+            case DatumType.Float:
+                return (float)Value == 0;
+            case DatumType.DbRef:
+                return (int)Value == -1;
+            case DatumType.String:
+                return string.IsNullOrEmpty((string)Value);
+        }
+
+        return false;
+    }
+
+    public bool isTrue() {
+        return !isFalse();
     }
 }

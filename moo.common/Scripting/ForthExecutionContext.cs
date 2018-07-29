@@ -69,6 +69,19 @@ public class ForthExecutionContext
         callTable.Add("}", (stack, variables, me, trigger, command) => MarkerEnd.Execute(stack));
         callTable.Add("@", (stack, variables, me, trigger, command) => At.Execute(stack, variables, me, trigger, command));
         callTable.Add("!", (stack, variables, me, trigger, command) => Bang.Execute(stack, variables, me, trigger, command));
+        callTable.Add("<", (stack, variables, me, trigger, command) => OpLessThan.Execute(stack));
+        callTable.Add(">", (stack, variables, me, trigger, command) => OpGreaterThan.Execute(stack));
+        callTable.Add("=", (stack, variables, me, trigger, command) => OpEquals.Execute(stack));
+        callTable.Add("<=", (stack, variables, me, trigger, command) => OpLessThanOrEqual.Execute(stack));
+        callTable.Add(">=", (stack, variables, me, trigger, command) => OpGreaterThanOrEqual.Execute(stack));
+        callTable.Add("NOT", (stack, variables, me, trigger, command) => OpNot.Execute(stack));
+        callTable.Add("AND", (stack, variables, me, trigger, command) => OpAnd.Execute(stack));
+        callTable.Add("OR", (stack, variables, me, trigger, command) => OpOr.Execute(stack));
+        callTable.Add("XOR", (stack, variables, me, trigger, command) => OpXor.Execute(stack));
+        callTable.Add("STRING?", (stack, variables, me, trigger, command) => OpIsString.Execute(stack));
+        callTable.Add("INT?", (stack, variables, me, trigger, command) => OpIsInt.Execute(stack));
+        callTable.Add("FLOAT?", (stack, variables, me, trigger, command) => OpIsFloat.Execute(stack));
+        callTable.Add("DBREF?", (stack, variables, me, trigger, command) => OpIsDbRef.Execute(stack));
     }
 
     public ForthExecutionContext(
@@ -186,7 +199,8 @@ public class ForthExecutionContext
                     }).Aggregate((c, n) => c + " " + n) + ") " + datum.Value);
 
                 // Literals
-                if (datum.Type == ForthDatum.DatumType.Integer ||
+                if (datum.Type == ForthDatum.DatumType.Float ||
+                    datum.Type == ForthDatum.DatumType.Integer ||
                     datum.Type == ForthDatum.DatumType.String ||
                     datum.Type == ForthDatum.DatumType.Unknown ||
                     datum.Type == ForthDatum.DatumType.DbRef)
