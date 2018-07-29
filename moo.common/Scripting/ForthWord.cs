@@ -6,22 +6,14 @@ using System.Threading.Tasks;
 using static ForthDatum;
 using static ForthProgramResult;
 
-public class ForthExecutionContext
+public struct ForthWord
 {
     private static readonly Dictionary<string, Func<Stack<ForthDatum>, Dictionary<string, object>, Player, Dbref, string, ForthProgramResult>> callTable = new Dictionary<string, Func<Stack<ForthDatum>, Dictionary<string, object>, Player, Dbref, string, ForthProgramResult>>();
-    private readonly List<List<ForthDatum>> programLines;
-    private readonly Stack<ForthDatum> stack = new Stack<ForthDatum>();
-    private readonly Dictionary<string, object> outerScopeVariables = new Dictionary<string, object>();
-    private readonly Dictionary<string, object> contextScopedVariables = new Dictionary<string, object>();
-    // KEY = scopeId:scriptId, VALUE = dictionary of variables
-    private static readonly Dictionary<string, Dictionary<string, object>> programLocalVariables = new Dictionary<string, Dictionary<string, object>>();
-    private readonly Dbref scriptId;
-    private readonly Player me;
-    private readonly String scopeId;
-    private readonly String outerScopeId;
-    private bool hasRan;
+    public readonly string name;
+    public readonly Dictionary<int, ForthDatum[]> programLineNumbersAndDatum;
+    private readonly Dictionary<string, object> functionScopedVariables;
 
-    static ForthExecutionContext()
+    static ForthWord()
     {
         // Setup call table
         callTable.Add("pop", (stack, variables, me, trigger, command) => Pop.Execute(stack));
@@ -108,28 +100,16 @@ public class ForthExecutionContext
         callTable.Add("version", (stack, variables, me, trigger, command) => Version.Execute(stack));
     }
 
-    public ForthExecutionContext(
-        Dbref scriptId,
-        List<List<ForthDatum>> programLines,
-        Player me,
-        string outerScopeId = null,
-        Dictionary<string, object> outerScopeVariables = null)
+    public ForthWord(string name, Dictionary<int, ForthDatum[]> programLineNumbersAndDatum)
     {
-        this.scriptId = scriptId;
-        this.programLines = programLines;
-        this.me = me;
-        this.scopeId = Guid.NewGuid().ToString();
+        if (name == null)
+            throw new System.ArgumentNullException(nameof(name));
+        if (programLineNumbersAndDatum == null)
+            throw new System.ArgumentNullException(nameof(programLineNumbersAndDatum));
 
-        if (outerScopeId != null)
-        {
-            this.outerScopeId = outerScopeId;
-
-            if (outerScopeVariables != null)
-            {
-                foreach (var kvp in outerScopeVariables)
-                    this.outerScopeVariables.Add(kvp.Key, kvp.Value);
-            }
-        }
+        this.name = name;
+        this.programLineNumbersAndDatum = programLineNumbersAndDatum;
+        this.functionScopedVariables = new Dictionary<string, object>();
     }
 
     public static ICollection<string> GetPrimatives()
@@ -137,29 +117,21 @@ public class ForthExecutionContext
         return callTable.Keys;
     }
 
-    private static Dictionary<string, object> GetProgramLocalVariables(string scopeId, Dbref scriptId)
+    public async Task<ForthProgramResult> RunAsync(
+        ForthProcess process,
+        Stack<ForthDatum> stack,
+        Player me,
+        Dbref trigger,
+        string command,
+        CancellationToken cancellationToken)
     {
-        var lvarKey = scopeId + ":" + scriptId;
-        Dictionary<string, object> lvarDictionary = null;
-        if (programLocalVariables.ContainsKey(lvarKey))
-            lvarDictionary = programLocalVariables[lvarKey];
-
-        return lvarDictionary;
-    }
-
-    public async Task<ForthProgramResult> RunAsync(Dbref trigger, string command, object[] args, CancellationToken cancellationToken)
-    {
-        if (hasRan)
-        {
-            return new ForthProgramResult(ForthProgramErrorResult.INTERNAL_ERROR, $"Execution scope {scopeId} tried to run twice.");
-        }
-        hasRan = true;
-
         // For each line
-        int lineCount = 0;
-        Dictionary<string, object> lvarDictionary = GetProgramLocalVariables(scopeId, scriptId);
-        foreach (var line in programLines)
+        var lineCount = 0;
+        var ifControlStack = new Stack<IfControl>();
+
+        foreach (var kvpLine in programLineNumbersAndDatum)
         {
+            var line = kvpLine.Value;
             lineCount++;
 
             if (cancellationToken.IsCancellationRequested)
@@ -167,44 +139,26 @@ public class ForthExecutionContext
 
             // Line-level items
 
-            // LVAR
-            if (line.Count == 2 && string.Compare(line[0].Value.ToString(), "LVAR", true) == 0)
-            {
-                if (lvarDictionary == null)
-                {
-                    lvarDictionary = new Dictionary<string, object>();
-                    programLocalVariables.Add(scopeId + ":" + scriptId, lvarDictionary);
-                }
-
-                var varKey = line[1].Value.ToString().ToLowerInvariant();
-                if (lvarDictionary.ContainsKey(varKey))
-                    return new ForthProgramResult(ForthProgramErrorResult.VARIABLE_ALREADY_DEFINED, $"Variable '{varKey}' is already defined.");
-
-                lvarDictionary.Add(varKey, null);
-                await me.sendOutput(line.Select(d => d.Value.ToString()).Aggregate((c, n) => c + " " + n));
-                continue;
-            }
-
             // VAR
-            if (line.Count == 2 && string.Compare(line[0].Value.ToString(), "VAR", true) == 0)
+            if (line.Length == 2 && string.Compare(line[0].Value.ToString(), "VAR", true) == 0)
             {
                 var varKey = line[1].Value.ToString().ToLowerInvariant();
-                if (contextScopedVariables.ContainsKey(varKey))
+                if (functionScopedVariables.ContainsKey(varKey))
                     return new ForthProgramResult(ForthProgramErrorResult.VARIABLE_ALREADY_DEFINED, $"Variable '{varKey}' is already defined.");
 
-                contextScopedVariables.Add(varKey, null);
+                functionScopedVariables.Add(varKey, null);
                 await me.sendOutput(line.Select(d => d.Value.ToString()).Aggregate((c, n) => c + " " + n));
                 continue;
             }
 
             // VAR!
-            if (line.Count == 2 && string.Compare(line[0].Value.ToString(), "VAR!", true) == 0)
+            if (line.Length == 2 && string.Compare(line[0].Value.ToString(), "VAR!", true) == 0)
             {
                 var varKey = line[1].Value.ToString().ToLowerInvariant();
-                if (contextScopedVariables.ContainsKey(varKey))
+                if (functionScopedVariables.ContainsKey(varKey))
                     return new ForthProgramResult(ForthProgramErrorResult.VARIABLE_ALREADY_DEFINED, $"Variable '{varKey}' is already defined.");
 
-                contextScopedVariables.Add(varKey, stack.Count > 0 ? (object)stack.Pop() : null);
+                functionScopedVariables.Add(varKey, stack.Count > 0 ? (object)stack.Pop() : null);
                 await me.sendOutput(line.Select(d => d.Value.ToString()).Aggregate((c, n) => c + " " + n));
                 continue;
             }
@@ -219,8 +173,55 @@ public class ForthExecutionContext
                     await me.sendOutput($"DEBUG ({lineCount}): (" +
                     stack.Reverse().Select(s =>
                     {
-                        return s.Type == DatumType.DbRef ? "#" + s.Value : s.Value.ToString();
+                        return s.Value.ToString();
                     }).Aggregate((c, n) => c + " " + n) + ") " + datum.Value);
+
+                // Execution Control
+                if (datum.Type == ForthDatum.DatumType.Unknown)
+                {
+                    // IF
+                    var primative = ((string)datum.Value).ToLowerInvariant();
+                    if (string.Compare("if", primative, true) == 0)
+                    {
+                        var eval = stack.Pop();
+                        if (eval.isTrue())
+                            ifControlStack.Push(IfControl.InIfAndContinue);
+                        else
+                            ifControlStack.Push(IfControl.InIfAndSkip);
+                        continue;
+                    }
+
+                    // ELSE
+                    if (string.Compare("else", primative, true) == 0)
+                    {
+                        if (ifControlStack.Count == 0)
+                            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "ELSE encountered without preceding IF");
+
+                        var currentControl = ifControlStack.Pop();
+                        if (currentControl == IfControl.InIfAndContinue)
+                            ifControlStack.Push(IfControl.InElseAndSkip);
+                        else
+                            ifControlStack.Push(IfControl.InElseAndContinue);
+
+                        continue;
+                    }
+
+                    // THEN
+                    if (string.Compare("then", primative, true) == 0)
+                    {
+                        if (ifControlStack.Count == 0)
+                            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "THEN encountered without preceding IF");
+                        ifControlStack.Pop();
+                        continue;
+                    }
+                }
+
+                if (ifControlStack.Count > 0)
+                {
+                    var ifControlCurrent = ifControlStack.Peek();
+                    if (ifControlCurrent == IfControl.InIfAndSkip || ifControlCurrent == IfControl.InElseAndSkip)
+                        continue;
+                }
 
                 // Literals
                 if (datum.Type == ForthDatum.DatumType.Float ||
@@ -239,10 +240,8 @@ public class ForthExecutionContext
                     var primative = ((string)datum.Value).ToLowerInvariant();
                     if (callTable.ContainsKey(primative))
                     {
-                        var variables = lvarDictionary == null
-                            ? contextScopedVariables
-                            : lvarDictionary
-                                .Union(contextScopedVariables)
+                        var variables = process.GetProgramLocalVariables()
+                                .Union(functionScopedVariables)
                                 .ToDictionary(k => k.Key, v => v.Value);
 
                         var result = callTable[primative].Invoke(stack, variables, me, trigger, command);
@@ -250,14 +249,14 @@ public class ForthExecutionContext
                         // Push dirty variables where they may need to go.
                         if (result.dirtyVariables != null && result.dirtyVariables.Count > 0)
                         {
-                            var programLocalVariables = GetProgramLocalVariables(scopeId, scriptId);
+                            var programLocalVariables = process.GetProgramLocalVariables();
                             foreach (var dirty in result.dirtyVariables)
                             {
                                 if (programLocalVariables.ContainsKey(dirty.Key))
                                     programLocalVariables[dirty.Key] = dirty.Value;
 
-                                if (contextScopedVariables.ContainsKey(dirty.Key))
-                                    contextScopedVariables[dirty.Key] = dirty.Value;
+                                if (functionScopedVariables.ContainsKey(dirty.Key))
+                                    functionScopedVariables[dirty.Key] = dirty.Value;
                             }
                         }
 
@@ -280,9 +279,9 @@ public class ForthExecutionContext
             await me.sendOutput($"DEBUG ({lineCount}): (" +
             stack.Reverse().Select(s =>
             {
-                return s.Type == DatumType.DbRef ? "#" + s.Value : s.Value.ToString();
+                return s.Value.ToString();
             }).Aggregate((c, n) => c + " " + n) + ")");
 
-        return new ForthProgramResult(null, "Program complete");
+        return new ForthProgramResult(null, $"Word {name} completed");
     }
 }
