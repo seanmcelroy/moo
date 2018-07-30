@@ -9,7 +9,7 @@ namespace moo.console
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Moo!");
+            Console.WriteLine("\r\n\r\nMoo!\r\n");
             CancellationTokenSource cts = new CancellationTokenSource();
 
             Console.Out.WriteLine("Initializing sqlite storage provider");
@@ -19,6 +19,9 @@ namespace moo.console
 
             Console.Out.WriteLine("Loading initial pillars");
             Player consolePlayer = LoadSandbox();
+
+            var aether = ThingRepository.GetFromCacheOnly<Room>((Dbref)0);
+            aether.SetPropertyPathValue("_sys/startuptime", new ForthDatum((int)DateTimeOffset.Now.ToUnixTimeSeconds()));
 
             Console.Out.WriteLine("Loading built-in actions");
             LoadBuiltInActions();

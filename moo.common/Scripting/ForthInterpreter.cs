@@ -26,7 +26,7 @@ public class ForthInterpreter
         Console.Out.WriteLine($"Parsed {lines.Length} lines");
 
         var regexWordParsing = new Regex(@"(?:(?<comment>\([^\)]*\))|(?<lvar>lvar\s+\w+)|(?<word>\:\s*(?<wordName>[\w\-]+)\s*(?<wordBody>[^;]+)\;))");
-        var regexDatumParsing = new Regex(@"(?:(?<comment>\([^\)]*\))|(?<string>""[^""\r\n]*"")|(?<float>\-?(?:\d+\.\d*|\d*\.\d+))|(?<int>\-?\d+)|(?<dbref>#\d+)|(?<prim>[\w\.\-\+\*\/%\?!><=@;:{}]+))", RegexOptions.Compiled);
+        var regexDatumParsing = new Regex(@"(?:(?<comment>\([^\)]*\))|(?:""(?<string>[^""]*)"")|(?<float>\-?(?:\d+\.\d*|\d*\.\d+))|(?<int>\-?\d+)|(?<dbref>#\d+)|(?<prim>[\w\.\-\+\*\/%\?!><=@;:{}]+))", RegexOptions.Compiled);
 
         foreach (Match wordMatch in regexWordParsing.Matches(program))
         {
@@ -56,7 +56,7 @@ public class ForthInterpreter
                         if (!string.IsNullOrWhiteSpace(match.Groups["comment"].Value))
                             continue;
 
-                        if (!string.IsNullOrWhiteSpace(match.Groups["string"].Value))
+                        if (!string.IsNullOrWhiteSpace(match.Groups["string"].Value) || wordBodySplit[i].Trim() == "\"\"")
                         {
                             lineData.Add(new ForthDatum(match.Groups["string"].Value, ForthDatum.DatumType.String));
                             continue;
@@ -89,7 +89,7 @@ public class ForthInterpreter
                             continue;
                         }
 
-                        throw new System.InvalidOperationException($"Unable to parse line in word {wordName}: {match.Value}");
+                        throw new System.InvalidOperationException($"Unable to parse line in word {wordName}: {match.Value}.  Full line: {wordBodySplit[i]}");
                     }
 
                     programLineNumbersAndDatum.Add(i + 1, lineData.ToArray());

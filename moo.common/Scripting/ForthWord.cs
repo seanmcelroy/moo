@@ -87,6 +87,9 @@ public struct ForthWord
         callTable.Add("/", (stack, variables, me, trigger, command) => MathDivide.Execute(stack));
         callTable.Add("%", (stack, variables, me, trigger, command) => MathModulo.Execute(stack));
 
+        // PROPERTY MANIPULATION
+        callTable.Add("getpropval", (stack, variables, me, trigger, command) => GetPropVal.ExecuteAsync(stack).Result);
+
         // TIME MANIPULATION
         callTable.Add("time", (stack, variables, me, trigger, command) => Time.Execute(stack));
         callTable.Add("date", (stack, variables, me, trigger, command) => Date.Execute(stack));

@@ -22,7 +22,7 @@ public struct ForthDatum
         this.Type = type;
     }
 
-     public ForthDatum(Dbref value, byte dud)
+    public ForthDatum(Dbref value, byte dud)
     {
         this.Value = value;
         this.Type = DatumType.DbRef;
@@ -83,7 +83,28 @@ public struct ForthDatum
         return new ForthDatum(0);
     }
 
-    public override string ToString() {
+    public override string ToString()
+    {
         return $"({Enum.GetName(typeof(DatumType), Type)}){Value}";
+    }
+
+    public Dbref UnwrapDbref()
+    {
+        if (Type != DatumType.DbRef)
+            throw new InvalidCastException("Cannot unwrap property as dbref, since it is of type: " + Type);
+
+        if (Value.GetType() == typeof(Dbref)) {
+            return (Dbref)Value;
+        }
+
+        if (Value.GetType() == typeof(string)) {
+            return new Dbref((string)Value);
+        }
+
+        if (Value.GetType() == typeof(int)) {
+            return new Dbref((int)Value);
+        }
+
+        throw new InvalidCastException("Cannot unwrap property as dbref, underlying type is: " + Value.GetType().Name);
     }
 }

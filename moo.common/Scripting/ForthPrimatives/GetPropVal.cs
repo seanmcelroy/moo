@@ -1,12 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using static ForthDatum;
 using static ForthProgramResult;
+using static Property;
 
 public static class GetPropVal
 {
-    public static ForthProgramResult Execute(Stack<ForthDatum> stack)
+    public static async Task<ForthProgramResult> ExecuteAsync(Stack<ForthDatum> stack)
     {
         /*
         GETPROPVAL ( d s -- i ) 
@@ -16,11 +19,29 @@ public static class GetPropVal
         if (stack.Count < 2)
             return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "GETPROPVAL requires two parameters");
 
-        var n2 = stack.Pop();
-        var n1 = stack.Pop();
+        var sPath = stack.Pop();
+        if (sPath.Type != DatumType.String)
+            return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "GETPROPVAL requires the top parameter on the stack to be an string");
 
-        return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "+ expects integers or floating point numbers, or no more than one dbref and an integer");
+        var sTarget = stack.Pop();
+        if (sTarget.Type != DatumType.DbRef)
+            return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "GETPROPVAL requires the second-to-top parameter on the stack to be a dbref");
 
-        // TODO: We do not support variable numbers today.  They're depreciated anyway.
+        var targetResult = await ThingRepository.GetAsync<Thing>(sTarget.UnwrapDbref(), default(CancellationToken));
+        if (!targetResult.isSuccess)
+        {
+            stack.Push(new ForthDatum(0));
+            return default(ForthProgramResult);
+        }
+
+        var property = targetResult.value.GetPropertyPathValue((string)sPath.Value);
+        if (property == null || property.Value.Type != PropertyType.Integer)
+        {
+            stack.Push(new ForthDatum(0));
+            return default(ForthProgramResult);
+        }
+
+        stack.Push(new ForthDatum((int)property.Value.Value));
+        return default(ForthProgramResult);
     }
 }

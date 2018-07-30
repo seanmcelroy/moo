@@ -121,12 +121,14 @@ public struct Property
             return $"<prop><name>{prop.Name}</name>" + Serialize((float)prop.Value) + "</prop>";
         if (typeof(double).IsAssignableFrom(prop.Value.GetType()))
             return $"<prop><name>{prop.Name}</name>" + Serialize(Convert.ToSingle((double)prop.Value)) + "</prop>";
+        if (typeof(PropertyDirectory).IsAssignableFrom(prop.Value.GetType()))
+            return $"<prop><name>{prop.Name}</name>" + PropertyDirectory.Serialize((PropertyDirectory)prop.Value) + "</prop>";
 
         throw new System.InvalidOperationException($"Cannot handle object of type {prop.Type}");
     }
 
     public static string Serialize(Dbref value, byte dud) => Thing.Serialize(value, 0);
     public static string Serialize(string value) => Thing.Serialize(value);
-    public static string Serialize(float value) => Thing.Serialize(value);
+    public static string    Serialize(float value) => Thing.Serialize(value);
     public static string Serialize(int value) => Thing.Serialize(value);
 }

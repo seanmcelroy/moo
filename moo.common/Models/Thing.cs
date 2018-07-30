@@ -24,10 +24,6 @@ public class Thing : IStorable<Thing>
 
     public Thing()
     {
-        properties.Add("dbrefTEST", new Dbref(-10));
-        properties.Add("stringTEST", "test string");
-        properties.Add("intTEST", 999);
-        properties.Add("floatTEST", 999.999f);
     }
 
     public async Task<VerbResult> MoveToAsync(Container target, CancellationToken cancellationToken)
@@ -182,7 +178,8 @@ public class Thing : IStorable<Thing>
         }
         else if (serialized.StartsWith("<prop>"))
         {
-            var r = new Regex(@"<prop><name>(?<name>[^<]*)<\/name>(?<value>(?:.*?))<\/prop>(?:.*?)");
+            //var r = new Regex(@"<prop><name>(?<name>[^<]*)<\/name>(?<value>(?:.*?))<\/prop>(?:.*?)");
+            var r = new Regex(@"<prop><name>(?<name>[^<]*)<\/name>(?<value>(?:<(?<open>\w+)>.*?)<\/\k<open>>)<\/prop>(?:.*?)");
             var m = r.Match(serialized);
 
             var propertyName = m.Groups["name"].Value;
@@ -196,6 +193,8 @@ public class Thing : IStorable<Thing>
                 property = new Property(propertyName, (int)propertyValue);
             else if (typeof(Dbref) == propertyValue.GetType())
                 property = new Property(propertyName, (Dbref)propertyValue);
+            else if (typeof(PropertyDirectory) == propertyValue.GetType())
+                property = new Property(propertyName, (PropertyDirectory)propertyValue);
             else
                 throw new InvalidOperationException("Unknown property type: " + propertyValue.GetType());
 
@@ -242,12 +241,19 @@ public class Thing : IStorable<Thing>
                 var innerDictionary = DeserializePart(substring).Single();
                 yield return Tuple.Create<object, string>(innerDictionary, substring.Substring(substring.IndexOf("</dict></value>") + "</dict></value>".Length));
             }
-            if (m.Groups["value"].Value.StartsWith("<propdir>"))
+            else if (m.Groups["value"].Value.StartsWith("<propdir>"))
             {
                 // Handle property directories
                 var substring = serialized.Substring("<value>".Length);
                 var propertyDirectory = DeserializePart(substring).Single();
                 yield return Tuple.Create<object, string>(propertyDirectory, substring.Substring(substring.IndexOf("</propdir></value>") + "</propdir></value>".Length));
+            }
+            else if (m.Groups["value"].Value.StartsWith("<prop>"))
+            {
+                // Handle property directories
+                var substring = serialized.Substring("<value>".Length);
+                var property = DeserializePart(substring).Single();
+                yield return Tuple.Create<object, string>(property, substring.Substring(substring.IndexOf("</prop></value>") + "</prop></value>".Length));
             }
             else
             {
@@ -260,6 +266,19 @@ public class Thing : IStorable<Thing>
         {
             throw new InvalidOperationException("Can't handle: " + serialized);
         }
+    }
+
+    public Property? GetPropertyPathValue(string path)
+    {
+        return this.properties?.GetPropertyPathValue(path);
+    }
+
+    public void SetPropertyPathValue(string path, ForthDatum value)
+    {
+        if (this.properties == null)
+            this.properties = new PropertyDirectory();
+
+        this.properties.SetPropertyPathValue(path, value);
     }
 
     public string Serialize()

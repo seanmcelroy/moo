@@ -55,6 +55,24 @@ public static class ThingRepository
         return null;
     }
 
+    public static T GetFromCacheOnly<T>(Dbref id) where T : Thing, new() {
+
+        // Is it in cache?
+        if (_cache.ContainsKey(id))
+        {
+            Thing ret;
+            if (_cache.TryGetValue(id, out ret))
+            {
+                if (typeof(T).IsAssignableFrom(ret.GetType()))
+                    return (T)ret;
+
+                return null;
+            }
+        }
+
+        return null;
+    }
+
     public static async Task<GetResult<T>> GetAsync<T>(Dbref id, CancellationToken cancellationToken) where T : Thing, new()
     {
         if ((int)id < 0)
