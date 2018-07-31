@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 
+//[JsonConverter(typeof(PropertySerializer))]
+[JsonObject(MemberSerialization.OptIn)]
 public struct Property
 {
     public enum PropertyType
@@ -13,8 +16,15 @@ public struct Property
         Directory = 5
     }
 
+    [JsonProperty]
     public string Name;
-    private object value;
+
+    [JsonProperty]
+    public PropertyDirectory directory;
+
+    [JsonProperty]
+    public object value;
+
     public object Value
     {
         get
@@ -24,10 +34,14 @@ public struct Property
                 if (value != null && value.GetType() == typeof(string))
                     return new Dbref((string)value);
             }
-            return value;
+            return directory ?? value;
         }
-        set {
-            this.value = value;
+        set
+        {
+            if (value is PropertyDirectory)
+                this.directory = (PropertyDirectory)value;
+            else
+                this.value = value;
         }
     }
 
@@ -39,6 +53,7 @@ public struct Property
             throw new System.ArgumentNullException(nameof(name));
 
         this.Name = name;
+        this.directory = null;
         this.value = value;
         this.Type = PropertyType.String;
     }
@@ -49,6 +64,7 @@ public struct Property
             throw new System.ArgumentNullException(nameof(name));
 
         this.Name = name;
+        this.directory = null;
         this.value = value;
         this.Type = PropertyType.Integer;
     }
@@ -61,6 +77,7 @@ public struct Property
             throw new System.ArgumentNullException(nameof(value));
 
         this.Name = name;
+        this.directory = null;
         this.value = value;
         this.Type = PropertyType.DbRef;
     }
@@ -70,6 +87,7 @@ public struct Property
             throw new System.ArgumentNullException(nameof(name));
 
         this.Name = name;
+        this.directory = null;
         this.value = value;
         this.Type = PropertyType.Float;
     }
@@ -81,7 +99,8 @@ public struct Property
             throw new System.ArgumentNullException(nameof(value));
 
         this.Name = name;
-        this.value = value;
+        this.directory = value;
+        this.value = null;
         this.Type = PropertyType.Directory;
     }
 
@@ -129,6 +148,6 @@ public struct Property
 
     public static string Serialize(Dbref value, byte dud) => Thing.Serialize(value, 0);
     public static string Serialize(string value) => Thing.Serialize(value);
-    public static string    Serialize(float value) => Thing.Serialize(value);
+    public static string Serialize(float value) => Thing.Serialize(value);
     public static string Serialize(int value) => Thing.Serialize(value);
 }
