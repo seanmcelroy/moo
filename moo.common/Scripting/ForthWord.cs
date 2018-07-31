@@ -87,6 +87,10 @@ public struct ForthWord
         callTable.Add("/", (stack, variables, me, trigger, command) => MathDivide.Execute(stack));
         callTable.Add("%", (stack, variables, me, trigger, command) => MathModulo.Execute(stack));
 
+        // STRING MANIPULATION OPERATIONS
+        callTable.Add("strcat", (stack, variables, me, trigger, command) => StrCat.Execute(stack));
+        callTable.Add("intostr", (stack, variables, me, trigger, command) => IntoStr.Execute(stack));
+
         // PROPERTY MANIPULATION
         callTable.Add("getpropval", (stack, variables, me, trigger, command) => GetPropVal.ExecuteAsync(stack).Result);
 
@@ -176,8 +180,20 @@ public struct ForthWord
                     var primative = ((string)datum.Value).ToLowerInvariant();
                     if (string.Compare("if", primative, true) == 0)
                     {
-                // Debug, print stack
-                await DumpStackToDebugAsync(stack, me, lineCount, datum);
+                        // I could be an 'if' inside a skipped branch.
+                        if (ifControlStack.Count > 0)
+                        {
+                            var ifControlCurrent = ifControlStack.Peek();
+                            if (ifControlCurrent == IfControl.InIfAndSkip || ifControlCurrent == IfControl.InElseAndSkip || ifControlCurrent == IfControl.SkippedBranch)
+                            {
+                                await DumpStackToDebugAsync(stack, me, lineCount, datum, "(skipped)");
+                                ifControlStack.Push(IfControl.SkippedBranch);
+                                continue;
+                            }
+                        }
+
+                        // Debug, print stack
+                        await DumpStackToDebugAsync(stack, me, lineCount, datum);
 
                         if (stack.Count == 0)
                         {
@@ -196,9 +212,18 @@ public struct ForthWord
                     // ELSE
                     if (string.Compare("else", primative, true) == 0)
                     {
-                                        // Debug, print stack
-                await DumpStackToDebugAsync(stack, me, lineCount, datum);
+                        // I could be an 'else' inside a skipped branch.
+                        if (ifControlStack.Count > 0)
+                        {
+                            if (ifControlStack.Peek() == IfControl.SkippedBranch)
+                            {
+                                await DumpStackToDebugAsync(stack, me, lineCount, datum, "(skipped)");
+                                continue;
+                            }
+                        }
 
+                        // Debug, print stack
+                        await DumpStackToDebugAsync(stack, me, lineCount, datum);
 
                         if (ifControlStack.Count == 0)
                             return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "ELSE encountered without preceding IF");
@@ -215,8 +240,20 @@ public struct ForthWord
                     // THEN
                     if (string.Compare("then", primative, true) == 0)
                     {
-                                        // Debug, print stack
-                await DumpStackToDebugAsync(stack, me, lineCount, datum);
+                        // I could be an 'else' inside a skipped branch.
+                        if (ifControlStack.Count > 0)
+                        {
+                            if (ifControlStack.Peek() == IfControl.SkippedBranch)
+                            {
+                                await DumpStackToDebugAsync(stack, me, lineCount, datum, "(skipped)");
+                                // A skipped if will push a SkippedBranch, so we should pop it.
+                                ifControlStack.Pop();
+                                continue;
+                            }
+                        }
+
+                        // Debug, print stack
+                        await DumpStackToDebugAsync(stack, me, lineCount, datum);
 
 
                         if (ifControlStack.Count == 0)
@@ -228,12 +265,11 @@ public struct ForthWord
 
                 if (ifControlStack.Count > 0)
                 {
-                                    // Debug, print stack
-                await DumpStackToDebugAsync(stack, me, lineCount, datum, "(skipped)");
-
+                    // Debug, print stack
+                    await DumpStackToDebugAsync(stack, me, lineCount, datum, "(skipped)");
 
                     var ifControlCurrent = ifControlStack.Peek();
-                    if (ifControlCurrent == IfControl.InIfAndSkip || ifControlCurrent == IfControl.InElseAndSkip)
+                    if (ifControlCurrent == IfControl.InIfAndSkip || ifControlCurrent == IfControl.InElseAndSkip || ifControlCurrent == IfControl.SkippedBranch)
                         continue;
                 }
 
