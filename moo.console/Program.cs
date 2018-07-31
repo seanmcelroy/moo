@@ -76,8 +76,8 @@ namespace moo.console
             HostPlayer.make("God", aether);
             var player = ConsolePlayer.make("Intrepid Hero", aether);
 
+            /*/
             Script.Make("foo", "\"foo\" \"bar\" \"baz\" 2 rotate 2 rotate 3 rotate -2 rotate 3 pick POP POP POP POP");
-
             Script.Make("test-rotate1", "\"a\" \"b\" \"c\" \"d\" 4 rotate");
             Script.Make("test-rotate2", "\"a\" \"b\" \"c\" \"d\" -4 rotate");
             Script.Make("test-put", "\"a\" \"b\" \"c\" \"d\" \"e\" 3 put");
@@ -87,8 +87,11 @@ namespace moo.console
             Script.Make("test-@", "me @ loc @ trigger @ command @ POP POP POP POP");
             Script.Make("test-vars", "LVAR test\r\n1234 test !\r\ntest @");
             Script.Make("test-math", "3 5 1.1 2 2 1.01 9 2 1 2 3 + + * / - * > + INT + %");
+            */
 
             Script.Make("cmd-uptime", LoadScriptFile("scripts/cmd-upload.muf"));
+
+            LoadScriptDirectory("scripts", "cmd-*.muf", "cmd-");
 
             return player;
         }
@@ -96,6 +99,15 @@ namespace moo.console
         private static string LoadScriptFile(string path)
         {
             return System.IO.File.ReadAllText(path);
+        }
+
+        private static void LoadScriptDirectory(string path, string searchPattern, string prefix)
+        {
+            foreach (var file in System.IO.Directory.GetFiles(path, searchPattern))
+            {
+                var commandName = file.Substring(path.Length + 1).Replace(prefix, "").Replace(".muf", "");
+                Script.Make(commandName, LoadScriptFile(file));
+            }
         }
     }
 }

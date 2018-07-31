@@ -13,7 +13,8 @@ public struct ForthProgramResult
         UNKNOWN_TYPE,
         INTERNAL_ERROR,
         VARIABLE_ALREADY_DEFINED,
-        DIVISION_BY_ZERO
+        DIVISION_BY_ZERO,
+        SYNTAX_ERROR
     }
 
     public bool isSuccessful;

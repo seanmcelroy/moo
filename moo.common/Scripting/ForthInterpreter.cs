@@ -19,17 +19,23 @@ public class ForthInterpreter
         this.program = program;
     }
 
-    private void Parse()
+    private ForthParseResult Parse()
     {
         // Parse the program onto the stack
-        var lines = program.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+        var lines = program.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
         Console.Out.WriteLine($"Parsed {lines.Length} lines");
 
         var regexWordParsing = new Regex(@"(?:(?<comment>\([^\)]*\))|(?:lvar\s+(?<lvar>\w+))|(?<word>\:\s*(?<wordName>[\w\-]+)\s*(?<wordBody>[^;]+)\;))");
         var regexDatumParsing = new Regex(@"(?:(?<comment>\([^\)]*\))|(?:""(?<string>[^""]*)"")|(?<float>\-?(?:\d+\.\d*|\d*\.\d+))|(?<int>\-?\d+)|(?<dbref>#\d+)|(?<prim>[\w\.\-\+\*\/%\?!><=@;:{}]+))", RegexOptions.Compiled);
 
+        //int lineRatchet = 0;
         foreach (Match wordMatch in regexWordParsing.Matches(program))
         {
+            /*while (lineRatchet < lines.Length) {
+                if (lines[lineRatchet].IndexOf(wordMatch.Value) > -1)
+                    break;
+                lineRatchet++;
+            }*/
 
             if (!string.IsNullOrWhiteSpace(wordMatch.Groups["comment"].Value))
                 continue;
@@ -53,43 +59,47 @@ public class ForthInterpreter
                     var matches = regexDatumParsing.Matches(wordBodySplit[i]);
                     foreach (Match match in matches)
                     {
-                        if (!string.IsNullOrWhiteSpace(match.Groups["comment"].Value))
-                            continue;
-
-                        if (!string.IsNullOrWhiteSpace(match.Groups["string"].Value) || wordBodySplit[i].Trim() == "\"\"")
+                        foreach (Group group in match.Groups.Skip(1).Where(g => g.Success))
                         {
-                            lineData.Add(new ForthDatum(match.Groups["string"].Value, ForthDatum.DatumType.String));
-                            continue;
+                            switch (group.Name)
+                            {
+                                case "comment":
+                                    {
+                                        continue;
+                                    }
+                                case "string":
+                                    {
+                                        lineData.Add(new ForthDatum(group.Value, ForthDatum.DatumType.String));
+                                        continue;
+                                    }
+                                case "float":
+                                    {
+                                        lineData.Add(new ForthDatum(float.Parse(group.Value), ForthDatum.DatumType.Float));
+                                        continue;
+                                    }
+                                case "int":
+                                    {
+                                        lineData.Add(new ForthDatum(int.Parse(group.Value), ForthDatum.DatumType.Integer));
+                                        continue;
+                                    }
+                                case "dbref":
+                                    {
+                                        lineData.Add(new ForthDatum(group.Value, ForthDatum.DatumType.DbRef));
+                                        continue;
+                                    }
+                                case "prim":
+                                    {
+                                        if (ForthWord.GetPrimatives().Any(s => string.Compare(s, group.Value, true) == 0))
+                                            lineData.Add(new ForthDatum(group.Value, ForthDatum.DatumType.Primitive));
+                                        else // Could be a variable name
+                                            lineData.Add(new ForthDatum(group.Value, ForthDatum.DatumType.Unknown));
+                                        continue;
+                                    }
+                            }
+
+                            return new ForthParseResult(false, $"Unable to parse line in word {wordName}: {match.Value}.  Full line: {wordBodySplit[i]}");
                         }
 
-                        if (!string.IsNullOrWhiteSpace(match.Groups["float"].Value))
-                        {
-                            lineData.Add(new ForthDatum(float.Parse(match.Groups["float"].Value), ForthDatum.DatumType.Float));
-                            continue;
-                        }
-
-                        if (!string.IsNullOrWhiteSpace(match.Groups["int"].Value))
-                        {
-                            lineData.Add(new ForthDatum(int.Parse(match.Groups["int"].Value), ForthDatum.DatumType.Integer));
-                            continue;
-                        }
-
-                        if (!string.IsNullOrWhiteSpace(match.Groups["dbref"].Value))
-                        {
-                            lineData.Add(new ForthDatum(match.Groups["dbref"].Value, ForthDatum.DatumType.DbRef));
-                            continue;
-                        }
-
-                        if (!string.IsNullOrWhiteSpace(match.Groups["prim"].Value))
-                        {
-                            if (ForthWord.GetPrimatives().Any(s => string.Compare(s, match.Groups["prim"].Value, true) == 0))
-                                lineData.Add(new ForthDatum(match.Groups["prim"].Value, ForthDatum.DatumType.Primitive));
-                            else // Could be a variable name
-                                lineData.Add(new ForthDatum(match.Groups["prim"].Value, ForthDatum.DatumType.Unknown));
-                            continue;
-                        }
-
-                        throw new System.InvalidOperationException($"Unable to parse line in word {wordName}: {match.Value}.  Full line: {wordBodySplit[i]}");
                     }
 
                     programLineNumbersAndDatum.Add(i + 1, lineData.ToArray());
@@ -99,7 +109,8 @@ public class ForthInterpreter
                 continue;
             }
         }
-        Console.Out.WriteLine($"Parsed {programLocalVariableDeclarations.Count} program local variables and {words.Count} words");
+
+        return new ForthParseResult(true, $"Parsed {programLocalVariableDeclarations.Count} program local variables and {words.Count} words");
     }
 
     public async Task<ForthProgramResult> SpawnAsync(
@@ -111,7 +122,12 @@ public class ForthInterpreter
         CancellationToken cancellationToken)
     {
         if (words.Count == 0)
-            Parse();
+        {
+            var result = Parse();
+
+            if (!result.isSuccessful)
+                return new ForthProgramResult(ForthProgramResult.ForthProgramErrorResult.SYNTAX_ERROR, result.reason);
+        }
 
         var process = new ForthProcess(scriptId, words, player);
         foreach (var lvar in programLocalVariableDeclarations)

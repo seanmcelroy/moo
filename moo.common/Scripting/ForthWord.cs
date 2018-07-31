@@ -173,6 +173,11 @@ public struct ForthWord
             // For each element in line
             foreach (var datum in line)
             {
+                // Do we have something unknown on the top of the stack/
+                if (stack.Count > 0 && stack.Peek().Type == ForthDatum.DatumType.Unknown) {
+                    return new ForthProgramResult(ForthProgramErrorResult.SYNTAX_ERROR, $"Unable to handle datum: {stack.Peek()}");
+                }
+
                 // Execution Control
                 if (datum.Type == ForthDatum.DatumType.Unknown)
                 {
@@ -331,6 +336,9 @@ public struct ForthWord
 
                         continue;
                     }
+
+                    // Unable to handle!
+                    return new ForthProgramResult(ForthProgramErrorResult.SYNTAX_ERROR, $"Unable to handle datum: {datum}");
                 }
 
                 // Unable to handle!
