@@ -53,7 +53,7 @@ public class PropertyDirectory : Dictionary<string, Property>
         if (firstSeparator >= 0)
         {
             // Subdirectory needed
-            var firstSegmentName = path.Substring(firstSeparator);
+            var firstSegmentName = path.Substring(0, firstSeparator);
             if (this.ContainsKey(firstSegmentName))
             {
                 var firstSegmentProperty = this.GetValueOrDefault(firstSegmentName);
@@ -61,7 +61,7 @@ public class PropertyDirectory : Dictionary<string, Property>
                 {
                     // Exists and is a directory
                     var firstSegmentPropertyDirectory = (PropertyDirectory)firstSegmentProperty.Value;
-                    return firstSegmentPropertyDirectory.GetPropertyPathValue(path.Substring(firstSeparator));
+                    return firstSegmentPropertyDirectory.GetPropertyPathValue(path.Substring(firstSeparator + 1));
                 }
                 else
                 {

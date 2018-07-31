@@ -21,7 +21,10 @@ namespace moo.console
             Player consolePlayer = LoadSandbox();
 
             var aether = ThingRepository.GetFromCacheOnly<Room>((Dbref)0);
-            aether.SetPropertyPathValue("_sys/startuptime", new ForthDatum((int)DateTimeOffset.Now.ToUnixTimeSeconds()));
+            var now = (int)DateTimeOffset.Now.ToUnixTimeSeconds();
+            aether.SetPropertyPathValue("_sys/startuptime", new ForthDatum(now));
+            var nowRead = aether.GetPropertyPathValue("_sys/startuptime");
+            
 
             Console.Out.WriteLine("Loading built-in actions");
             LoadBuiltInActions();
