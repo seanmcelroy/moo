@@ -24,7 +24,7 @@ namespace moo.console
             var now = (int)DateTimeOffset.Now.ToUnixTimeSeconds();
             aether.SetPropertyPathValue("_sys/startuptime", new ForthDatum(now));
             var nowRead = aether.GetPropertyPathValue("_sys/startuptime");
-            
+
 
             Console.Out.WriteLine("Loading built-in actions");
             LoadBuiltInActions();

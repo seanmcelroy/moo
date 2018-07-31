@@ -25,7 +25,7 @@ public class ForthInterpreter
         var lines = program.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
         Console.Out.WriteLine($"Parsed {lines.Length} lines");
 
-        var regexWordParsing = new Regex(@"(?:(?<comment>\([^\)]*\))|(?<lvar>lvar\s+\w+)|(?<word>\:\s*(?<wordName>[\w\-]+)\s*(?<wordBody>[^;]+)\;))");
+        var regexWordParsing = new Regex(@"(?:(?<comment>\([^\)]*\))|(?:lvar\s+(?<lvar>\w+))|(?<word>\:\s*(?<wordName>[\w\-]+)\s*(?<wordBody>[^;]+)\;))");
         var regexDatumParsing = new Regex(@"(?:(?<comment>\([^\)]*\))|(?:""(?<string>[^""]*)"")|(?<float>\-?(?:\d+\.\d*|\d*\.\d+))|(?<int>\-?\d+)|(?<dbref>#\d+)|(?<prim>[\w\.\-\+\*\/%\?!><=@;:{}]+))", RegexOptions.Compiled);
 
         foreach (Match wordMatch in regexWordParsing.Matches(program))

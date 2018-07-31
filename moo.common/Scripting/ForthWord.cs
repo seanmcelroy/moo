@@ -169,16 +169,6 @@ public struct ForthWord
             // For each element in line
             foreach (var datum in line)
             {
-                // Debug, print stack
-                if (stack.Count == 0)
-                    await me.sendOutput($"DEBUG ({lineCount}): ()");
-                else
-                    await me.sendOutput($"DEBUG ({lineCount}): (" +
-                    stack.Reverse().Select(s =>
-                    {
-                        return s.Value.ToString();
-                    }).Aggregate((c, n) => c + " " + n) + ") " + datum.Value);
-
                 // Execution Control
                 if (datum.Type == ForthDatum.DatumType.Unknown)
                 {
@@ -186,6 +176,15 @@ public struct ForthWord
                     var primative = ((string)datum.Value).ToLowerInvariant();
                     if (string.Compare("if", primative, true) == 0)
                     {
+                // Debug, print stack
+                await DumpStackToDebugAsync(stack, me, lineCount, datum);
+
+                        if (stack.Count == 0)
+                        {
+                            await DumpVariablesToDebugAsync(process, me);
+                            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "IF had no value on the stack to evaluate");
+                        }
+
                         var eval = stack.Pop();
                         if (eval.isTrue())
                             ifControlStack.Push(IfControl.InIfAndContinue);
@@ -197,6 +196,10 @@ public struct ForthWord
                     // ELSE
                     if (string.Compare("else", primative, true) == 0)
                     {
+                                        // Debug, print stack
+                await DumpStackToDebugAsync(stack, me, lineCount, datum);
+
+
                         if (ifControlStack.Count == 0)
                             return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "ELSE encountered without preceding IF");
 
@@ -212,6 +215,10 @@ public struct ForthWord
                     // THEN
                     if (string.Compare("then", primative, true) == 0)
                     {
+                                        // Debug, print stack
+                await DumpStackToDebugAsync(stack, me, lineCount, datum);
+
+
                         if (ifControlStack.Count == 0)
                             return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "THEN encountered without preceding IF");
                         ifControlStack.Pop();
@@ -221,9 +228,27 @@ public struct ForthWord
 
                 if (ifControlStack.Count > 0)
                 {
+                                    // Debug, print stack
+                await DumpStackToDebugAsync(stack, me, lineCount, datum, "(skipped)");
+
+
                     var ifControlCurrent = ifControlStack.Peek();
                     if (ifControlCurrent == IfControl.InIfAndSkip || ifControlCurrent == IfControl.InElseAndSkip)
                         continue;
+                }
+
+                // Debug, print stack
+                await DumpStackToDebugAsync(stack, me, lineCount, datum);
+
+                // Function calls
+                if (datum.Type == ForthDatum.DatumType.Unknown &&
+                    process.HasWord(datum.Value.ToString()))
+                {
+                    // Yield to other word.
+                    var wordResult = await process.RunWordAsync(datum.Value.ToString(), trigger, command, cancellationToken);
+                    if (!wordResult.isSuccessful)
+                        return wordResult;
+                    continue;
                 }
 
                 // Literals
@@ -267,6 +292,8 @@ public struct ForthWord
                             continue;
                         if (!result.isSuccessful)
                             return result;
+
+                        continue;
                     }
                 }
 
@@ -275,16 +302,35 @@ public struct ForthWord
             }
         }
 
+        // Debug, print stack at end of program
+        await DumpStackToDebugAsync(stack, me, lineCount);
+
+        return new ForthProgramResult(null, $"Word {name} completed");
+    }
+
+    private async Task DumpStackToDebugAsync(Stack<ForthDatum> stack, Player me, int lineCount, ForthDatum currentDatum = default(ForthDatum), string extra = null)
+    {
         // Debug, print stack
         if (stack.Count == 0)
-            await me.sendOutput($"DEBUG ({lineCount}): ()");
+            await me.sendOutput($"DEBUG ({lineCount}): () " + extra);
         else
             await me.sendOutput($"DEBUG ({lineCount}): (" +
             stack.Reverse().Select(s =>
             {
-                return s.Value.ToString();
-            }).Aggregate((c, n) => c + " " + n) + ")");
+                return (s.Type == DatumType.String) ? "\"" + s.Value.ToString() + "\"" : s.Value.ToString();
+            }).Aggregate((c, n) => c + " " + n) + ") " + (default(ForthDatum).Equals(currentDatum) ? "" : ((currentDatum.Type == DatumType.String) ? "\"" + currentDatum.Value.ToString() + "\"" : currentDatum.Value.ToString())) + " " + extra);
+    }
 
-        return new ForthProgramResult(null, $"Word {name} completed");
+    private async Task DumpVariablesToDebugAsync(ForthProcess process, Player me)
+    {
+        foreach (var lvar in process.GetProgramLocalVariables())
+        {
+            await me.sendOutput($"LVAR {lvar.Key}={lvar.Value}");
+        }
+
+        foreach (var local in functionScopedVariables)
+        {
+            await me.sendOutput($"VAR {local.Key}={local.Value}");
+        }
     }
 }

@@ -45,7 +45,8 @@ public class ForthProcess
         }
     }
 
-    public ConcurrentDictionary<string, object> GetProgramLocalVariables() {
+    public ConcurrentDictionary<string, object> GetProgramLocalVariables()
+    {
         return this.programLocalVariables;
     }
 
@@ -55,6 +56,13 @@ public class ForthProcess
         {
             programLocalVariables[name] = value;
         }
+    }
+
+    public bool HasWord(string wordName) => this.words.Any(w => string.Compare(w.name, wordName, true) == 0);
+
+    public async Task<ForthProgramResult> RunWordAsync(string wordName,  Dbref trigger, string command, CancellationToken cancellationToken)
+    {
+        return await this.words.Single(w=> string.Compare(w.name, wordName, true) == 0).RunAsync(this, stack, me, trigger, command, cancellationToken);
     }
 
     public async Task<ForthProgramResult> RunAsync(Dbref trigger, string command, object[] args, CancellationToken cancellationToken)
