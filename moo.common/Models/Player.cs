@@ -17,6 +17,8 @@ public abstract class Player : Container {
         _cache.TryAdd(player.id, player);
     }
 
+    public override Dbref Owner => this.id;
+
     public abstract void receiveInput(String input);
 
     public abstract Task<CommandResult> popCommand();

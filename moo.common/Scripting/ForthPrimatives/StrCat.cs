@@ -24,7 +24,7 @@ public static class StrCat
         if (n1.Type != DatumType.String)
             return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "STRCAT requires the top parameter on the stack to be a string");
 
-        stack.Push(new ForthDatum(n1.Value.ToString() + n2.Value.ToString()));
+        stack.Push(new ForthDatum((string)n1.Value + (string)n2.Value));
         return default(ForthProgramResult);
     }
 }

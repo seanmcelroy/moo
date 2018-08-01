@@ -26,10 +26,10 @@ public class ForthInterpreter
         Console.Out.WriteLine($"Parsed {lines.Length} lines");
 
         var regexWordParsing = new Regex(@"(?:(?<comment>\([^\)]*\))|(?:lvar\s+(?<lvar>\w+))|(?<word>\:\s*(?<wordName>[\w\-]+)\s*(?<wordBody>[^;]+)\;))");
-        var regexDatumParsing = new Regex(@"(?:(?<comment>\([^\)]*\))|(?:""(?<string>[^""]*)"")|(?<float>\-?(?:\d+\.\d*|\d*\.\d+))|(?<int>\-?\d+)|(?<dbref>#\d+)|(?<prim>[\w\.\-\+\*\/%\?!><=@;:{}]+))", RegexOptions.Compiled);
+        var regexDatumParsing = new Regex(@"(?:(?<comment>\([^\)]*\))|(?:""(?<string>[^""]*)"")|(?<float>\-?(?:\d+\.\d*|\d*\.\d+))|(?<int>\-?\d+)|(?<dbref>#\-?\d+)|(?<prim>[\w\.\-\+\*\/%\?!><=@;:{}]+))", RegexOptions.Compiled);
 
         //int lineRatchet = 0;
-        foreach (Match wordMatch in regexWordParsing.Matches(program))
+        foreach (System.Text.RegularExpressions.Match wordMatch in regexWordParsing.Matches(program))
         {
             /*while (lineRatchet < lines.Length) {
                 if (lines[lineRatchet].IndexOf(wordMatch.Value) > -1)
@@ -57,7 +57,7 @@ public class ForthInterpreter
                 {
                     var lineData = new List<ForthDatum>();
                     var matches = regexDatumParsing.Matches(wordBodySplit[i]);
-                    foreach (Match match in matches)
+                    foreach (System.Text.RegularExpressions.Match match in matches)
                     {
                         foreach (Group group in match.Groups.Skip(1).Where(g => g.Success))
                         {
@@ -69,22 +69,22 @@ public class ForthInterpreter
                                     }
                                 case "string":
                                     {
-                                        lineData.Add(new ForthDatum(group.Value, ForthDatum.DatumType.String));
+                                        lineData.Add(new ForthDatum(group.Value));
                                         continue;
                                     }
                                 case "float":
                                     {
-                                        lineData.Add(new ForthDatum(float.Parse(group.Value), ForthDatum.DatumType.Float));
+                                        lineData.Add(new ForthDatum(float.Parse(group.Value)));
                                         continue;
                                     }
                                 case "int":
                                     {
-                                        lineData.Add(new ForthDatum(int.Parse(group.Value), ForthDatum.DatumType.Integer));
+                                        lineData.Add(new ForthDatum(int.Parse(group.Value)));
                                         continue;
                                     }
                                 case "dbref":
                                     {
-                                        lineData.Add(new ForthDatum(group.Value, ForthDatum.DatumType.DbRef));
+                                        lineData.Add(new ForthDatum(new Dbref(group.Value), 0));
                                         continue;
                                     }
                                 case "prim":

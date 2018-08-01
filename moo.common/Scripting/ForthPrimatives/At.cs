@@ -16,7 +16,7 @@ public static class At
             return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "@ requires one parameter");
 
         var reference = stack.Pop();
-        if (reference.Type != DatumType.Unknown)
+        if (reference.Type != DatumType.Variable)
             return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "@ requires the top parameter on the stack to be a variable");
 
         var variableName = reference.Value.ToString().ToLowerInvariant();

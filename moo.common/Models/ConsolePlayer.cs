@@ -6,7 +6,7 @@ public class ConsolePlayer : HumanPlayer {
 
     private readonly StringBuilder buffer = new StringBuilder();
 
-    public static Player make(string name, Container location) {
+    public static ConsolePlayer make(string name, Container location) {
         var player = ThingRepository.Make<ConsolePlayer>();
         player.name = name;
         player.location = location.id;

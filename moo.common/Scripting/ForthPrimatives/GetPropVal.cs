@@ -9,7 +9,7 @@ using static Property;
 
 public static class GetPropVal
 {
-    public static async Task<ForthProgramResult> ExecuteAsync(Stack<ForthDatum> stack)
+    public static async Task<ForthProgramResult> ExecuteAsync(Stack<ForthDatum> stack, CancellationToken cancellationToken)
     {
         /*
         GETPROPVAL ( d s -- i ) 
@@ -27,7 +27,7 @@ public static class GetPropVal
         if (sTarget.Type != DatumType.DbRef)
             return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "GETPROPVAL requires the second-to-top parameter on the stack to be a dbref");
 
-        var targetResult = await ThingRepository.GetAsync<Thing>(sTarget.UnwrapDbref(), default(CancellationToken));
+        var targetResult = await ThingRepository.GetAsync<Thing>(sTarget.UnwrapDbref(), cancellationToken);
         if (!targetResult.isSuccess)
         {
             stack.Push(new ForthDatum(0));
@@ -41,7 +41,11 @@ public static class GetPropVal
             return default(ForthProgramResult);
         }
 
-        stack.Push(new ForthDatum((int)property.Value.Value));
+        if (property.Value.Value.GetType() == typeof(long))
+            stack.Push(new ForthDatum(Convert.ToInt32((long)property.Value.Value)));
+        else
+            stack.Push(new ForthDatum((int)property.Value.Value));
+
         return default(ForthProgramResult);
     }
 }

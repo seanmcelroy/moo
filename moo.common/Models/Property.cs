@@ -45,6 +45,7 @@ public struct Property
         }
     }
 
+    [JsonProperty]
     public PropertyType Type;
 
     public Property(string name, string value)

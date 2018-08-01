@@ -2,6 +2,7 @@
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using static Dbref;
 
 namespace moo.console
 {
@@ -10,18 +11,18 @@ namespace moo.console
         static void Main(string[] args)
         {
             Console.WriteLine("\r\n\r\nMoo!\r\n");
-            CancellationTokenSource cts = new CancellationTokenSource();
+            var cts = new CancellationTokenSource();
 
             Console.Out.WriteLine("Initializing sqlite storage provider");
-            SqliteStorageProvider storageProvider = new SqliteStorageProvider();
+            var storageProvider = new SqliteStorageProvider();
             storageProvider.Initialize();
             ThingRepository.setStorageProvider(storageProvider);
 
             Console.Out.WriteLine("Loading initial pillars");
-            Player consolePlayer = LoadSandbox();
+            var consolePlayer = LoadSandbox(cts.Token);
 
-            var aether = ThingRepository.GetFromCacheOnly<Room>((Dbref)0);
-            var now = (int)DateTimeOffset.Now.ToUnixTimeSeconds();
+            var aether = ThingRepository.GetFromCacheOnly<Room>(new Dbref(0, DbrefObjectType.Room));
+            var now = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             aether.SetPropertyPathValue("_sys/startuptime", new ForthDatum(now));
             var nowRead = aether.GetPropertyPathValue("_sys/startuptime");
 
@@ -69,12 +70,13 @@ namespace moo.console
             }
         }
 
-        private static Player LoadSandbox()
+        private static ConsolePlayer LoadSandbox(CancellationToken cancellationToken)
         {
             Room aether = Room.Make("The Aether");
             aether.internalDescription = "You see a massless, infinite black void stretching forever in all directions and across all time.";
             HostPlayer.make("God", aether);
             var player = ConsolePlayer.make("Intrepid Hero", aether);
+            var moveResult = player.MoveToAsync(aether, cancellationToken).Result;
 
             /*/
             Script.Make("foo", "\"foo\" \"bar\" \"baz\" 2 rotate 2 rotate 3 rotate -2 rotate 3 pick POP POP POP POP");
@@ -87,6 +89,7 @@ namespace moo.console
             Script.Make("test-@", "me @ loc @ trigger @ command @ POP POP POP POP");
             Script.Make("test-vars", "LVAR test\r\n1234 test !\r\ntest @");
             Script.Make("test-math", "3 5 1.1 2 2 1.01 9 2 1 2 3 + + * / - * > + INT + %");
+            Script.Make("test-rinstr", ":test \"abcbcba\" \"bc\" rinstr ;");
             */
 
             Script.Make("cmd-uptime", LoadScriptFile("scripts/cmd-upload.muf"));

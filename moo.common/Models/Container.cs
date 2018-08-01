@@ -2,16 +2,17 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Linq;
 using static ThingRepository;
+using static Dbref;
 
 public class Container : Thing
 {
-
-    private ConcurrentDictionary<Dbref, byte> contents = new ConcurrentDictionary<Dbref, byte>();
+    private ConcurrentDictionary<Dbref, int> contents = new ConcurrentDictionary<Dbref, int>();
 
     public string internalDescription;
 
-    public VerbResult add(Dbref id)
+    public VerbResult Add(Dbref id)
     {
         if (id == this.id)
         {
@@ -28,13 +29,35 @@ public class Container : Thing
         return new VerbResult(false, "Item is already in that container");
     }
 
-    public bool contains(Dbref id)
+    public VerbResult Add(Thing thing)
+    {
+        return this.Add(thing.id);
+    }
+
+    public bool Contains(Dbref id)
     {
         return contents.ContainsKey(id);
     }
-    public bool contains(Thing thing)
+
+    public bool Contains(Thing thing)
     {
         return contents.ContainsKey(thing.id);
+    }
+
+    public async Task<Dbref> MatchAsync(string name, CancellationToken cancellationToken)
+    {
+
+        var tasks = this.contents.Keys
+            .Select(async k => await ThingRepository.GetAsync<Thing>(k, cancellationToken));
+        var results = await Task.WhenAll(tasks);
+
+        var result = results
+            .Where(t => t.isSuccess && string.Compare(name, t.value.name) == 0)
+            .Select(t => t.value.id)
+            .DefaultIfEmpty(Dbref.NOT_FOUND)
+            .Aggregate((c, n) => c | n);
+
+        return result;
     }
 
     public IEnumerable<HumanPlayer> GetVisibleHumanPlayersForAsync(Player subject, CancellationToken cancellationToken)
@@ -50,15 +73,37 @@ public class Container : Thing
 
         return results;
     }
+    public Dbref FirstContent(DbrefObjectType[] filterTypes)
+    {
+        return contents.Keys.Count == 0
+            ? Dbref.NOT_FOUND
+            : contents.Keys
+                .Where(d => filterTypes == null || filterTypes.Contains(d.Type))
+                .OrderBy(d => d.ToInt32())
+                .First();
+    }
 
-    public VerbResult remove(Dbref id)
+    public Dbref NextContent(Dbref lastContent, DbrefObjectType[] filterTypes)
+    {
+        if (this.contents.Keys.Count == 0)
+            return Dbref.NOT_FOUND;
+
+        return this.contents.Keys
+            .Where(d => filterTypes == null || filterTypes.Contains(d.Type))
+            .OrderBy(k => k.ToInt32())
+            .SkipWhile(k => k <= lastContent)
+            .DefaultIfEmpty(Dbref.NOT_FOUND)
+            .FirstOrDefault();
+    }
+
+    public VerbResult Remove(Dbref id)
     {
         if (id == this.id)
         {
             return new VerbResult(false, "A thing cannot come from itself");
         }
 
-        byte dud;
+        int dud;
         if (this.contents.TryRemove(id, out dud))
         {
             return new VerbResult(true, "");

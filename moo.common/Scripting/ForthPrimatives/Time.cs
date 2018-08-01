@@ -13,7 +13,7 @@ public static class Time
 
         Returns the time of day as integers on the stack, seconds, then minutes, then hours.
         */
-        var now = DateTime.Now;
+        var now = DateTime.UtcNow;
 
         stack.Push(new ForthDatum(now.Second));
         stack.Push(new ForthDatum(now.Minute));

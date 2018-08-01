@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
+using static Dbref;
 
 public static class ThingRepository
 {
@@ -38,7 +39,16 @@ public static class ThingRepository
 
     public static T Insert<T>(T subject) where T : Thing
     {
-        subject.id = new Dbref(Interlocked.Increment(ref nextThingId));
+        DbrefObjectType type;
+        // TODO: Exits
+        if (typeof(T) == typeof(Room))
+            type = DbrefObjectType.Room;
+        else if (typeof(T) == typeof(Player))
+            type = DbrefObjectType.Thing;
+        else
+            type = DbrefObjectType.Room;
+
+        subject.id = new Dbref(Interlocked.Increment(ref nextThingId), type);
         if (_cache.TryAdd(subject.id, subject))
             return subject;
 
@@ -47,15 +57,11 @@ public static class ThingRepository
 
     public static T Make<T>() where T : Thing, new()
     {
-        T subject = new T();
-        subject.id = new Dbref(Interlocked.Increment(ref nextThingId));
-        if (_cache.TryAdd(subject.id, subject))
-            return subject;
-
-        return null;
+        return Insert(new T());
     }
 
-    public static T GetFromCacheOnly<T>(Dbref id) where T : Thing, new() {
+    public static T GetFromCacheOnly<T>(Dbref id) where T : Thing, new()
+    {
 
         // Is it in cache?
         if (_cache.ContainsKey(id))

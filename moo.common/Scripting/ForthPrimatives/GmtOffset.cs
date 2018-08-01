@@ -13,7 +13,7 @@ public static class GmtOffset
 
         Returns the machine's offset from Greenwich Mean Time in seconds.
         */
-        var ts = DateTime.UtcNow - DateTime.Now;
+        var ts = DateTime.UtcNow - DateTime.UtcNow;
 
         stack.Push(new ForthDatum(Convert.ToInt32(ts.TotalSeconds)));
 

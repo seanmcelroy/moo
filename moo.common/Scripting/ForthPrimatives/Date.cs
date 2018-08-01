@@ -13,7 +13,7 @@ public static class Date
 
         Returns the monthday, month, and year. ie: if it were February 6, 1992, date would return 6 2 1992 as three integers on the stack.
         */
-        var now = DateTime.Now;
+        var now = DateTime.UtcNow;
 
         stack.Push(new ForthDatum(now.Day));
         stack.Push(new ForthDatum(now.Month));

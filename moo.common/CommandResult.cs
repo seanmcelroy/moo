@@ -1,5 +1,6 @@
 using System;
 using System.Text.RegularExpressions;
+using static Dbref;
 
 public struct CommandResult
 {
@@ -7,7 +8,7 @@ public struct CommandResult
     private static Regex parts = new Regex(@"^\s*(?<verb>[^\s]+)(?:(?: +(?<io>(?:.*?)) +(?<prepI>to) +(?<doI>.*)$)|(?: +(?:(?<prepD>above|beside|around|at|in|on|off|under) *)?(?<doD>.*)$))?", RegexOptions.Compiled);
 
     public String raw;
-    private Match match;
+    private System.Text.RegularExpressions.Match match;
 
     public CommandResult(String raw)
     {
@@ -19,7 +20,6 @@ public struct CommandResult
     {
         return match.Groups["verb"].Value;
     }
-
 
     public bool hasIndirectObject()
     {
@@ -44,8 +44,24 @@ public struct CommandResult
             return context.id;
         if (String.Compare("here", dobj, true) == 0)
             return context.location;
-        if (Regex.IsMatch(dobj, @"#\d+"))
-            return new Dbref(int.Parse(dobj.Substring(1)));
+        if (Regex.IsMatch(dobj, @"#\d+[A-Z]"))
+        {
+            DbrefObjectType type;
+            switch (dobj[dobj.Length - 1])
+            {
+                case 'P':
+                    type = DbrefObjectType.Player;
+                    break;
+                case 'R':
+                    type = DbrefObjectType.Room;
+                    break;
+                default:
+                    type = DbrefObjectType.Thing;
+                    break;
+            }
+
+            return new Dbref(int.Parse(dobj.Substring(1)), type);
+        }
 
         return Dbref.NOT_FOUND;
     }

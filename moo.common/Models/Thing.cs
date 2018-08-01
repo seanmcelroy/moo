@@ -26,18 +26,21 @@ public class Thing : IStorable<Thing>
     {
     }
 
+    public virtual Dbref Owner => owner;
+
     public async Task<VerbResult> MoveToAsync(Container target, CancellationToken cancellationToken)
     {
-        if (target.contains(id))
+        if (target.Contains(id))
         {
             return new VerbResult(false, "I am already in that.");
         }
 
-        GetResult<Container> currentLocationLookup = await ThingRepository.GetAsync<Container>(location, cancellationToken);
-        VerbResult resultTakeOut = currentLocationLookup.value.remove(id);
-        if (currentLocationLookup.isSuccess && currentLocationLookup.value.remove(id))
+        var currentLocationLookup = await ThingRepository.GetAsync<Container>(location, cancellationToken);
+        var resultTakeOut = currentLocationLookup.value.Remove(id);
+        if (currentLocationLookup.isSuccess)
         {
-            VerbResult resultPutIn = target.add(id);
+            currentLocationLookup.value.Remove(id);
+            var resultPutIn = target.Add(id);
             if (resultPutIn)
             {
                 location = target.id;
@@ -221,8 +224,8 @@ public class Thing : IStorable<Thing>
         }
         else if (serialized.StartsWith("<key>"))
         {
-            Regex r = new Regex(@"<key>(?<value>(?:.*?))<\/key>(?:.*?)");
-            Match m = r.Match(serialized);
+            var r = new Regex(@"<key>(?<value>(?:.*?))<\/key>(?:.*?)");
+            var m = r.Match(serialized);
 
             var substring = serialized.Substring(m.Length);
             yield return Tuple.Create<object, string>(m.Groups["value"].Value, substring);
@@ -231,8 +234,8 @@ public class Thing : IStorable<Thing>
         {
             var value = new Dictionary<string, object>();
 
-            Regex r = new Regex(@"<value>(?<value>(?:.*?))<\/value>(?:.*?)");
-            Match m = r.Match(serialized);
+            var r = new Regex(@"<value>(?<value>(?:.*?))<\/value>(?:.*?)");
+            var m = r.Match(serialized);
 
             if (m.Groups["value"].Value.StartsWith("<dict>"))
             {

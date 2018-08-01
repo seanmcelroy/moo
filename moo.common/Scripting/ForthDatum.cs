@@ -1,4 +1,5 @@
 using System;
+using static Dbref;
 
 public struct ForthDatum
 {
@@ -10,7 +11,8 @@ public struct ForthDatum
         Primitive = 3,
         Marker = 4,
         DbRef = 5,
-        Float = 6
+        Float = 6,
+        Variable = 7
     }
 
     public object Value;
@@ -55,7 +57,7 @@ public struct ForthDatum
             case DatumType.Float:
                 return (float)Value == 0;
             case DatumType.DbRef:
-                return (int)Value == -1;
+                return ((Dbref)Value).ToInt32() == -1;
             case DatumType.String:
                 return string.IsNullOrEmpty((string)Value);
         }
@@ -93,16 +95,19 @@ public struct ForthDatum
         if (Type != DatumType.DbRef)
             throw new InvalidCastException("Cannot unwrap property as dbref, since it is of type: " + Type);
 
-        if (Value.GetType() == typeof(Dbref)) {
+        if (Value.GetType() == typeof(Dbref))
+        {
             return (Dbref)Value;
         }
 
-        if (Value.GetType() == typeof(string)) {
+        if (Value.GetType() == typeof(string))
+        {
             return new Dbref((string)Value);
         }
 
-        if (Value.GetType() == typeof(int)) {
-            return new Dbref((int)Value);
+        if (Value.GetType() == typeof(int))
+        {
+            return new Dbref((int)Value, DbrefObjectType.Thing);
         }
 
         throw new InvalidCastException("Cannot unwrap property as dbref, underlying type is: " + Value.GetType().Name);

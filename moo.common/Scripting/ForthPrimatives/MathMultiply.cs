@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using static Dbref;
 using static ForthDatum;
 using static ForthProgramResult;
 
@@ -34,10 +35,15 @@ public static class MathMultiply
             return default(ForthProgramResult);
         }
 
-        if ((n1.Type == DatumType.Integer && n2.Type == DatumType.DbRef) ||
-           (n1.Type == DatumType.DbRef || n2.Type == DatumType.Integer))
+        if (n1.Type == DatumType.DbRef || n2.Type == DatumType.Integer)
         {
-            stack.Push(new ForthDatum(new Dbref((int)n1.Value * (int)n2.Value), 0));
+            var n1v = ((Dbref)n1.Value).ToInt32();
+
+            var n2v = (int)n2.Value;
+            if (n2v == 0)
+                return new ForthProgramResult(ForthProgramErrorResult.DIVISION_BY_ZERO, "Attempt to divide by zero was aborted");
+
+            stack.Push(new ForthDatum(new Dbref(n1v * n2v, DbrefObjectType.Thing), 0));
             return default(ForthProgramResult);
         }
 
