@@ -9,7 +9,7 @@ using static Property;
 
 public static class Notify
 {
-    public static async Task<ForthProgramResult> ExecuteAsync(Stack<ForthDatum> stack, CancellationToken cancellationToken)
+    public static async Task<ForthProgramResult> ExecuteAsync(Action<Dbref, string> notifyAction, Stack<ForthDatum> stack, CancellationToken cancellationToken)
     {
         /*
         NOTIFY ( d s -- ) 
@@ -32,21 +32,11 @@ public static class Notify
         if (((Dbref)sTarget.Value).ToInt32() < 0)
             return default(ForthProgramResult);
 
-        var targetResult = await ThingRepository.GetAsync<Thing>(sTarget.UnwrapDbref(), cancellationToken);
-        if (!targetResult.isSuccess)
-        {
-            stack.Push(new ForthDatum(0));
-            return default(ForthProgramResult);
-        }
-
-        if (!typeof(Player).IsAssignableFrom(targetResult.value.GetType()))
-            return default(ForthProgramResult);
-
         var message = (string)sMessage.Value;
         if (message == null || string.IsNullOrWhiteSpace(message))
             return default(ForthProgramResult);
 
-        await ((Player)targetResult.value).sendOutput(message);
+        notifyAction.Invoke(sTarget.UnwrapDbref(), message);
 
         return default(ForthProgramResult);
     }

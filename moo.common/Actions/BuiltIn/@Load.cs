@@ -6,7 +6,7 @@ using static ThingRepository;
 
 public class @Load : Action
 {
-    public sealed override Tuple<bool, string> CanProcess(Player player, CommandResult command)
+    public sealed override Tuple<bool, string> CanProcess(PlayerConnection connection, CommandResult command)
     {
         var verb = command.getVerb().ToLowerInvariant();
         if (verb == "@load" && command.hasDirectObject())
@@ -14,20 +14,18 @@ public class @Load : Action
         return new Tuple<bool, string>(false, null);
     }
 
-    public override ActionType Type => ActionType.BuiltIn;
-
-    public sealed override async Task<VerbResult> Process(Player player, CommandResult command, CancellationToken cancellationToken)
+    public sealed override async Task<VerbResult> Process(Server server, PlayerConnection connection, CommandResult command, CancellationToken cancellationToken)
     {
-        var targetId = command.resolveDirectObject(player);
+        var targetId = command.resolveDirectObject(connection.Dbref, connection.Location);
         if (targetId == Dbref.NOT_FOUND)
         {
-            await player.sendOutput("I don't see that here.");
+            await connection.sendOutput("I don't see that here.");
             return new VerbResult(false, "Target not found");
         }
 
         if (targetId == Dbref.AMBIGUOUS)
         {
-            await player.sendOutput("I don't know which one you mean.");
+            await connection.sendOutput("I don't know which one you mean.");
             return new VerbResult(false, "Multiple targets found");
         }
 
@@ -36,11 +34,11 @@ public class @Load : Action
         {
             var target = lookup.value;
             var loadResult = await ThingRepository.LoadFromDatabaseAsync<Thing>(targetId, cancellationToken);
-            await player.sendOutput($"Load from database: {loadResult.isSuccess}");
+            await connection.sendOutput($"Load from database: {loadResult.isSuccess}");
         }
         else
         {
-            await player.sendOutput("You can't seem to find that.");
+            await connection.sendOutput("You can't seem to find that.");
             return new VerbResult(false, "Target not found");
         }
 

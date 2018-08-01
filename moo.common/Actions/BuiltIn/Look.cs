@@ -6,48 +6,46 @@ using static ThingRepository;
 
 public class Look : Action
 {
-    public override ActionType Type => ActionType.BuiltIn;
-
     public Look() {
         this.aliases.Add("l");
     }
 
-    public sealed override async Task<VerbResult> Process(Player player, CommandResult command, CancellationToken cancellationToken)
+    public sealed override async Task<VerbResult> Process(Server server, PlayerConnection connection, CommandResult command, CancellationToken cancellationToken)
     {
         if ((!command.hasDirectObject() && !command.hasIndirectObject())
             || (command.hasDirectObject() && string.Compare("here", command.getDirectObject()) == 0))
         {
-            await lookAtRoom(player, player.location, cancellationToken);
+            await lookAtRoom(connection, connection.Location, cancellationToken);
             return new VerbResult(true, "");
         }
 
-        await player.sendOutput("You don't see that here.");
+        await connection.sendOutput("You don't see that here.");
         return new VerbResult(false, "No reference");
     }
 
-    private async Task lookAtRoom(Player player, Dbref locationId, CancellationToken cancellationToken)
+    private async Task lookAtRoom(PlayerConnection connection, Dbref locationId, CancellationToken cancellationToken)
     {
         var locationLookup = await ThingRepository.GetAsync<Container>(locationId, cancellationToken);
         if (locationLookup.isSuccess)
         {
             var location = locationLookup.value;
-            await player.sendOutput($"{location.name}({location.id})");
-            await player.sendOutput(location.internalDescription);
+            await connection.sendOutput($"{location.name}({location.id})");
+            await connection.sendOutput(location.internalDescription);
 
             var otherHumans = new StringBuilder();
             otherHumans.Append("You see ");
             int count = 0;
-            foreach (var peer in location.GetVisibleHumanPlayersForAsync(player, cancellationToken))
+            foreach (var peer in location.GetVisibleHumanPlayersForAsync(cancellationToken))
             {
                 otherHumans.Append(count == 0 ? peer.name : ", " + peer.name);
                 count++;
             }
             if (count > 0)
-                await player.sendOutput(otherHumans.AppendFormat(" here.").ToString());
+                await connection.sendOutput(otherHumans.AppendFormat(" here.").ToString());
         }
         else
         {
-            await player.sendOutput($"You see nothing {(player.location == locationId ? "here" : "there")}.");
+            await connection.sendOutput($"You see nothing {(connection.Location == locationId ? "here" : "there")}.");
         }
     }
 }

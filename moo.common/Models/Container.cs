@@ -60,7 +60,7 @@ public class Container : Thing
         return result;
     }
 
-    public IEnumerable<HumanPlayer> GetVisibleHumanPlayersForAsync(Player subject, CancellationToken cancellationToken)
+    public IEnumerable<HumanPlayer> GetVisibleHumanPlayersForAsync(CancellationToken cancellationToken)
     {
         var results = new ConcurrentBag<HumanPlayer>();
 

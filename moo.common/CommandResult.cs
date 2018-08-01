@@ -36,15 +36,15 @@ public struct CommandResult
         return !string.IsNullOrWhiteSpace(match.Groups["doI"].Value) ? match.Groups["doI"].Value : match.Groups["doD"].Value;
     }
 
-    public Dbref resolveDirectObject(Player context)
+    public Dbref resolveDirectObject(Dbref playerId, Dbref playerLocation)
     {
         var dobj = getDirectObject();
 
         if (String.Compare("me", dobj, true) == 0)
-            return context.id;
+            return playerId;
         if (String.Compare("here", dobj, true) == 0)
-            return context.location;
-        if (Regex.IsMatch(dobj, @"#\d+[A-Z]"))
+            return playerLocation;
+        if (Regex.IsMatch(dobj, @"#\d+[A-Z]?"))
         {
             DbrefObjectType type;
             switch (dobj[dobj.Length - 1])

@@ -8,7 +8,7 @@ using static ForthProgramResult;
 
 public static class Match
 {
-    public static async Task<ForthProgramResult> ExecuteAsync(Stack<ForthDatum> stack, Player me, CancellationToken cancellationToken)
+    public static async Task<ForthProgramResult> ExecuteAsync(Stack<ForthDatum> stack, PlayerConnection connection, CancellationToken cancellationToken)
     {
         /*
         MATCH ( s -- d ) 
@@ -25,12 +25,12 @@ public static class Match
         var s = (string)n1.Value;
 
         if (string.Compare("me", s, true) == 0){
-            stack.Push(new ForthDatum(me.id, 0));
+            stack.Push(new ForthDatum(connection.Dbref, 0));
             return default(ForthProgramResult);
         }
 
-        var inventoryMatch = await me.MatchAsync(s, cancellationToken);
-        var locationResult = await ThingRepository.GetAsync<Container>(me.location, cancellationToken);
+        var inventoryMatch = await connection.MatchAsync(s, cancellationToken);
+        var locationResult = await ThingRepository.GetAsync<Container>(connection.Location, cancellationToken);
 
         // TODO: Should only match the exits in a room I can actually use.
 

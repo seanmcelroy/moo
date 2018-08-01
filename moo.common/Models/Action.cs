@@ -6,17 +6,9 @@ using System.Threading.Tasks;
 
 public abstract class Action : Thing
 {
-    public enum ActionType
-    {
-        BuiltIn = 1,
-        Script = 2
-    }
-
-    public abstract ActionType Type { get; }
-
     public HashSet<string> aliases = new HashSet<string>();
 
-    public virtual Tuple<bool, string> CanProcess(Player player, CommandResult command)
+    public virtual Tuple<bool, string> CanProcess(PlayerConnection player, CommandResult command)
     {
         string verb = command.getVerb().ToLowerInvariant();
 
@@ -29,7 +21,7 @@ public abstract class Action : Thing
         return new Tuple<bool, string>(false, null);
     }
 
-    public abstract Task<VerbResult> Process(Player player, CommandResult command, CancellationToken cancellationToken);
+    public abstract Task<VerbResult> Process(Server server, PlayerConnection connection, CommandResult command, CancellationToken cancellationToken);
 
     protected override Dictionary<string, object> GetSerializedElements()
     {

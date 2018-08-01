@@ -6,7 +6,7 @@ using static ForthProgramResult;
 
 public static class MathInt
 {
-    public static ForthProgramResult Execute(Stack<ForthDatum> stack, Dictionary<string, object> variables, Player player, Dbref trigger, string command)
+    public static ForthProgramResult Execute(Stack<ForthDatum> stack, Dictionary<string, object> variables, PlayerConnection connection, Dbref trigger, string command)
     {
         /*
         INT ( x -- i ) 
@@ -22,7 +22,7 @@ public static class MathInt
         {
             // Resolve variable 
             var variableName = reference.Value.ToString().ToLowerInvariant();
-            datum = At.ResolveVariableByName(variables, player, trigger, command, variableName);
+            datum = At.ResolveVariableByName(variables, connection.Dbref, connection.Location, trigger, command, variableName);
 
             if (default(ForthDatum).Equals(datum) && !variables.ContainsKey(variableName))
                 return new ForthProgramResult(ForthProgramErrorResult.VARIABLE_NOT_FOUND, $"No variable named {variableName} was found");

@@ -5,39 +5,14 @@ using System.Threading.Tasks;
 
 public class Script : Action
 {
-    public override ActionType Type => ActionType.Script;
-
     public string programText;
 
-    private ForthInterpreter forth;
-
-    public override async Task<VerbResult> Process(Player player, CommandResult command, CancellationToken cancellationToken)
+    public sealed override async Task<VerbResult> Process(Server server, PlayerConnection connection, CommandResult command, CancellationToken cancellationToken)
     {
-        if (player == null)
-            throw new ArgumentNullException(nameof(player));
-
-        if (forth == null)
-            forth = new ForthInterpreter(programText);
-
         // TODO: Right now we block on programs
-        var result = await forth.SpawnAsync(this.id, player, player.id, command.getVerb(), null, cancellationToken);
-        return new VerbResult(result.isSuccessful, result.reason?.ToString());
-    }
-
-    public static Script Make(string name, string programText)
-    {
-        if (name == null)
-            throw new System.ArgumentNullException(nameof(name));
-        if (programText == null)
-            throw new System.ArgumentNullException(nameof(programText));
-
-        var script = ThingRepository.Make<Script>();
-        script.name = name;
-        script.programText = programText;
-
-        CommandHandler.actions.TryAdd(script.id, script);
-
-        Console.WriteLine($"Created new script {name}({script.id})");
-        return script;
+        var forth = new ForthInterpreter(server, programText);
+        var result = await forth.SpawnAsync(id, connection, connection.Dbref, command.getVerb(), null, cancellationToken);
+        var scriptResult = new VerbResult(result.isSuccessful, result.reason?.ToString());
+        return scriptResult;
     }
 }

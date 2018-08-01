@@ -13,69 +13,50 @@ namespace moo.console
             Console.WriteLine("\r\n\r\nMoo!\r\n");
             var cts = new CancellationTokenSource();
 
-            Console.Out.WriteLine("Initializing sqlite storage provider");
-            var storageProvider = new SqliteStorageProvider();
-            storageProvider.Initialize();
-            ThingRepository.setStorageProvider(storageProvider);
+            var server = new Server(Console.Out);
 
-            Console.Out.WriteLine("Loading initial pillars");
             var consolePlayer = LoadSandbox(cts.Token);
-
-            var aether = ThingRepository.GetFromCacheOnly<Room>(new Dbref(0, DbrefObjectType.Room));
-            var now = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            aether.SetPropertyPathValue("_sys/startuptime", new ForthDatum(now));
-            var nowRead = aether.GetPropertyPathValue("_sys/startuptime");
-
+            server.AttachConsolePlayer(consolePlayer, Console.In, Console.Out);
 
             Console.Out.WriteLine("Loading built-in actions");
-            LoadBuiltInActions();
+            foreach (var action in new Action[] { new @Load(), new Look(), new @Save() })
+                server.RegisterBuiltInAction(action);
 
-            Task consoleTask = Task.Factory.StartNew(async () =>
+            Console.Out.WriteLine("Loading script directory");
+            var scriptDirectoryPath = "scripts";
+            var scriptSearchPattern = "cmd-*.muf";
+            var scriptFilePrefix = "cmd-";
+            foreach (var file in System.IO.Directory.GetFiles(scriptDirectoryPath, scriptSearchPattern))
             {
-                await Console.Out.WriteLineAsync("Starting console interface");
-                do
+                var commandName = file.Substring(scriptDirectoryPath.Length + 1).Replace(scriptFilePrefix, "").Replace(".muf", "");
+                var script = server.RegisterScript(commandName, LoadScriptFile(file));
+                Console.WriteLine($"Created new script {script.name}({script.id})");
+            }
+
+            Console.Out.WriteLine("Starting server");
+            server.Start(cts.Token);
+
+            while (!cts.IsCancellationRequested)
+            {
+                /*/
+                var input = System.Console.ReadLine();
+                if (string.Compare("QUIT", input) == 0)
                 {
-                    String input = await Console.In.ReadLineAsync();
-                    consolePlayer.receiveInput(input + "\r\n");
-                } while (true);
-            });
-
-            do
-            {
-                Parallel.ForEach(Player.all(), async (player) =>
-                {
-                    CommandResult command = await player.popCommand();
-                    if (default(CommandResult).Equals(command))
-                        return;
-
-                    await Console.Out.WriteLineAsync($"{player.name}({player.id}): {command.raw}");
-
-                    var result = await CommandHandler.HandleHumanCommandAsync(player, command, cts.Token);
-                    if (!result.isSuccess)
-                    {
-                        await player.sendOutput("ERROR: " + result.reason);
-                    }
-                });
-
-            } while (!cts.IsCancellationRequested);
-        }
-
-        static void LoadBuiltInActions()
-        {
-
-            foreach (var actionType in new Action[] { new @Load(), new Look(), new @Save() })
-            {
-                Action actionObject = ThingRepository.Insert(actionType);
-                CommandHandler.actions.TryAdd(actionObject.id, actionObject);
+                    cts.Cancel();
+                }*/
+                System.Threading.Thread.Sleep(100);
             }
         }
 
-        private static ConsolePlayer LoadSandbox(CancellationToken cancellationToken)
+        private static HumanPlayer LoadSandbox(CancellationToken cancellationToken)
         {
-            Room aether = Room.Make("The Aether");
+            var aether = Room.Make("The Aether");
             aether.internalDescription = "You see a massless, infinite black void stretching forever in all directions and across all time.";
             HostPlayer.make("God", aether);
-            var player = ConsolePlayer.make("Intrepid Hero", aether);
+            var player = HumanPlayer.make("Wizard", aether);
+
+            Console.WriteLine($"Created new player {player.name}({player.id})");
+
             var moveResult = player.MoveToAsync(aether, cancellationToken).Result;
 
             /*/
@@ -92,25 +73,12 @@ namespace moo.console
             Script.Make("test-rinstr", ":test \"abcbcba\" \"bc\" rinstr ;");
             */
 
-            Script.Make("cmd-uptime", LoadScriptFile("scripts/cmd-upload.muf"));
-
-            LoadScriptDirectory("scripts", "cmd-*.muf", "cmd-");
-
             return player;
         }
 
         private static string LoadScriptFile(string path)
         {
             return System.IO.File.ReadAllText(path);
-        }
-
-        private static void LoadScriptDirectory(string path, string searchPattern, string prefix)
-        {
-            foreach (var file in System.IO.Directory.GetFiles(path, searchPattern))
-            {
-                var commandName = file.Substring(path.Length + 1).Replace(prefix, "").Replace(".muf", "");
-                Script.Make(commandName, LoadScriptFile(file));
-            }
         }
     }
 }

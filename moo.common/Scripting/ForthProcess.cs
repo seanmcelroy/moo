@@ -15,22 +15,26 @@ public class ForthProcess
     private readonly Dictionary<string, object> outerScopeVariables = new Dictionary<string, object>();
     // Variables local to my process context, which I could pass on to programs I call and all my words can see (LVAR)
     private readonly ConcurrentDictionary<string, object> programLocalVariables = new ConcurrentDictionary<string, object>();
+
+    private readonly Server server;
     private readonly Dbref scriptId;
-    private readonly Player me;
+    private readonly PlayerConnection connection;
     private readonly String scopeId;
     private readonly String outerScopeId;
     private bool hasRan;
 
     public ForthProcess(
+        Server server,
         Dbref scriptId,
         List<ForthWord> words,
-        Player me,
+        PlayerConnection connection,
         string outerScopeId = null,
         Dictionary<string, object> outerScopeVariables = null)
     {
+        this.server = server;
         this.scriptId = scriptId;
         this.words = words;
-        this.me = me;
+        this.connection = connection;
         this.scopeId = Guid.NewGuid().ToString();
 
         if (outerScopeId != null)
@@ -60,9 +64,13 @@ public class ForthProcess
 
     public bool HasWord(string wordName) => this.words.Any(w => string.Compare(w.name, wordName, true) == 0);
 
-    public async Task<ForthProgramResult> RunWordAsync(string wordName,  Dbref trigger, string command, CancellationToken cancellationToken)
+    public async Task<ForthProgramResult> RunWordAsync(string wordName, Dbref trigger, string command, CancellationToken cancellationToken)
     {
-        return await this.words.Single(w=> string.Compare(w.name, wordName, true) == 0).RunAsync(this, stack, me, trigger, command, cancellationToken);
+        return await this.words.Single(w=> string.Compare(w.name, wordName, true) == 0).RunAsync(this, stack, connection, trigger, command, cancellationToken);
+    }
+
+    public void Notify(Dbref target, string message) {
+        server.Notify(target, message);
     }
 
     public async Task<ForthProgramResult> RunAsync(Dbref trigger, string command, object[] args, CancellationToken cancellationToken)
@@ -74,6 +82,6 @@ public class ForthProcess
         hasRan = true;
 
         // Execute the last word.
-        return await words.Last().RunAsync(this, stack, me, trigger, command, cancellationToken);
+        return await words.Last().RunAsync(this, stack, connection, trigger, command, cancellationToken);
     }
 }

@@ -8,14 +8,14 @@ using System.Threading.Tasks;
 
 public class ForthInterpreter
 {
-    private static readonly ConcurrentBag<ForthProcess> processes = new ConcurrentBag<ForthProcess>();
-
+    private readonly Server server;
     private readonly string program;
     private readonly List<ForthWord> words = new List<ForthWord>();
     private readonly List<string> programLocalVariableDeclarations = new List<string>();
 
-    public ForthInterpreter(string program)
+    public ForthInterpreter(Server server, string program)
     {
+        this.server = server;
         this.program = program;
     }
 
@@ -104,7 +104,7 @@ public class ForthInterpreter
 
                     programLineNumbersAndDatum.Add(i + 1, lineData.ToArray());
                 }
-                var word = new ForthWord(wordName, programLineNumbersAndDatum);
+                var word = new ForthWord((d, s) => server.Notify(d, s), wordName, programLineNumbersAndDatum);
                 words.Add(word);
                 continue;
             }
@@ -115,7 +115,7 @@ public class ForthInterpreter
 
     public async Task<ForthProgramResult> SpawnAsync(
         Dbref scriptId,
-        Player player,
+        PlayerConnection connection,
         Dbref trigger,
         string command,
         object[] args,
@@ -129,12 +129,10 @@ public class ForthInterpreter
                 return new ForthProgramResult(ForthProgramResult.ForthProgramErrorResult.SYNTAX_ERROR, result.reason);
         }
 
-        var process = new ForthProcess(scriptId, words, player);
+        var process = new ForthProcess(server, scriptId, words, connection);
         foreach (var lvar in programLocalVariableDeclarations)
             process.SetProgramLocalVariable(lvar, null);
-        processes.Add(process);
 
-        var programResult = await process.RunAsync(trigger, command, args, cancellationToken);
-        return programResult;
+        return await server.ExecuteAsync(process, trigger, command, args, cancellationToken);
     }
 }
