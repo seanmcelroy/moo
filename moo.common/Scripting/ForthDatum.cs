@@ -15,37 +15,49 @@ public struct ForthDatum
         Variable = 7
     }
 
-    public object Value;
-    public DatumType Type;
+    public readonly object Value;
+    public readonly DatumType Type;
+    public readonly int? LineNumber;
+    public readonly int? ColumnNumber;
 
-    public ForthDatum(object value, DatumType type)
+    public ForthDatum(object value, DatumType type, int? lineNumber = null, int? columnNumber = null)
     {
         this.Value = value;
         this.Type = type;
+        this.LineNumber = lineNumber;
+        this.ColumnNumber = columnNumber;
     }
 
-    public ForthDatum(Dbref value, byte dud)
+    public ForthDatum(Dbref value, byte dud, int? lineNumber = null, int? columnNumber = null)
     {
         this.Value = value;
         this.Type = DatumType.DbRef;
+        this.LineNumber = lineNumber;
+        this.ColumnNumber = columnNumber;
     }
 
-    public ForthDatum(string value)
+    public ForthDatum(string value, int? lineNumber = null, int? columnNumber = null)
     {
         this.Value = value;
         this.Type = DatumType.String;
+        this.LineNumber = lineNumber;
+        this.ColumnNumber = columnNumber;
     }
 
-    public ForthDatum(int? value)
+    public ForthDatum(int? value, int? lineNumber = null, int? columnNumber = null)
     {
         this.Value = value;
         this.Type = DatumType.Integer;
+        this.LineNumber = lineNumber;
+        this.ColumnNumber = columnNumber;
     }
 
-    public ForthDatum(float? value)
+    public ForthDatum(float? value, int? lineNumber = null, int? columnNumber = null)
     {
         this.Value = value;
         this.Type = DatumType.Float;
+        this.LineNumber = lineNumber;
+        this.ColumnNumber = columnNumber;
     }
 
     public bool isFalse()

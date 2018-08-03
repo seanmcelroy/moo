@@ -25,8 +25,8 @@ public class ForthInterpreter
         var lines = program.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
         Console.Out.WriteLine($"Parsed {lines.Length} lines");
 
-        var regexWordParsing = new Regex(@"(?:(?<comment>\([^\)]*\))|(?:lvar\s+(?<lvar>\w+))|(?<word>\:\s*(?<wordName>[\w\-]+)\s*(?<wordBody>[^;]+)\;))");
-        var regexDatumParsing = new Regex(@"(?:(?<comment>\([^\)]*\))|(?:""(?<string>[^""]*)"")|(?<float>\-?(?:\d+\.\d*|\d*\.\d+))|(?<int>\-?\d+)|(?<dbref>#\-?\d+)|(?<prim>[\w\.\-\+\*\/%\?!><=@;:{}]+))", RegexOptions.Compiled);
+        var regexWordParsing = new Regex(@"(?:\([^\)]*\)|(?:lvar\s+(?<lvar>\w+))|(?<word>\:\s*(?<wordName>[\w\-]+)\s*(?<wordBody>[^;]+)\;))");
+        var regexDatumParsing = new Regex(@"(?:\([^\)]*\)|(?:""(?<string>[^""]*)"")|(?<float>\-?(?:\d+\.\d*|\d*\.\d+))|(?<int>\-?\d+)|(?<dbref>#\-?\d+)|(?<prim>[\w\.\-\+\*\/%\?!><=@;:{}]+))", RegexOptions.Compiled);
 
         //int lineRatchet = 0;
         foreach (System.Text.RegularExpressions.Match wordMatch in regexWordParsing.Matches(program))
@@ -36,9 +36,6 @@ public class ForthInterpreter
                     break;
                 lineRatchet++;
             }*/
-
-            if (!string.IsNullOrWhiteSpace(wordMatch.Groups["comment"].Value))
-                continue;
 
             if (!string.IsNullOrWhiteSpace(wordMatch.Groups["lvar"].Value))
             {
@@ -52,47 +49,42 @@ public class ForthInterpreter
                 var wordBody = wordMatch.Groups["wordBody"].Value;
 
                 var wordBodySplit = wordBody.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
-                var programLineNumbersAndDatum = new Dictionary<int, ForthDatum[]>();
+                var programData = new List<ForthDatum>();
                 for (int i = 0; i < wordBodySplit.Length; i++)
                 {
-                    var lineData = new List<ForthDatum>();
                     var matches = regexDatumParsing.Matches(wordBodySplit[i]);
                     foreach (System.Text.RegularExpressions.Match match in matches)
                     {
-                        foreach (Group group in match.Groups.Skip(1).Where(g => g.Success))
+                        foreach (var group in match.Groups.Skip(1).Where(g => g.Success))
                         {
                             switch (group.Name)
                             {
-                                case "comment":
-                                    {
-                                        continue;
-                                    }
                                 case "string":
                                     {
-                                        lineData.Add(new ForthDatum(group.Value));
+                                        programData.Add(new ForthDatum(group.Value, i));
                                         continue;
                                     }
                                 case "float":
                                     {
-                                        lineData.Add(new ForthDatum(float.Parse(group.Value)));
+                                        programData.Add(new ForthDatum(float.Parse(group.Value), i));
                                         continue;
                                     }
                                 case "int":
                                     {
-                                        lineData.Add(new ForthDatum(int.Parse(group.Value)));
+                                        programData.Add(new ForthDatum(int.Parse(group.Value), i));
                                         continue;
                                     }
                                 case "dbref":
                                     {
-                                        lineData.Add(new ForthDatum(new Dbref(group.Value), 0));
+                                        programData.Add(new ForthDatum(new Dbref(group.Value), 0, i));
                                         continue;
                                     }
                                 case "prim":
                                     {
                                         if (ForthWord.GetPrimatives().Any(s => string.Compare(s, group.Value, true) == 0))
-                                            lineData.Add(new ForthDatum(group.Value, ForthDatum.DatumType.Primitive));
+                                            programData.Add(new ForthDatum(group.Value, ForthDatum.DatumType.Primitive, i));
                                         else // Could be a variable name
-                                            lineData.Add(new ForthDatum(group.Value, ForthDatum.DatumType.Unknown));
+                                            programData.Add(new ForthDatum(group.Value, ForthDatum.DatumType.Unknown, i));
                                         continue;
                                     }
                             }
@@ -101,10 +93,8 @@ public class ForthInterpreter
                         }
 
                     }
-
-                    programLineNumbersAndDatum.Add(i + 1, lineData.ToArray());
                 }
-                var word = new ForthWord((d, s) => server.Notify(d, s), wordName, programLineNumbersAndDatum);
+                var word = new ForthWord((d, s) => server.Notify(d, s), wordName, programData);
                 words.Add(word);
                 continue;
             }
