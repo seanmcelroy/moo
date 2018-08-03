@@ -6,14 +6,14 @@ using static ForthProgramResult;
 
 public static class Pop
 {
-    public static ForthProgramResult Execute(Stack<ForthDatum> stack)
+    public static ForthProgramResult Execute(ForthPrimativeParameters parameters)
     {
         // POP ( x -- ) 
         // Pops the top of the stack into oblivion.
-        if (stack.Count == 0)
+        if (parameters.Stack.Count == 0)
             return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "POP requires at least one item on the stack, but the stack is empty.");
 
-        stack.Pop();
+        parameters.Stack.Pop();
 
         return default(ForthProgramResult);
     }

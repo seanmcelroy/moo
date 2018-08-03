@@ -8,7 +8,7 @@ using static ForthProgramResult;
 
 public struct ForthWord
 {
-    private static readonly Dictionary<string, Func<Stack<ForthDatum>, Dictionary<string, object>, PlayerConnection, Dbref, string, Action<Dbref, string>, CancellationToken, ForthProgramResult>> callTable = new Dictionary<string, Func<Stack<ForthDatum>, Dictionary<string, object>, PlayerConnection, Dbref, string, Action<Dbref, string>, CancellationToken, ForthProgramResult>>();
+    private static readonly Dictionary<string, Func<ForthPrimativeParameters, ForthProgramResult>> callTable = new Dictionary<string, Func<ForthPrimativeParameters, ForthProgramResult>>();
     private readonly Action<Dbref, string> notifyAction;
     public readonly string name;
     public readonly Dictionary<int, ForthDatum[]> programLineNumbersAndDatum;
@@ -17,121 +17,125 @@ public struct ForthWord
     static ForthWord()
     {
         // Setup call table
-        callTable.Add("pop", (stack, variables, conn, trigger, command, notify, token) => Pop.Execute(stack));
-        callTable.Add("popn", (stack, variables, conn, trigger, command, notify, token) => PopN.Execute(stack));
-        callTable.Add("dup", (stack, variables, conn, trigger, command, notify, token) =>
+        callTable.Add("pop", (p) => Pop.Execute(p));
+        callTable.Add("popn", (p) => PopN.Execute(p));
+        callTable.Add("dup", (p) =>
         {
             // DUP is the same as 1 pick.
-            stack.Push(new ForthDatum(1));
-            return Pick.Execute(stack);
+            p.Stack.Push(new ForthDatum(1));
+            return Pick.Execute(p);
         });
-        callTable.Add("dupn", (stack, variables, conn, trigger, command, notify, token) => DupN.Execute(stack));
-        callTable.Add("ldup", (stack, variables, conn, trigger, command, notify, token) => LDup.Execute(stack));
-        callTable.Add("swap", (stack, variables, conn, trigger, command, notify, token) => Swap.Execute(stack));
-        callTable.Add("over", (stack, variables, conn, trigger, command, notify, token) =>
+        callTable.Add("dupn", (p) => DupN.Execute(p));
+        callTable.Add("ldup", (p) => LDup.Execute(p));
+        callTable.Add("swap", (p) => Swap.Execute(p));
+        callTable.Add("over", (p) =>
         {
             // OVER is the same as 2 pick.
-            stack.Push(new ForthDatum(2));
-            return Pick.Execute(stack);
+            p.Stack.Push(new ForthDatum(2));
+            return Pick.Execute(p);
         });
-        callTable.Add("rot", (stack, variables, conn, trigger, command, notify, token) =>
+        callTable.Add("rot", (p) =>
         {
             // ROT is the same as 3 rotate
-            stack.Push(new ForthDatum(3));
-            return Rotate.Execute(stack);
+            p.Stack.Push(new ForthDatum(3));
+            return Rotate.Execute(p);
         });
-        callTable.Add("rotate", (stack, variables, conn, trigger, command, notify, token) => Rotate.Execute(stack));
-        callTable.Add("pick", (stack, variables, conn, trigger, command, notify, token) => Pick.Execute(stack));
-        callTable.Add("put", (stack, variables, conn, trigger, command, notify, token) => Put.Execute(stack));
-        callTable.Add("reverse", (stack, variables, conn, trigger, command, notify, token) => Reverse.Execute(stack));
-        callTable.Add("lreverse", (stack, variables, conn, trigger, command, notify, token) => LReverse.Execute(stack));
-        callTable.Add("depth", (stack, variables, conn, trigger, command, notify, token) =>
+        callTable.Add("rotate", (p) => Rotate.Execute(p));
+        callTable.Add("pick", (p) => Pick.Execute(p));
+        callTable.Add("put", (p) => Put.Execute(p));
+        callTable.Add("reverse", (p) => Reverse.Execute(p));
+        callTable.Add("lreverse", (p) => LReverse.Execute(p));
+        callTable.Add("depth", (p) =>
         {
             // DEPTH ( -- i ) 
             // Returns the number of items currently on the stack.
-            stack.Push(new ForthDatum(stack.Count));
+            p.Stack.Push(new ForthDatum(p.Stack.Count));
             return default(ForthProgramResult);
         });
-        callTable.Add("{", (stack, variables, conn, trigger, command, notify, token) =>
+        callTable.Add("{", (p) =>
         {
             // { ( -- marker) 
             // Pushes a marker onto the stack, to be used with } or }list or }dict.
-            stack.Push(new ForthDatum("{", DatumType.Marker));
+            p.Stack.Push(new ForthDatum("{", DatumType.Marker));
             return default(ForthProgramResult);
         });
-        callTable.Add("}", (stack, variables, conn, trigger, command, notify, token) => MarkerEnd.Execute(stack));
-        callTable.Add("@", (stack, variables, conn, trigger, command, notify, token) => At.Execute(stack, variables, conn, trigger, command));
-        callTable.Add("!", (stack, variables, conn, trigger, command, notify, token) => Bang.Execute(stack));
-        callTable.Add("<", (stack, variables, conn, trigger, command, notify, token) => OpLessThan.Execute(stack));
-        callTable.Add(">", (stack, variables, conn, trigger, command, notify, token) => OpGreaterThan.Execute(stack));
-        callTable.Add("=", (stack, variables, conn, trigger, command, notify, token) => OpEquals.Execute(stack));
-        callTable.Add("<=", (stack, variables, conn, trigger, command, notify, token) => OpLessThanOrEqual.Execute(stack));
-        callTable.Add(">=", (stack, variables, conn, trigger, command, notify, token) => OpGreaterThanOrEqual.Execute(stack));
-        callTable.Add("not", (stack, variables, conn, trigger, command, notify, token) => OpNot.Execute(stack));
-        callTable.Add("and", (stack, variables, conn, trigger, command, notify, token) => OpAnd.Execute(stack));
-        callTable.Add("or", (stack, variables, conn, trigger, command, notify, token) => OpOr.Execute(stack));
-        callTable.Add("xor", (stack, variables, conn, trigger, command, notify, token) => OpXor.Execute(stack));
-        callTable.Add("string?", (stack, variables, conn, trigger, command, notify, token) => OpIsString.Execute(stack));
-        callTable.Add("int?", (stack, variables, conn, trigger, command, notify, token) => OpIsInt.Execute(stack));
-        callTable.Add("float?", (stack, variables, conn, trigger, command, notify, token) => OpIsFloat.Execute(stack));
-        callTable.Add("dbref?", (stack, variables, conn, trigger, command, notify, token) => OpIsDbRef.Execute(stack));
+        callTable.Add("}", (p) => MarkerEnd.Execute(p));
+        callTable.Add("@", (p) => At.Execute(p));
+        callTable.Add("!", (p) => Bang.Execute(p));
+        callTable.Add("<", (p) => OpLessThan.Execute(p));
+        callTable.Add(">", (p) => OpGreaterThan.Execute(p));
+        callTable.Add("=", (p) => OpEquals.Execute(p));
+        callTable.Add("<=", (p) => OpLessThanOrEqual.Execute(p));
+        callTable.Add(">=", (p) => OpGreaterThanOrEqual.Execute(p));
+        callTable.Add("not", (p) => OpNot.Execute(p));
+        callTable.Add("and", (p) => OpAnd.Execute(p));
+        callTable.Add("or", (p) => OpOr.Execute(p));
+        callTable.Add("xor", (p) => OpXor.Execute(p));
+        callTable.Add("string?", (p) => OpIsString.Execute(p));
+        callTable.Add("int?", (p) => OpIsInt.Execute(p));
+        callTable.Add("float?", (p) => OpIsFloat.Execute(p));
+        callTable.Add("dbref?", (p) => OpIsDbRef.Execute(p));
         // TODO ARRAY?
         // TODO DICTIONARY/
         // TODO ADDRESS?
         // TODO LOCK?
 
         // I/O OPERATORS
-        callTable.Add("notify", (stack, variables, conn, trigger, command, notify, token) => Notify.ExecuteAsync(notify, stack, token).Result);
+        callTable.Add("notify", (p) => Notify.ExecuteAsync(p).Result);
 
         // MATHEMATICAL OPERATORS
-        callTable.Add("int", (stack, variables, conn, trigger, command, notify, token) => MathInt.Execute(stack, variables, conn, trigger, command));
-        callTable.Add("+", (stack, variables, conn, trigger, command, notify, token) => MathAdd.Execute(stack));
-        callTable.Add("-", (stack, variables, conn, trigger, command, notify, token) => MathSubtract.Execute(stack));
-        callTable.Add("*", (stack, variables, conn, trigger, command, notify, token) => MathMultiply.Execute(stack));
-        callTable.Add("/", (stack, variables, conn, trigger, command, notify, token) => MathDivide.Execute(stack));
-        callTable.Add("%", (stack, variables, conn, trigger, command, notify, token) => MathModulo.Execute(stack));
+        callTable.Add("int", (p) => MathInt.Execute(p));
+        callTable.Add("+", (p) => MathAdd.Execute(p));
+        callTable.Add("-", (p) => MathSubtract.Execute(p));
+        callTable.Add("*", (p) => MathMultiply.Execute(p));
+        callTable.Add("/", (p) => MathDivide.Execute(p));
+        callTable.Add("%", (p) => MathModulo.Execute(p));
 
         // STRING MANIPULATION OPERATIONS
-        callTable.Add("atoi", (stack, variables, conn, trigger, command, notify, token) => AtoI.Execute(stack));
-        callTable.Add("ctoi", (stack, variables, conn, trigger, command, notify, token) => CtoI.Execute(stack));
-        callTable.Add("strlen", (stack, variables, conn, trigger, command, notify, token) => StrLen.Execute(stack));
-        callTable.Add("strcat", (stack, variables, conn, trigger, command, notify, token) => StrCat.Execute(stack));
-        callTable.Add("strcmp", (stack, variables, conn, trigger, command, notify, token) => StrCmp.Execute(stack));
-        callTable.Add("strncmp", (stack, variables, conn, trigger, command, notify, token) => StrNCmp.Execute(stack));
-        callTable.Add("stringcmp", (stack, variables, conn, trigger, command, notify, token) => StringCmp.Execute(stack));
-        callTable.Add("stringpfx", (stack, variables, conn, trigger, command, notify, token) => StringPfx.Execute(stack));
-        callTable.Add("instr", (stack, variables, conn, trigger, command, notify, token) => Instr.Execute(stack));
-        callTable.Add("rinstr", (stack, variables, conn, trigger, command, notify, token) => RInstr.Execute(stack));
+        callTable.Add("atoi", (p) => AtoI.Execute(p));
+        callTable.Add("ctoi", (p) => CtoI.Execute(p));
+        callTable.Add("strlen", (p) => StrLen.Execute(p));
+        callTable.Add("strcat", (p) => StrCat.Execute(p));
+        callTable.Add("strcmp", (p) => StrCmp.Execute(p));
+        callTable.Add("strncmp", (p) => StrNCmp.Execute(p));
+        callTable.Add("stringcmp", (p) => StringCmp.Execute(p));
+        callTable.Add("stringpfx", (p) => StringPfx.Execute(p));
+        callTable.Add("instr", (p) => Instr.Execute(p));
+        callTable.Add("rinstr", (p) => RInstr.Execute(p));
 
-        callTable.Add("intostr", (stack, variables, conn, trigger, comman, Notify, token) => IntoStr.Execute(stack));
+        callTable.Add("intostr", (p) => IntoStr.Execute(p));
 
         // PROPERTY MANIPULATION
-        callTable.Add("getpropval", (stack, variables, conn, trigger, command, notify, token) => GetPropVal.ExecuteAsync(stack, token).Result);
+        callTable.Add("getpropval", (p) => GetPropVal.ExecuteAsync(p).Result);
 
         // Database Related Operators
-        callTable.Add("dbref", (stack, variables, conn, trigger, command, notify, token) => DbrefConvert.Execute(stack));
+        callTable.Add("dbref", (p) => DbrefConvert.Execute(p));
         // TODO: PROG
-        callTable.Add("trig", (stack, variables, conn, trigger, command, notify, token) => Trig.Execute(stack, trigger));
+        callTable.Add("trig", (p) => Trig.Execute(p));
         // TODO: CALLER
         // TODO: DBTOP
-        callTable.Add("dbcmp", (stack, variables, conn, trigger, command, notify, token) => DbCmp.Execute(stack));
-        callTable.Add("location", (stack, variables, conn, trigger, command, notify, token) => Location.ExecuteAsync(stack, token).Result);
-        callTable.Add("contents", (stack, variables, conn, trigger, command, notify, token) => Contents.ExecuteAsync(stack, token).Result);
-        callTable.Add("match", (stack, variables, conn, trigger, command, notify, token) => Match.ExecuteAsync(stack, conn, token).Result);
-        callTable.Add("player?", (stack, variables, conn, trigger, command, notify, token) => IsPlayer.ExecuteAsync(stack, token).Result);
-        callTable.Add("name", (stack, variables, conn, trigger, command, notify, token) => Name.ExecuteAsync(stack, token).Result);
+        callTable.Add("dbcmp", (p) => DbCmp.Execute(p));
+        callTable.Add("location", (p) => Location.ExecuteAsync(p).Result);
+        callTable.Add("contents", (p) => Contents.ExecuteAsync(p).Result);
+        callTable.Add("match", (p) => Match.ExecuteAsync(p).Result);
+        callTable.Add("player?", (p) => IsPlayer.ExecuteAsync(p).Result);
+        callTable.Add("name", (p) => Name.ExecuteAsync(p).Result);
 
         // TIME MANIPULATION
-        callTable.Add("time", (stack, variables, conn, trigger, command, notify, token) => Time.Execute(stack));
-        callTable.Add("date", (stack, variables, conn, trigger, command, notify, token) => Date.Execute(stack));
-        callTable.Add("systime", (stack, variables, conn, trigger, command, notify, token) => SysTime.Execute(stack));
-        callTable.Add("systime_precise", (stack, variables, conn, trigger, command, notify, token) => SysTimePrecise.Execute(stack));
-        callTable.Add("gmtoffset", (stack, variables, conn, trigger, command, notify, token) => GmtOffset.Execute(stack));
-        callTable.Add("timesplit", (stack, variables, conn, trigger, command, notify, token) => TimeSplit.Execute(stack));
-        callTable.Add("timefmt", (stack, variables, conn, trigger, command, notify, token) => TimeFormat.Execute(stack));
+        callTable.Add("time", (p) => Time.Execute(p));
+        callTable.Add("date", (p) => Date.Execute(p));
+        callTable.Add("systime", (p) => SysTime.Execute(p));
+        callTable.Add("systime_precise", (p) => SysTimePrecise.Execute(p));
+        callTable.Add("gmtoffset", (p) => GmtOffset.Execute(p));
+        callTable.Add("timesplit", (p) => TimeSplit.Execute(p));
+        callTable.Add("timefmt", (p) => TimeFormat.Execute(p));
+
+        // CONNECTION MANAGEMENT OPTIONS
+        callTable.Add("awake?", (p) => Awake.Execute(p));
+        callTable.Add("descriptors", (p) => Descriptors.Execute(p));
 
         // MISCELLANEOUS
-        callTable.Add("version", (stack, variables, conn, trigger, command, notify, token) => Version.Execute(stack));
+        callTable.Add("version", (p) => Version.Execute(p));
     }
 
     public ForthWord(Action<Dbref, string> notifyAction, string name, Dictionary<int, ForthDatum[]> programLineNumbersAndDatum)
@@ -377,14 +381,10 @@ public struct ForthWord
                 {
                     if (callTable.ContainsKey(datumString))
                     {
-                        var result = callTable[datumString].Invoke(
-                            stack,
-                            variables,
-                            connection,
-                            trigger,
-                            command,
-                            (d, s) => process.Notify(d, s),
-                            cancellationToken);
+                        var p = new ForthPrimativeParameters(process.Server, stack, variables, connection, trigger, command, (d, s) => process.Notify(d, s),
+                                                    cancellationToken);
+
+                        var result = callTable[datumString].Invoke(p);
 
                         // Push dirty variables where they may need to go.
                         if (result.dirtyVariables != null && result.dirtyVariables.Count > 0)

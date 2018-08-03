@@ -9,14 +9,14 @@ using static ForthProgramResult;
 
 public static class Trig
 {
-    public static ForthProgramResult Execute(Stack<ForthDatum> stack, Dbref trigger)
+    public static ForthProgramResult Execute(ForthPrimativeParameters parameters)
     {
         /*
         TRIG ( -- d) 
 
         Returns the dbref of the original trigger.
         */
-        stack.Push(new ForthDatum(trigger, 0));
+        parameters.Stack.Push(new ForthDatum(parameters.Trigger, 0));
         return default(ForthProgramResult);
     }
 }

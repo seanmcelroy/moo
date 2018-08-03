@@ -6,7 +6,7 @@ using static ForthProgramResult;
 
 public static class GmtOffset
 {
-    public static ForthProgramResult Execute(Stack<ForthDatum> stack)
+    public static ForthProgramResult Execute(ForthPrimativeParameters parameters)
     {
         /*
         GMTOFFSET ( -- i) 
@@ -15,7 +15,7 @@ public static class GmtOffset
         */
         var ts = DateTime.UtcNow - DateTime.UtcNow;
 
-        stack.Push(new ForthDatum(Convert.ToInt32(ts.TotalSeconds)));
+        parameters.Stack.Push(new ForthDatum(Convert.ToInt32(ts.TotalSeconds)));
 
         return default(ForthProgramResult);
     }

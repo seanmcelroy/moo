@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading;
 using NUnit.Framework;
 
 namespace Tests
@@ -21,7 +22,8 @@ namespace Tests
         {
             var local = new Stack<ForthDatum>(stack);
             local.Push(new ForthDatum(3));
-            var result = Pick.Execute(local);
+            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, default(CancellationToken));
+            var result = Pick.Execute(parameters);
             Assert.AreEqual(default(ForthProgramResult), result);
 
             var b = local.Pop();

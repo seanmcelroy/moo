@@ -9,7 +9,7 @@ using static Property;
 
 public static class Notify
 {
-    public static async Task<ForthProgramResult> ExecuteAsync(Action<Dbref, string> notifyAction, Stack<ForthDatum> stack, CancellationToken cancellationToken)
+    public static async Task<ForthProgramResult> ExecuteAsync(ForthPrimativeParameters parameters)
     {
         /*
         NOTIFY ( d s -- ) 
@@ -18,14 +18,14 @@ public static class Notify
         This primitive will trigger the _listen'er property on the object the message is sent to,
         unless the program that would be run is the same as one one currently running.
         */
-        if (stack.Count < 2)
+        if (parameters.Stack.Count < 2)
             return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "NOTIFY requires two parameters");
 
-        var sMessage = stack.Pop();
+        var sMessage = parameters.Stack.Pop();
         if (sMessage.Type != DatumType.String)
             return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "NOTIFY requires the top parameter on the stack to be an string");
 
-        var sTarget = stack.Pop();
+        var sTarget = parameters.Stack.Pop();
         if (sTarget.Type != DatumType.DbRef)
             return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "NOTIFY requires the second-to-top parameter on the stack to be a dbref");
 
@@ -36,7 +36,7 @@ public static class Notify
         if (message == null || string.IsNullOrWhiteSpace(message))
             return default(ForthProgramResult);
 
-        notifyAction.Invoke(sTarget.UnwrapDbref(), message);
+        parameters.Notify.Invoke(sTarget.UnwrapDbref(), message);
 
         return default(ForthProgramResult);
     }

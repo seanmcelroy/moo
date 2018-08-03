@@ -6,7 +6,7 @@ using static ForthProgramResult;
 
 public static class OpOr
 {
-    public static ForthProgramResult Execute(Stack<ForthDatum> stack)
+    public static ForthProgramResult Execute(ForthPrimativeParameters parameters)
     {
         /*
         OR ( x1 x2 -- i ) 
@@ -17,13 +17,13 @@ public static class OpOr
             DBRef        #-1
             String       ""
         */
-        if (stack.Count < 2)
+        if (parameters.Stack.Count < 2)
             return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "OR requires two parameters");
 
-        var n1 = stack.Pop();
-        var n2 = stack.Pop();
+        var n1 = parameters.Stack.Pop();
+        var n2 = parameters.Stack.Pop();
 
-        stack.Push(new ForthDatum(n1.isTrue() || n2.isTrue() ? 1 : 0));
+        parameters.Stack.Push(new ForthDatum(n1.isTrue() || n2.isTrue() ? 1 : 0));
         return default(ForthProgramResult);
     }
 }

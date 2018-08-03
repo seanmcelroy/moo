@@ -6,28 +6,28 @@ using static ForthProgramResult;
 
 public static class At
 {
-    public static ForthProgramResult Execute(Stack<ForthDatum> stack, Dictionary<string, object> variables, PlayerConnection connection, Dbref trigger, string command)
+    public static ForthProgramResult Execute(ForthPrimativeParameters parameters)
     {
         /*
         @ ( v -- x ) 
         Retrieves variable v's value x.
         */
-        if (stack.Count < 1)
+        if (parameters.Stack.Count < 1)
             return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "@ requires one parameter");
 
-        var reference = stack.Pop();
+        var reference = parameters.Stack.Pop();
         if (reference.Type != DatumType.Variable)
             return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "@ requires the top parameter on the stack to be a variable");
 
         var variableName = reference.Value.ToString().ToLowerInvariant();
-        var variableValue = ResolveVariableByName(variables, connection.Dbref, connection.Location, trigger, command, variableName);
+        var variableValue = ResolveVariableByName(parameters.Variables, parameters.Connection.Dbref, parameters.Connection.Location, parameters.Trigger, parameters.Command, variableName);
 
-        if (default(ForthDatum).Equals(variableValue) && !variables.ContainsKey(variableName))
+        if (default(ForthDatum).Equals(variableValue) && !parameters.Variables.ContainsKey(variableName))
             return new ForthProgramResult(ForthProgramErrorResult.VARIABLE_NOT_FOUND, $"No variable named {variableName} was found");
 
         if (!default(ForthDatum).Equals(variableValue))
         {
-            stack.Push(variableValue);
+            parameters.Stack.Push(variableValue);
             return default(ForthProgramResult);
         }
 

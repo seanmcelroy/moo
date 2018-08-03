@@ -6,7 +6,7 @@ using static ForthProgramResult;
 
 public static class Version
 {
-    public static ForthProgramResult Execute(Stack<ForthDatum> stack)
+    public static ForthProgramResult Execute(ForthPrimativeParameters parameters)
     {
         /*
         VERSION ( -- s) 
@@ -14,7 +14,7 @@ public static class Version
         Returns the version of this code in a string. "Muck2.2fb5.55", currently.
         */
       
-        stack.Push(new ForthDatum("Moo0.1"));
+        parameters.Stack.Push(new ForthDatum("Moo0.1"));
         return default(ForthProgramResult);
     }
 }

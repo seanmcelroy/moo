@@ -6,16 +6,16 @@ using static ForthProgramResult;
 
 public static class Pick
 {
-    public static ForthProgramResult Execute(Stack<ForthDatum> stack)
+    public static ForthProgramResult Execute(ForthPrimativeParameters parameters)
     {
         /*
         PICK ( ni ... n1 i -- ni ... n1 ni ) 
         Takes the i'th thing from the top of the stack and pushes it on the top. 1 pick is equivalent to dup, and 2 pick is equivalent to over.
         */
-        if (stack.Count == 0)
+        if (parameters.Stack.Count == 0)
             return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "PICK requires at least one parameter");
 
-        var si = stack.Pop();
+        var si = parameters.Stack.Pop();
         if (si.Type != DatumType.Integer)
             return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "PICK requires the top parameter on the stack to be an integer");
 
@@ -25,15 +25,15 @@ public static class Pick
 
         // Shortcut for DUP.
         if (i == 1) {
-            stack.Push(stack.Peek());
+            parameters.Stack.Push(parameters.Stack.Peek());
             return default(ForthProgramResult);
         }
 
-        if (stack.Count < i)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, $"PICK would have the {Math.Abs(i)}th item from the top of the stack, but only {stack.Count} were present.");
+        if (parameters.Stack.Count < i)
+            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, $"PICK would have the {Math.Abs(i)}th item from the top of the stack, but only {parameters.Stack.Count} were present.");
 
-        var ni = stack.Reverse().Skip(1 - i).Take(1).Single();
-        stack.Push(ni);
+        var ni = parameters.Stack.Reverse().Skip(1 - i).Take(1).Single();
+        parameters.Stack.Push(ni);
 
         return default(ForthProgramResult);
     }

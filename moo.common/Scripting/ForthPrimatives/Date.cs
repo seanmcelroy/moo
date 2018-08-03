@@ -6,7 +6,7 @@ using static ForthProgramResult;
 
 public static class Date
 {
-    public static ForthProgramResult Execute(Stack<ForthDatum> stack)
+    public static ForthProgramResult Execute(ForthPrimativeParameters parameters)
     {
         /*
         DATE ( -- i i i) 
@@ -15,9 +15,9 @@ public static class Date
         */
         var now = DateTime.UtcNow;
 
-        stack.Push(new ForthDatum(now.Day));
-        stack.Push(new ForthDatum(now.Month));
-        stack.Push(new ForthDatum(now.Year));
+        parameters.Stack.Push(new ForthDatum(now.Day));
+        parameters.Stack.Push(new ForthDatum(now.Month));
+        parameters.Stack.Push(new ForthDatum(now.Year));
 
         return default(ForthProgramResult);
     }

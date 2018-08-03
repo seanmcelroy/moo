@@ -6,7 +6,7 @@ using static ForthProgramResult;
 
 public static class LReverse
 {
-    public static ForthProgramResult Execute(Stack<ForthDatum> stack)
+    public static ForthProgramResult Execute(ForthPrimativeParameters parameters)
     {
         /*
         REVERSE ( ?n..?1 i -- ?1..?n ) 
@@ -16,10 +16,10 @@ public static class LReverse
         would return on the stack:
             "a"  "e"  "d"  "c"  "b"
         */
-        if (stack.Count < 1)
+        if (parameters.Stack.Count < 1)
             return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "LREVERSE requires at least one parameter");
 
-        var si = stack.Pop();
+        var si = parameters.Stack.Pop();
         if (si.Type != DatumType.Integer)
             return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "LREVERSE requires the top parameter to be an integer");
 
@@ -27,19 +27,19 @@ public static class LReverse
         if (i < 1)
             return new ForthProgramResult(ForthProgramErrorResult.INVALID_VALUE, "LREVERSE requires the top parameter to be greater than or equal to 1");
 
-        if (stack.Count < i)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, $"LREVERSE would reverse the top {Math.Abs(i)} items from the top of the stack, but only {stack.Count} were present.");
+        if (parameters.Stack.Count < i)
+            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, $"LREVERSE would reverse the top {Math.Abs(i)} items from the top of the stack, but only {parameters.Stack.Count} were present.");
 
         var temp = new Queue<ForthDatum>();
         for (int n = 0; n < i; n++)
         {
-            temp.Enqueue(stack.Pop());
+            temp.Enqueue(parameters.Stack.Pop());
         }
 
         while (temp.Count > 0)
-            stack.Push(temp.Dequeue());
+            parameters.Stack.Push(temp.Dequeue());
 
-        stack.Push(si);
+        parameters.Stack.Push(si);
 
         return default(ForthProgramResult);
     }

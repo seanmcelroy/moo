@@ -6,7 +6,7 @@ using static ForthProgramResult;
 
 public static class SysTimePrecise
 {
-    public static ForthProgramResult Execute(Stack<ForthDatum> stack)
+    public static ForthProgramResult Execute(ForthPrimativeParameters parameters)
     {
         /*
         SYSTIME_PRECISE ( -- f ) 
@@ -15,7 +15,7 @@ public static class SysTimePrecise
         */
         var t = DateTime.UtcNow - new DateTime(1970, 1, 1);
         var secondsSinceEpoch = t.TotalMilliseconds / 1000;
-        stack.Push(new ForthDatum(Convert.ToSingle(secondsSinceEpoch)));
+        parameters.Stack.Push(new ForthDatum(Convert.ToSingle(secondsSinceEpoch)));
 
         return default(ForthProgramResult);
     }

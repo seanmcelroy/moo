@@ -59,7 +59,6 @@ public class @Save : Action
             return new VerbResult(false, "Target not found");
         }
 
-        await connection.sendOutput("Saved.");
         return new VerbResult(true, "");
     }
 }

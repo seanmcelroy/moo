@@ -6,19 +6,19 @@ using static ForthProgramResult;
 
 public static class OpIsString
 {
-    public static ForthProgramResult Execute(Stack<ForthDatum> stack)
+    public static ForthProgramResult Execute(ForthPrimativeParameters parameters)
     {
         /*
         STRING? ( x -- i ) 
 
         Returns true if x is a string.
         */
-        if (stack.Count < 1)
+        if (parameters.Stack.Count < 1)
             return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "STRING? requires at least one parameter");
 
-        var n1 = stack.Pop();
+        var n1 = parameters.Stack.Pop();
 
-        stack.Push(new ForthDatum(n1.Type == DatumType.String ? 1 : 0));
+        parameters.Stack.Push(new ForthDatum(n1.Type == DatumType.String ? 1 : 0));
         return default(ForthProgramResult);
     }
 }

@@ -5,7 +5,7 @@ using static ForthProgramResult;
 
 public static class Rotate
 {
-    public static ForthProgramResult Execute(Stack<ForthDatum> stack)
+    public static ForthProgramResult Execute(ForthPrimativeParameters parameters)
     {
         /*
         ROTATE ( ni ... n1 i -- n(i-1) ... n1 ni )
@@ -18,28 +18,28 @@ public static class Rotate
         would leave
             "d" "a" "b" "c" on the stack.
         */
-        if (stack.Count == 0)
+        if (parameters.Stack.Count == 0)
             return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "ROTATE requires at least one parameter");
 
-        var si = stack.Pop();
+        var si = parameters.Stack.Pop();
         if (si.Type != DatumType.Integer)
             return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "ROTATE requires the top parameter on the stack to be an integer");
 
         int i = (int)si.Value;
-        if (stack.Count < i)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, $"ROTATE would have rotated {Math.Abs(i)} items on the stack, but only {stack.Count} were present.");
+        if (parameters.Stack.Count < i)
+            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, $"ROTATE would have rotated {Math.Abs(i)} items on the stack, but only {parameters.Stack.Count} were present.");
 
         var data = new ForthDatum[Math.Abs(i)];
         for (int n = Math.Abs(i) - 1; n >= 0; n--)
-            data[n] = stack.Pop();
+            data[n] = parameters.Stack.Pop();
 
         if (i > 0) {
             for (int n = 0; n < data.Length; n++)
-                stack.Push(data[(n + 1) % (data.Length)]);
+                parameters.Stack.Push(data[(n + 1) % (data.Length)]);
         }
         else {
              for (int n = 0; n < data.Length; n++)
-                stack.Push(data[(n == 0 ? data.Length : n) - 1]);
+                parameters.Stack.Push(data[(n == 0 ? data.Length : n) - 1]);
         }
 
         //var shift = i < 0 ? -1 : 1;

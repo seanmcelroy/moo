@@ -23,6 +23,8 @@ public class ForthProcess
     private readonly String outerScopeId;
     private bool hasRan;
 
+    public Server Server => server;
+
     public ForthProcess(
         Server server,
         Dbref scriptId,

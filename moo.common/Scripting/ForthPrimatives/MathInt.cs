@@ -6,25 +6,25 @@ using static ForthProgramResult;
 
 public static class MathInt
 {
-    public static ForthProgramResult Execute(Stack<ForthDatum> stack, Dictionary<string, object> variables, PlayerConnection connection, Dbref trigger, string command)
+    public static ForthProgramResult Execute(ForthPrimativeParameters parameters)
     {
         /*
         INT ( x -- i ) 
         Converts variable, float, or dbref x to integer i.
         */
-        if (stack.Count < 1)
+        if (parameters.Stack.Count < 1)
             return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "INT requires one parameter");
 
         ForthDatum datum;
 
-        var reference = stack.Pop();
+        var reference = parameters.Stack.Pop();
         if (reference.Type == DatumType.Unknown)
         {
             // Resolve variable 
             var variableName = reference.Value.ToString().ToLowerInvariant();
-            datum = At.ResolveVariableByName(variables, connection.Dbref, connection.Location, trigger, command, variableName);
+            datum = At.ResolveVariableByName(parameters.Variables, parameters.Connection.Dbref, parameters.Connection.Location, parameters.Trigger, parameters.Command, variableName);
 
-            if (default(ForthDatum).Equals(datum) && !variables.ContainsKey(variableName))
+            if (default(ForthDatum).Equals(datum) && !parameters.Variables.ContainsKey(variableName))
                 return new ForthProgramResult(ForthProgramErrorResult.VARIABLE_NOT_FOUND, $"No variable named {variableName} was found");
 
             if (default(ForthDatum).Equals(datum))
@@ -35,7 +35,7 @@ public static class MathInt
             datum = reference;
         }
 
-        stack.Push(datum.ToInteger());
+        parameters.Stack.Push(datum.ToInteger());
         return default(ForthProgramResult);
     }
 }

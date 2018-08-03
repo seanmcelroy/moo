@@ -6,7 +6,7 @@ using static ForthProgramResult;
 
 public static class OpNot
 {
-    public static ForthProgramResult Execute(Stack<ForthDatum> stack)
+    public static ForthProgramResult Execute(ForthPrimativeParameters parameters)
     {
         /*
         NOT ( x -- i ) 
@@ -17,11 +17,11 @@ public static class OpNot
             DBRef        #-1
             String       ""
         */
-        if (stack.Count < 1)
+        if (parameters.Stack.Count < 1)
             return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "NOT requires at least one parameter");
 
-        var n1 = stack.Pop();
-        stack.Push(new ForthDatum(n1.isFalse() ? 1 : 0));
+        var n1 = parameters.Stack.Pop();
+        parameters.Stack.Push(new ForthDatum(n1.isFalse() ? 1 : 0));
         return default(ForthProgramResult);
     }
 }

@@ -6,7 +6,7 @@ using static ForthProgramResult;
 
 public static class MathModulo
 {
-    public static ForthProgramResult Execute(Stack<ForthDatum> stack)
+    public static ForthProgramResult Execute(ForthPrimativeParameters parameters)
     {
         /*
         % ( n1 n2 -- i ) 
@@ -14,11 +14,11 @@ public static class MathModulo
         This returns the integer modulo (remainder) of the division of two numbers, n1 % n2.
         Floats cannot use the % modulo function. For them, use either the FMOD or MODF primitives.
         */
-        if (stack.Count < 2)
+        if (parameters.Stack.Count < 2)
             return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "% requires two parameters");
 
-        var n2 = stack.Pop();
-        var n1 = stack.Pop();
+        var n2 = parameters.Stack.Pop();
+        var n1 = parameters.Stack.Pop();
 
         if (n2.Type != DatumType.Integer)
             return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "% requires arguments to be integers");
@@ -26,7 +26,7 @@ public static class MathModulo
         if (n1.Type != DatumType.Integer)
             return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "% requires arguments to be integers");
 
-        stack.Push(new ForthDatum((int)n1.Value % (int)n2.Value));
+        parameters.Stack.Push(new ForthDatum((int)n1.Value % (int)n2.Value));
         return default(ForthProgramResult);
     }
 }

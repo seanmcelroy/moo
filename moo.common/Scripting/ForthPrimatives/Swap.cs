@@ -6,17 +6,17 @@ using static ForthProgramResult;
 
 public static class Swap
 {
-    public static ForthProgramResult Execute(Stack<ForthDatum> stack)
+    public static ForthProgramResult Execute(ForthPrimativeParameters parameters)
     {
         // SWAP ( x y -- y x ) 
         // Takes objects x and y on the stack and reverses their order.
-        if (stack.Count < 2)
+        if (parameters.Stack.Count < 2)
             return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "SWAP requires two parameters");
 
-        var y = stack.Pop();
-        var x = stack.Pop();
-        stack.Push(y);
-        stack.Push(x);
+        var y = parameters.Stack.Pop();
+        var x = parameters.Stack.Pop();
+        parameters.Stack.Push(y);
+        parameters.Stack.Push(x);
 
         return default(ForthProgramResult);
     }

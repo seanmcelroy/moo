@@ -6,7 +6,7 @@ using static ForthProgramResult;
 
 public static class Time
 {
-    public static ForthProgramResult Execute(Stack<ForthDatum> stack)
+    public static ForthProgramResult Execute(ForthPrimativeParameters parameters)
     {
         /*
         TIME ( -- s m h ) 
@@ -15,9 +15,9 @@ public static class Time
         */
         var now = DateTime.UtcNow;
 
-        stack.Push(new ForthDatum(now.Second));
-        stack.Push(new ForthDatum(now.Minute));
-        stack.Push(new ForthDatum(now.Hour));
+        parameters.Stack.Push(new ForthDatum(now.Second));
+        parameters.Stack.Push(new ForthDatum(now.Minute));
+        parameters.Stack.Push(new ForthDatum(now.Hour));
 
         return default(ForthProgramResult);
     }

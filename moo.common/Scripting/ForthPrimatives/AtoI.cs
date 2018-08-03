@@ -9,26 +9,26 @@ using static ForthProgramResult;
 
 public static class AtoI
 {
-    public static ForthProgramResult Execute(Stack<ForthDatum> stack)
+    public static ForthProgramResult Execute(ForthPrimativeParameters parameters)
     {
         /*
         ATOI ( s -- i ) 
 
         Turns string s into integer i. If s is not a string, then 0 is pushed onto the stack.
         */
-        if (stack.Count < 1)
+        if (parameters.Stack.Count < 1)
             return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "ATOI requires one parameter");
 
-        var n1 = stack.Pop();
+        var n1 = parameters.Stack.Pop();
         if (n1.Type != DatumType.String)
-            stack.Push(new ForthDatum(0));
+            parameters.Stack.Push(new ForthDatum(0));
         else
         {
             int i;
             if (int.TryParse((string)n1.Value, out i))
-                stack.Push(new ForthDatum(i));
+                parameters.Stack.Push(new ForthDatum(i));
             else
-                stack.Push(new ForthDatum(0));
+                parameters.Stack.Push(new ForthDatum(0));
         }
 
         return default(ForthProgramResult);

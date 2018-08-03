@@ -7,7 +7,7 @@ using static ForthProgramResult;
 
 public static class TimeFormat
 {
-    public static ForthProgramResult Execute(Stack<ForthDatum> stack)
+    public static ForthProgramResult Execute(ForthPrimativeParameters parameters)
     {
         /*
         TIMEFMT (s i -- s) 
@@ -77,14 +77,14 @@ public static class TimeFormat
 
         %Z -- Time zone. "GMT", "EDT", "PST", etc.
         */
-        if (stack.Count < 2)
+        if (parameters.Stack.Count < 2)
             return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "TIMEFMT requires two parameters");
 
-        var si = stack.Pop();
+        var si = parameters.Stack.Pop();
         if (si.Type != DatumType.Integer)
             return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "TIMEFMT requires the top parameter on the stack to be an integer");
 
-        var sfmt = stack.Pop();
+        var sfmt = parameters.Stack.Pop();
         if (sfmt.Type != DatumType.String)
             return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "TIMEFMT requires the second-to-top parameter on the stack to be a format string");
 
@@ -131,7 +131,7 @@ public static class TimeFormat
 
         var formatted = dt.ToString(formatString).Replace(@"~\,./~", "%");
 
-        stack.Push(new ForthDatum(formatted));
+        parameters.Stack.Push(new ForthDatum(formatted));
 
         return default(ForthProgramResult);
     }

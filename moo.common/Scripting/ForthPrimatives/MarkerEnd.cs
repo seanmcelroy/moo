@@ -6,21 +6,21 @@ using static ForthProgramResult;
 
 public static class MarkerEnd
 {
-    public static ForthProgramResult Execute(Stack<ForthDatum> stack)
+    public static ForthProgramResult Execute(ForthPrimativeParameters parameters)
     {
         /*
         } ( marker ?n ... ?1 -- ?n ... ?1 i ) 
 
         Finds the topmost marker in the stack, and counts how many stack items are between it and the top of the stack. The marker is removed from the stack, and the count is pushed onto the stack.
         */
-        if (stack.Count < 1)
+        if (parameters.Stack.Count < 1)
             return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "} requires at least one parameter");
 
         var temp = new Stack<ForthDatum>();
         bool found = false;
-        while (stack.Count > 0)
+        while (parameters.Stack.Count > 0)
         {
-            var n = stack.Pop();
+            var n = parameters.Stack.Pop();
             if (n.Type == DatumType.Marker)
             {
                 found = true;
@@ -35,9 +35,9 @@ public static class MarkerEnd
         int count = temp.Count;
 
         while (temp.Count > 0)
-            stack.Push(temp.Pop());
+            parameters.Stack.Push(temp.Pop());
 
-        stack.Push(new ForthDatum(count));
+        parameters.Stack.Push(new ForthDatum(count));
 
         return default(ForthProgramResult);
     }

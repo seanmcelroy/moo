@@ -6,17 +6,17 @@ using static ForthProgramResult;
 
 public static class Bang
 {
-    public static ForthProgramResult Execute(Stack<ForthDatum> stack)
+    public static ForthProgramResult Execute(ForthPrimativeParameters parameters)
     {
         /*
         ! ( x v -- ) 
         Sets variable v's value to x.
         */
-        if (stack.Count < 2)
+        if (parameters.Stack.Count < 2)
             return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "! requires two parameters");
 
-        var svar = stack.Pop();
-        var sval = stack.Pop();
+        var svar = parameters.Stack.Pop();
+        var sval = parameters.Stack.Pop();
 
         var result = new ForthProgramResult(null, $"Variable {svar.Value} set to {sval.Value}");
         result.dirtyVariables = new Dictionary<string, object> {

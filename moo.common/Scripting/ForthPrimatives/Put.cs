@@ -6,7 +6,7 @@ using static ForthProgramResult;
 
 public static class Put
 {
-    public static ForthProgramResult Execute(Stack<ForthDatum> stack)
+    public static ForthProgramResult Execute(ForthPrimativeParameters parameters)
     {
         /*
         PUT ( nx...n1 ni i -- nx...ni...n1 ) 
@@ -16,10 +16,10 @@ public static class Put
         would return on the stack:
             "a"  "e"  "c"  "d"
         */
-        if (stack.Count < 3)
+        if (parameters.Stack.Count < 3)
             return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "PUT requires at least three parameters");
 
-        var si = stack.Pop();
+        var si = parameters.Stack.Pop();
         if (si.Type != DatumType.Integer)
             return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "PUT requires the top parameter on the stack to be an integer");
 
@@ -27,21 +27,21 @@ public static class Put
         if (i < 1)
             return new ForthProgramResult(ForthProgramErrorResult.INVALID_VALUE, "PUT requires the top parameter to be greater than or equal to 1");
 
-        if (stack.Count < i)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, $"PUT would grab the {Math.Abs(i)}th item from the top of the stack, but only {stack.Count} were present.");
+        if (parameters.Stack.Count < i)
+            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, $"PUT would grab the {Math.Abs(i)}th item from the top of the stack, but only {parameters.Stack.Count} were present.");
 
-        var ni = stack.Pop();
+        var ni = parameters.Stack.Pop();
 
         var temp = new Stack<ForthDatum>(i);
         for (int n = 0; n < i; n++) {
-            temp.Push(stack.Pop());
+            temp.Push(parameters.Stack.Pop());
         }
 
-        stack.Push(ni);
+        parameters.Stack.Push(ni);
         temp.Pop();
 
         while (temp.Count > 0)
-            stack.Push(temp.Pop());
+            parameters.Stack.Push(temp.Pop());
             
         return default(ForthProgramResult);
     }

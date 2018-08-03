@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using static Dbref;
@@ -75,6 +76,16 @@ public class Server
         processes.Add(process);
         var programResult = await process.RunAsync(trigger, command, args, cancellationToken);
         return programResult;
+    }
+
+    public int GetConnectionCount(Dbref playerId)
+    {
+        return _players.Count(p => p.Key == playerId);
+    }
+
+    public IEnumerable<int> GetConnectionDescriptors(Dbref playerId)
+    {
+        return _players.Where(p => p.Key == playerId).Select(p => p.Value.ConnectorDescriptor);
     }
 
     public void Notify(Dbref target, string message)
