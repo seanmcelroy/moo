@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -7,6 +8,8 @@ public abstract class PlayerConnection
 
     private HumanPlayer player;
     private int connectorDescriptor;
+    private DateTime connectionTime;
+    private DateTime? lastInput;
 
     public Dbref Dbref => player.id;
 
@@ -15,6 +18,10 @@ public abstract class PlayerConnection
     public Dbref Location => player.location;
 
     public int ConnectorDescriptor => connectorDescriptor;
+
+    public DateTime ConnectionTime => connectionTime;
+
+    public DateTime? LastInput => lastInput;
 
     protected PlayerConnection(HumanPlayer player)
     {
@@ -26,9 +33,12 @@ public abstract class PlayerConnection
             next = 1;
         }
         this.connectorDescriptor = next;
+        this.connectionTime = DateTime.Now;
     }
 
-    public abstract void receiveInput(string input);
+    public virtual void receiveInput(string input) {
+        lastInput = DateTime.Now;
+    }
 
     public abstract Task<CommandResult> popCommand();
 

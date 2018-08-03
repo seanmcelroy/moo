@@ -9,7 +9,7 @@ using static Dbref;
 
 public class Server
 {
-    private static ConcurrentDictionary<Dbref, PlayerConnection> _players = new ConcurrentDictionary<Dbref, PlayerConnection>();
+    private static ConcurrentQueue<PlayerConnection> _players = new ConcurrentQueue<PlayerConnection>();
 
     private static readonly ConcurrentDictionary<Dbref, Action> actions = new ConcurrentDictionary<Dbref, Action>();
 
@@ -26,7 +26,7 @@ public class Server
 
     public static IEnumerable<PlayerConnection> GetConnectedPlayers()
     {
-        foreach (var player in _players.Values)
+        foreach (var player in _players)
         {
             yield return player;
         }
@@ -35,11 +35,8 @@ public class Server
     public void AttachConsolePlayer(HumanPlayer player, TextReader input, TextWriter output)
     {
         var consoleConnection = new ConsoleConnection(player, input, output);
-
-        if (_players.TryAdd(player.id, consoleConnection))
-        {
-            statusWriter.WriteLine($"Console player {player.name}({player.id}) attached");
-        }
+        _players.Enqueue(consoleConnection);
+        statusWriter.WriteLine($"Console player {player.name}({player.id}) attached");
     }
 
     public void RegisterBuiltInAction(Action action)
@@ -78,21 +75,44 @@ public class Server
         return programResult;
     }
 
+
+    public IEnumerable<int> GetConnectionNumber(Dbref playerId)
+    {
+        return _players.Select((conn, index) => new { conn, index }).Where(x => x.conn.Dbref == playerId).Select(x => x.index);
+    }
+
+
+    public PlayerConnection GetConnectionForConnectionNumber(int connecitonNumber)
+    {
+        try
+        {
+            return _players.ToArray()[connecitonNumber];
+        }
+        catch (IndexOutOfRangeException)
+        {
+            return null;
+        }
+    }
+
+    public int? GetConnectionNumberForConnectionDescriptor(int connectionDescriptor)
+    {
+        return _players.Select((conn, index) => new { conn, index }).Where(x => x.conn.ConnectorDescriptor == connectionDescriptor).Select(x => x.index).SingleOrDefault();
+    }
+
     public int GetConnectionCount(Dbref playerId)
     {
-        return _players.Count(p => p.Key == playerId);
+        return _players.Count(p => p.Dbref == playerId);
     }
 
     public IEnumerable<int> GetConnectionDescriptors(Dbref playerId)
     {
-        return _players.Where(p => p.Key == playerId).Select(p => p.Value.ConnectorDescriptor);
+        return _players.Where(p => p.Dbref == playerId).Select(p => p.ConnectorDescriptor);
     }
 
     public void Notify(Dbref target, string message)
     {
-        PlayerConnection targetConnection;
-        if (_players.TryGetValue(target, out targetConnection))
-            targetConnection.sendOutput(message);
+        foreach (var connection in _players.Where(p => p.Dbref == target))
+            connection.sendOutput(message);
     }
 
     public void Start(CancellationToken cancellationToken)

@@ -132,6 +132,8 @@ public struct ForthWord
 
         // CONNECTION MANAGEMENT OPTIONS
         callTable.Add("awake?", (p) => Awake.Execute(p));
+        callTable.Add("conidle", (p) => ConIdle.Execute(p));
+        callTable.Add("descrcon", (p) => DescRcon.Execute(p));
         callTable.Add("descriptors", (p) => Descriptors.Execute(p));
 
         // MISCELLANEOUS
