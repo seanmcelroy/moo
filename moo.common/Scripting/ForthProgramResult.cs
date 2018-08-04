@@ -18,17 +18,24 @@ public struct ForthProgramResult
         VARIABLE_IS_CONSTANT
     }
 
-    public bool isSuccessful;
-    public object result;
-    public string reason;
+    private bool isSuccessful;
+    private object result;
+    private string reason;
+    private Dbref? lastListItem;
+
+    public bool IsSuccessful => isSuccessful;
+    public object Result => result;
+    public string Reason => reason;
+    public Dbref? LastListItem => lastListItem;
 
     public Dictionary<string, ForthVariable> dirtyVariables;
 
-    public ForthProgramResult(object result, string reason = null)
+    public ForthProgramResult(string reason, Dbref? lastListItem = null)
     {
         this.isSuccessful = true;
-        this.result = result;
+        this.result = null;
         this.reason = reason;
+        this.lastListItem = lastListItem;
         this.dirtyVariables = null;
     }
 
@@ -37,6 +44,7 @@ public struct ForthProgramResult
         this.isSuccessful = false;
         this.result = errorCode;
         this.reason = reason ?? System.Enum.GetName(typeof(ForthProgramErrorResult), errorCode);
+        this.lastListItem = null;
         this.dirtyVariables = null;
     }
 }

@@ -66,13 +66,13 @@ public class ForthProcess
 
     public bool HasWord(string wordName) => this.words.Any(w => string.Compare(w.name, wordName, true) == 0);
 
-    public async Task<ForthProgramResult> RunWordAsync(string wordName, Dbref trigger, string command, CancellationToken cancellationToken)
+    public async Task<ForthProgramResult> RunWordAsync(string wordName, Dbref trigger, string command, Dbref? lastListItem, CancellationToken cancellationToken)
     {
-        return await this.words.Single(w=> string.Compare(w.name, wordName, true) == 0).RunAsync(this, stack, connection, trigger, command, cancellationToken);
+        return await this.words.Single(w=> string.Compare(w.name, wordName, true) == 0).RunAsync(this, stack, connection, trigger, command, lastListItem, cancellationToken);
     }
 
-    public void Notify(Dbref target, string message) {
-        server.Notify(target, message);
+    public async Task NotifyAsync(Dbref target, string message) {
+        await server.NotifyAsync(target, message);
     }
 
     public async Task<ForthProgramResult> RunAsync(Dbref trigger, string command, object[] args, CancellationToken cancellationToken)
@@ -84,6 +84,6 @@ public class ForthProcess
         hasRan = true;
 
         // Execute the last word.
-        return await words.Last().RunAsync(this, stack, connection, trigger, command, cancellationToken);
+        return await words.Last().RunAsync(this, stack, connection, trigger, command, null, cancellationToken);
     }
 }

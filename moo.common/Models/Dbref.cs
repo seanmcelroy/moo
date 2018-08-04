@@ -136,6 +136,14 @@ public struct Dbref
         return obj.id == this.id;
     }
 
+    public override bool Equals(object obj)
+    {
+        if (!(obj is Dbref))
+            return false;
+
+        return this.Equals((Dbref)obj);
+    }
+
     public int ToInt32()
     {
         return this.id;

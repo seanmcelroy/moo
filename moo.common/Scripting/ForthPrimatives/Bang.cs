@@ -19,7 +19,7 @@ public static class Bang
         var svar = parameters.Stack.Pop();
         var sval = parameters.Stack.Pop();
 
-        var result = new ForthProgramResult(null, $"Variable {svar.Value} set to {sval.Value}");
+        var result = new ForthProgramResult($"Variable {svar.Value} set to {sval.Value}");
         result.dirtyVariables = new Dictionary<string, ForthVariable> {
             { svar.Value.ToString().ToLowerInvariant(), new ForthVariable(sval.Value, sval.Type == DatumType.String ? VariableType.String : (sval.Type == DatumType.Float ? VariableType.Float : (sval.Type == DatumType.Integer ? VariableType.Integer : (sval.Type == DatumType.DbRef ? VariableType.DbRef : VariableType.Unknown))), false) }
         };

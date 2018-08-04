@@ -109,10 +109,10 @@ public class Server
         return _players.Where(p => p.Dbref == playerId).Select(p => p.ConnectorDescriptor);
     }
 
-    public void Notify(Dbref target, string message)
+    public async Task NotifyAsync(Dbref target, string message)
     {
         foreach (var connection in _players.Where(p => p.Dbref == target))
-            connection.sendOutput(message);
+            await connection.sendOutput(message);
     }
 
     public void Start(CancellationToken cancellationToken)

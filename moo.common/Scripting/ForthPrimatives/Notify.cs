@@ -36,7 +36,7 @@ public static class Notify
         if (message == null || string.IsNullOrWhiteSpace(message))
             return default(ForthProgramResult);
 
-        parameters.Notify.Invoke(sTarget.UnwrapDbref(), message);
+        await parameters.Notify.Invoke(sTarget.UnwrapDbref(), message);
 
         return default(ForthProgramResult);
     }

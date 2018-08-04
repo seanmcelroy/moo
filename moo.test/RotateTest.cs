@@ -29,7 +29,7 @@ namespace Tests
              */
             var local = new Stack<ForthDatum>(stack);
             local.Push(new ForthDatum(4));
-            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, default(CancellationToken));
+            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, default(CancellationToken));
             var result = Rotate.Execute(parameters);
             Assert.AreEqual(default(ForthProgramResult), result);
 

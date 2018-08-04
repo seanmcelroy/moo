@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 
 public struct ForthPrimativeParameters
 {
+    private Dbref? lastListItem;
+
     public readonly Server Server;
     public readonly Stack<ForthDatum> Stack;
     public readonly Dictionary<string, ForthVariable> Variables;
@@ -14,11 +17,20 @@ public struct ForthPrimativeParameters
 
     public readonly string Command;
 
-    public readonly Action<Dbref, string> Notify;
+    public readonly Func<Dbref, string, Task> Notify;
 
     public readonly CancellationToken CancellationToken;
 
-    public ForthPrimativeParameters(Server server, Stack<ForthDatum> stack, Dictionary<string, ForthVariable> variables, PlayerConnection connection, Dbref trigger, string command, Action<Dbref, string> notify, CancellationToken cancellationToken)
+     public Dbref? LastListItem => lastListItem;
+
+    public ForthPrimativeParameters(
+        Server server, Stack<ForthDatum> stack, 
+        Dictionary<string, ForthVariable> variables,
+        PlayerConnection connection, 
+        Dbref trigger, string command, 
+        Func<Dbref, string, Task> notify,
+        Dbref? lastListItem,
+        CancellationToken cancellationToken)
     {
         this.Server = server;
         this.Stack = stack;
@@ -27,6 +39,7 @@ public struct ForthPrimativeParameters
         this.Trigger = trigger;
         this.Command = command;
         this.Notify = notify;
+        this.lastListItem = lastListItem;
         this.CancellationToken = cancellationToken;
     }
 }

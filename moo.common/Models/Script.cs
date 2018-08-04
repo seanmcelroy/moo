@@ -12,7 +12,7 @@ public class Script : Action
         // TODO: Right now we block on programs
         var forth = new ForthInterpreter(server, programText);
         var result = await forth.SpawnAsync(id, connection, connection.Dbref, command.getVerb(), null, cancellationToken);
-        var scriptResult = new VerbResult(result.isSuccessful, result.reason?.ToString());
+        var scriptResult = new VerbResult(result.IsSuccessful, result.Reason?.ToString());
         return scriptResult;
     }
 }

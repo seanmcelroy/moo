@@ -118,6 +118,7 @@ public struct ForthWord
         callTable.Add("dbcmp", (p) => DbCmp.Execute(p));
         callTable.Add("location", (p) => Location.ExecuteAsync(p).Result);
         callTable.Add("contents", (p) => Contents.ExecuteAsync(p).Result);
+        callTable.Add("next", (p) => Next.ExecuteAsync(p).Result);
         callTable.Add("match", (p) => Match.ExecuteAsync(p).Result);
         callTable.Add("player?", (p) => IsPlayer.ExecuteAsync(p).Result);
         callTable.Add("name", (p) => Name.ExecuteAsync(p).Result);
@@ -167,9 +168,11 @@ public struct ForthWord
         PlayerConnection connection,
         Dbref trigger,
         string command,
+        Dbref? lastListItem,
         CancellationToken cancellationToken)
     {
         // For each line
+        var verbosity = 0;
         var lineCount = 0;
         var controlFlow = new Stack<ControlFlowMarker>();
 
@@ -181,7 +184,7 @@ public struct ForthWord
             lineCount++;
 
             if (cancellationToken.IsCancellationRequested)
-                return new ForthProgramResult(ForthProgramErrorResult.INTERRUPTED);
+                return new ForthProgramResult(ForthProgramErrorResult.INTERRUPTED, "Cancellation received");
 
             // Line-level items
 
@@ -235,7 +238,8 @@ public struct ForthWord
                          || controlCurrent.Element == ControlFlowElement.SkippedBranch
                          || controlCurrent.Element == ControlFlowElement.SkipToAfterNextUntilOrRepeat)
                         {
-                            await DumpStackToDebugAsync(stack, connection, lineCount, datum, "(skipped)");
+                            if (verbosity >= 2)
+                                await DumpStackToDebugAsync(stack, connection, lineCount, datum, "(skipped)");
                             controlFlow.Push(new ControlFlowMarker(ControlFlowElement.SkippedBranch, x));
                             continue;
                         }
@@ -268,7 +272,8 @@ public struct ForthWord
                         if (controlCurrent.Element == ControlFlowElement.SkippedBranch
                          || controlCurrent.Element == ControlFlowElement.SkipToAfterNextUntilOrRepeat)
                         {
-                            await DumpStackToDebugAsync(stack, connection, lineCount, datum, "(skipped)");
+                            if (verbosity >= 2)
+                                await DumpStackToDebugAsync(stack, connection, lineCount, datum, "(skipped)");
                             continue;
                         }
                     }
@@ -298,7 +303,8 @@ public struct ForthWord
                         if (controlCurrent.Element == ControlFlowElement.SkippedBranch
                          || controlCurrent.Element == ControlFlowElement.SkipToAfterNextUntilOrRepeat)
                         {
-                            await DumpStackToDebugAsync(stack, connection, lineCount, datum, "(skipped)");
+                            if (verbosity >= 2)
+                                await DumpStackToDebugAsync(stack, connection, lineCount, datum, "(skipped)");
                             // A skipped if will push a SkippedBranch, so we should pop it.
                             controlFlow.Pop();
                             continue;
@@ -327,7 +333,8 @@ public struct ForthWord
                          || controlCurrent.Element == ControlFlowElement.SkippedBranch
                          || controlCurrent.Element == ControlFlowElement.SkipToAfterNextUntilOrRepeat)
                         {
-                            await DumpStackToDebugAsync(stack, connection, lineCount, datum, "(skipped)");
+                            if (verbosity >= 2)
+                                await DumpStackToDebugAsync(stack, connection, lineCount, datum, "(skipped)");
                             continue;
                         }
                     }
@@ -335,7 +342,7 @@ public struct ForthWord
                     // Debug, print stack
                     await DumpStackToDebugAsync(stack, connection, lineCount, datum);
 
-                    return new ForthProgramResult(null, $"Word {name} completed via exit");
+                    return new ForthProgramResult($"Word {name} completed via exit");
                 }
 
                 // BEGIN
@@ -350,7 +357,8 @@ public struct ForthWord
                          || controlCurrent.Element == ControlFlowElement.SkippedBranch
                          || controlCurrent.Element == ControlFlowElement.SkipToAfterNextUntilOrRepeat)
                         {
-                            await DumpStackToDebugAsync(stack, connection, lineCount, datum, "(skipped)");
+                            if (verbosity >= 2)
+                                await DumpStackToDebugAsync(stack, connection, lineCount, datum, "(skipped)");
                             continue;
                         }
                     }
@@ -374,7 +382,8 @@ public struct ForthWord
                          || controlCurrent.Element == ControlFlowElement.SkippedBranch
                          || controlCurrent.Element == ControlFlowElement.SkipToAfterNextUntilOrRepeat)
                         {
-                            await DumpStackToDebugAsync(stack, connection, lineCount, datum, "(skipped)");
+                            if (verbosity >= 2)
+                                await DumpStackToDebugAsync(stack, connection, lineCount, datum, "(skipped)");
                             continue;
                         }
                     }
@@ -452,7 +461,8 @@ public struct ForthWord
 
                     if (controlCurrent.Element == ControlFlowElement.InIfAndSkip || controlCurrent.Element == ControlFlowElement.InElseAndSkip || controlCurrent.Element == ControlFlowElement.SkippedBranch)
                     {
-                        await DumpStackToDebugAsync(stack, connection, lineCount, datum, "(skipped)");
+                        if (verbosity >= 2)
+                            await DumpStackToDebugAsync(stack, connection, lineCount, datum, "(skipped)");
                         continue;
                     }
 
@@ -500,7 +510,8 @@ public struct ForthWord
                  || controlCurrent.Element == ControlFlowElement.SkipToAfterNextUntilOrRepeat)
                 {
                     // Debug, print stack
-                    await DumpStackToDebugAsync(stack, connection, lineCount, datum, "(skipped)");
+                    if (verbosity >= 2)
+                        await DumpStackToDebugAsync(stack, connection, lineCount, datum, "(skipped)");
                     continue;
                 }
             }
@@ -513,8 +524,8 @@ public struct ForthWord
                 process.HasWord(datum.Value.ToString()))
             {
                 // Yield to other word.
-                var wordResult = await process.RunWordAsync(datum.Value.ToString(), trigger, command, cancellationToken);
-                if (!wordResult.isSuccessful)
+                var wordResult = await process.RunWordAsync(datum.Value.ToString(), trigger, command, lastListItem, cancellationToken);
+                if (!wordResult.IsSuccessful)
                     return wordResult;
                 continue;
             }
@@ -565,10 +576,13 @@ public struct ForthWord
             {
                 if (callTable.ContainsKey(datumString))
                 {
-                    var p = new ForthPrimativeParameters(process.Server, stack, variables, connection, trigger, command, (d, s) => process.Notify(d, s),
+                    var p = new ForthPrimativeParameters(process.Server, stack, variables, connection, trigger, command, async (d, s) => await process.NotifyAsync(d, s),
+                                                lastListItem,
                                                 cancellationToken);
 
                     var result = callTable[datumString].Invoke(p);
+                    if (result.LastListItem.HasValue)
+                        lastListItem = result.LastListItem.Value;
 
                     // Push dirty variables where they may need to go.
                     if (result.dirtyVariables != null && result.dirtyVariables.Count > 0)
@@ -592,7 +606,7 @@ public struct ForthWord
 
                     if (default(ForthProgramResult).Equals(result))
                         continue;
-                    if (!result.isSuccessful)
+                    if (!result.IsSuccessful)
                         return result;
 
                     continue;
@@ -609,7 +623,7 @@ public struct ForthWord
         // Debug, print stack at end of program
         await DumpStackToDebugAsync(stack, connection, lineCount);
 
-        return new ForthProgramResult(null, $"Word {name} completed");
+        return new ForthProgramResult($"Word {name} completed");
     }
 
     private async Task DumpStackToDebugAsync(Stack<ForthDatum> stack, PlayerConnection connection, int lineCount, ForthDatum currentDatum = default(ForthDatum), string extra = null)
