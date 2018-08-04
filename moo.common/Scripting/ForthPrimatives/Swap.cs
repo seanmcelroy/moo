@@ -18,6 +18,6 @@ public static class Swap
         parameters.Stack.Push(y);
         parameters.Stack.Push(x);
 
-        return default(ForthProgramResult);
+        return ForthProgramResult.SUCCESS;
     }
 }

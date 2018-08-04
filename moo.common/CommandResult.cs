@@ -21,6 +21,12 @@ public struct CommandResult
         return match.Groups["verb"].Value;
     }
 
+    public string getNonVerbPhrase()
+    {
+        var result = this.raw.Trim().Replace(getVerb(), "").Trim();
+        return result.Length == 0 ? null : result;
+    }
+
     public bool hasIndirectObject()
     {
         return !string.IsNullOrWhiteSpace(match.Groups["io"].Value);

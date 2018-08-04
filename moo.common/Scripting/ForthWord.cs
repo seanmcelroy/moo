@@ -11,6 +11,7 @@ public struct ForthWord
 {
     private static readonly Dictionary<string, Func<ForthPrimativeParameters, ForthProgramResult>> callTable = new Dictionary<string, Func<ForthPrimativeParameters, ForthProgramResult>>();
     private readonly Action<Dbref, string> notifyAction;
+    private readonly Action<Dbref, string, List<Dbref>> notifyExcludeAction;
     public readonly string name;
     public readonly List<ForthDatum> programData;
     private readonly Dictionary<string, ForthVariable> functionScopedVariables;
@@ -83,6 +84,17 @@ public struct ForthWord
 
         // I/O OPERATORS
         callTable.Add("notify", (p) => Notify.ExecuteAsync(p).Result);
+        callTable.Add("notify_except", (p) =>
+        {
+            // NOTIFY_EXCEPT is the same as 1 swap notify_exclude
+            p.Stack.Push(new ForthDatum(1));
+            var swapResult = Swap.Execute(p);
+            if (swapResult.IsSuccessful)
+                return NotifyExclude.ExecuteAsync(p).Result;
+            else
+                return swapResult;
+        });
+        callTable.Add("notify_exclude", (p) => NotifyExclude.ExecuteAsync(p).Result);
 
         // MATHEMATICAL OPERATORS
         callTable.Add("int", (p) => MathInt.Execute(p));
@@ -103,6 +115,7 @@ public struct ForthWord
         callTable.Add("stringpfx", (p) => StringPfx.Execute(p));
         callTable.Add("instr", (p) => Instr.Execute(p));
         callTable.Add("rinstr", (p) => RInstr.Execute(p));
+        callTable.Add("strcut", (p) => StrCut.Execute(p));
 
         callTable.Add("intostr", (p) => IntoStr.Execute(p));
 
@@ -143,16 +156,19 @@ public struct ForthWord
         callTable.Add("version", (p) => Version.Execute(p));
     }
 
-    public ForthWord(Action<Dbref, string> notifyAction, string name, List<ForthDatum> programData)
+    public ForthWord(Action<Dbref, string> notifyAction, Action<Dbref, string, List<Dbref>> notifyExcludeAction, string name, List<ForthDatum> programData)
     {
         if (notifyAction == null)
             throw new System.ArgumentNullException(nameof(notifyAction));
+        if (notifyExcludeAction == null)
+            throw new System.ArgumentNullException(nameof(notifyExcludeAction));
         if (name == null)
             throw new System.ArgumentNullException(nameof(name));
         if (programData == null)
             throw new System.ArgumentNullException(nameof(programData));
 
         this.notifyAction = notifyAction;
+        this.notifyExcludeAction = notifyExcludeAction;
         this.name = name;
         this.programData = programData;
         this.functionScopedVariables = new Dictionary<string, ForthVariable>();
@@ -577,9 +593,11 @@ public struct ForthWord
             {
                 if (callTable.ContainsKey(datumString))
                 {
-                    var p = new ForthPrimativeParameters(process.Server, stack, variables, connection, trigger, command, async (d, s) => await process.NotifyAsync(d, s),
-                                                lastListItem,
-                                                cancellationToken);
+                    var p = new ForthPrimativeParameters(process.Server, stack, variables, connection, trigger, command,
+                        async (d, s) => await process.NotifyAsync(d, s),
+                        async (d, s, e) => await process.NotifyRoomAsync(d, s, e),
+                        lastListItem,
+                        cancellationToken);
 
                     var result = callTable[datumString].Invoke(p);
                     if (result.LastListItem.HasValue)

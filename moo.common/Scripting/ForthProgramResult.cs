@@ -2,6 +2,10 @@ using System.Collections.Generic;
 
 public struct ForthProgramResult
 {
+    public static ForthProgramResult SUCCESS = new ForthProgramResult
+    {
+        isSuccessful = true
+    };
 
     public enum ForthProgramErrorResult : byte
     {

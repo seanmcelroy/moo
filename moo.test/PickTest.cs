@@ -22,7 +22,7 @@ namespace Tests
         {
             var local = new Stack<ForthDatum>(stack);
             local.Push(new ForthDatum(3));
-            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, default(CancellationToken));
+            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default(CancellationToken));
             var result = Pick.Execute(parameters);
             Assert.AreEqual(default(ForthProgramResult), result);
 

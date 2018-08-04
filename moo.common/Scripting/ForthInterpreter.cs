@@ -122,7 +122,7 @@ public class ForthInterpreter
 
                     }
                 }
-                var word = new ForthWord(async (d, s) => await server.NotifyAsync(d, s), wordName, programData);
+                var word = new ForthWord(async (d, s) => await server.NotifyAsync(d, s), async (d, s, e) => await server.NotifyRoomAsync(d, s, e), wordName, programData);
                 words.Add(word);
                 continue;
             }

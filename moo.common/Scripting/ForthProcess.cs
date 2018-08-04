@@ -68,11 +68,17 @@ public class ForthProcess
 
     public async Task<ForthProgramResult> RunWordAsync(string wordName, Dbref trigger, string command, Dbref? lastListItem, CancellationToken cancellationToken)
     {
-        return await this.words.Single(w=> string.Compare(w.name, wordName, true) == 0).RunAsync(this, stack, connection, trigger, command, lastListItem, cancellationToken);
+        return await this.words.Single(w => string.Compare(w.name, wordName, true) == 0).RunAsync(this, stack, connection, trigger, command, lastListItem, cancellationToken);
     }
 
-    public async Task NotifyAsync(Dbref target, string message) {
+    public async Task NotifyAsync(Dbref target, string message)
+    {
         await server.NotifyAsync(target, message);
+    }
+
+    public async Task NotifyRoomAsync(Dbref target, string message, List<Dbref> exclude = null)
+    {
+        await server.NotifyRoomAsync(target, message, exclude);
     }
 
     public async Task<ForthProgramResult> RunAsync(Dbref trigger, string command, object[] args, CancellationToken cancellationToken)
@@ -84,6 +90,11 @@ public class ForthProcess
         hasRan = true;
 
         // Execute the last word.
+        if (args != null && args.Length > 0 && args[0] != null)
+        {
+            if (args[0].GetType() == typeof(string))
+                stack.Push(new ForthDatum((string)args[0]));
+        }
         return await words.Last().RunAsync(this, stack, connection, trigger, command, null, cancellationToken);
     }
 }

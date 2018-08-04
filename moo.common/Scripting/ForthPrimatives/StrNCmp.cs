@@ -29,7 +29,7 @@ public static class StrNCmp
         if (n1.Type != DatumType.String)
             return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "STRNCMP requires the third-to-top parameter on the stack to be a string");
 
-        var si = (int)n1.Value;
+        var si = (int)ni.Value;
         var s1 = (string)n1.Value;
         var s2 = (string)n2.Value;
 

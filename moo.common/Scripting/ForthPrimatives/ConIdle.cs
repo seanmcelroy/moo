@@ -23,6 +23,6 @@ public static class ConIdle
 
         var connection = parameters.Server.GetConnectionForConnectionNumber((int)n1.Value);
         parameters.Stack.Push(new ForthDatum(Convert.ToInt32((DateTime.Now - connection.ConnectionTime).TotalSeconds)));
-        return default(ForthProgramResult);
+        return ForthProgramResult.SUCCESS;
     }
 }

@@ -31,6 +31,6 @@ public static class AtoI
                 parameters.Stack.Push(new ForthDatum(0));
         }
 
-        return default(ForthProgramResult);
+        return ForthProgramResult.SUCCESS;
     }
 }

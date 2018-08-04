@@ -109,11 +109,18 @@ public class Server
         return _players.Where(p => p.Dbref == playerId).Select(p => p.ConnectorDescriptor);
     }
 
-    public async Task NotifyAsync(Dbref target, string message)
+    public async Task NotifyAsync(Dbref player, string message)
     {
-        foreach (var connection in _players.Where(p => p.Dbref == target))
+        foreach (var connection in _players.Where(p => p.Dbref == player ))
             await connection.sendOutput(message);
     }
+
+    public async Task NotifyRoomAsync(Dbref room, string message, List<Dbref> exclude = null)
+    {
+        foreach (var connection in _players.Where(p => p.Location == room && (exclude == null || !exclude.Contains(p.Dbref))))
+            await connection.sendOutput(message);
+    }
+
 
     public void Start(CancellationToken cancellationToken)
     {

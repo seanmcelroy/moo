@@ -26,6 +26,6 @@ public static class Awake
         var connectionCount = parameters.Server.GetConnectionCount((Dbref)n1.Value);
 
         parameters.Stack.Push(new ForthDatum(connectionCount));
-        return default(ForthProgramResult);
+        return ForthProgramResult.SUCCESS;
     }
 }

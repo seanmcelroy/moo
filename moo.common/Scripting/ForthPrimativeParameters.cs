@@ -8,7 +8,9 @@ public struct ForthPrimativeParameters
     private Dbref? lastListItem;
 
     public readonly Server Server;
+
     public readonly Stack<ForthDatum> Stack;
+
     public readonly Dictionary<string, ForthVariable> Variables;
 
     public readonly PlayerConnection Connection;
@@ -19,16 +21,19 @@ public struct ForthPrimativeParameters
 
     public readonly Func<Dbref, string, Task> Notify;
 
+    public readonly Func<Dbref, string, List<Dbref>, Task> NotifyRoom;
+
     public readonly CancellationToken CancellationToken;
 
-     public Dbref? LastListItem => lastListItem;
+    public Dbref? LastListItem => lastListItem;
 
     public ForthPrimativeParameters(
-        Server server, Stack<ForthDatum> stack, 
+        Server server, Stack<ForthDatum> stack,
         Dictionary<string, ForthVariable> variables,
-        PlayerConnection connection, 
-        Dbref trigger, string command, 
+        PlayerConnection connection,
+        Dbref trigger, string command,
         Func<Dbref, string, Task> notify,
+        Func<Dbref, string, List<Dbref>, Task> notifyRoom,
         Dbref? lastListItem,
         CancellationToken cancellationToken)
     {
@@ -39,6 +44,7 @@ public struct ForthPrimativeParameters
         this.Trigger = trigger;
         this.Command = command;
         this.Notify = notify;
+        this.NotifyRoom = notifyRoom;
         this.lastListItem = lastListItem;
         this.CancellationToken = cancellationToken;
     }

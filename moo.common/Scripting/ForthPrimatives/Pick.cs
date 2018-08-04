@@ -25,6 +25,9 @@ public static class Pick
 
         // Shortcut for DUP.
         if (i == 1) {
+            if (parameters.Stack.Count == 0)
+                return default(ForthProgramResult);
+
             parameters.Stack.Push(parameters.Stack.Peek());
             return default(ForthProgramResult);
         }

@@ -28,7 +28,7 @@ public static class At
         if (!default(ForthDatum).Equals(variableValue))
         {
             parameters.Stack.Push(variableValue);
-            return default(ForthProgramResult);
+            return ForthProgramResult.SUCCESS;
         }
 
         return new ForthProgramResult(ForthProgramErrorResult.UNKNOWN_TYPE, $"Unable to determine data type for {variableName}: {variableValue.Value}");
