@@ -31,7 +31,7 @@ public static class TimeSplit
         parameters.Stack.Push(new ForthDatum(offset.DateTime.Day));
         parameters.Stack.Push(new ForthDatum(offset.DateTime.Month));
         parameters.Stack.Push(new ForthDatum(offset.DateTime.Year));
-        parameters.Stack.Push(new ForthDatum(((int)offset.DateTime.DayOfWeek)+1));
+        parameters.Stack.Push(new ForthDatum(((int)offset.DateTime.DayOfWeek) + 1));
         parameters.Stack.Push(new ForthDatum(offset.DateTime.DayOfYear));
 
         return default(ForthProgramResult);

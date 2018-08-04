@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Text;
-using static ForthDatum;
+using static ForthVariable;
 using static Property;
 
 public class PropertyDirectory : Dictionary<string, Property>
@@ -82,7 +82,7 @@ public class PropertyDirectory : Dictionary<string, Property>
         }
     }
 
-    public void SetPropertyPathValue(string path, ForthDatum value)
+    public void SetPropertyPathValue(string path, ForthVariable value)
     {
         path = path.TrimStart('/').TrimEnd('/');
 
@@ -128,16 +128,16 @@ public class PropertyDirectory : Dictionary<string, Property>
 
             switch (value.Type)
             {
-                case DatumType.DbRef:
+                case VariableType.DbRef:
                     this.Add(path, (Dbref)value.Value);
                     break;
-                case DatumType.String:
+                case VariableType.String:
                     this.Add(path, (string)value.Value);
                     break;
-                case DatumType.Integer:
+                case VariableType.Integer:
                     this.Add(path, (int)value.Value);
                     break;
-                case DatumType.Float:
+                case VariableType.Float:
                     this.Add(path, (float)value.Value);
                     break;
                 default:

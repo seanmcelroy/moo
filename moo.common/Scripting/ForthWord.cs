@@ -120,6 +120,7 @@ public struct ForthWord
         callTable.Add("contents", (p) => Contents.ExecuteAsync(p).Result);
         callTable.Add("next", (p) => Next.ExecuteAsync(p).Result);
         callTable.Add("match", (p) => Match.ExecuteAsync(p).Result);
+        callTable.Add("flag?", (p) => HasFlag.ExecuteAsync(p).Result);
         callTable.Add("player?", (p) => IsPlayer.ExecuteAsync(p).Result);
         callTable.Add("name", (p) => Name.ExecuteAsync(p).Result);
 

@@ -17,6 +17,8 @@ public class Thing : IStorable<Thing>
 
     public List<Dbref> templates = new List<Dbref>();
 
+    public string[] flags;
+
     public Dbref location;
     public Dbref owner;
     public string externalDescription;
@@ -276,7 +278,27 @@ public class Thing : IStorable<Thing>
         return this.properties?.GetPropertyPathValue(path);
     }
 
-    public void SetPropertyPathValue(string path, ForthDatum value)
+    public bool HasFlag(string flag)
+    {
+        return this.flags != null && this.flags.Any(f => string.Compare(f, flag, true) == 0);
+    }
+
+    public void SetFlag(string flag)
+    {
+        if (HasFlag(flag))
+            return;
+        if (this.flags == null)
+            this.flags = new string[] { flag };
+        else
+        {
+            var newArray = new string[this.flags.Length + 1];
+            Array.Copy(this.flags, newArray, this.flags.Length);
+            newArray[newArray.Length - 1] = flag;
+            this.flags = newArray;
+        }
+    }
+
+    public void SetPropertyPathValue(string path, ForthVariable value)
     {
         if (this.properties == null)
             this.properties = new PropertyDirectory();
@@ -296,6 +318,7 @@ public class Thing : IStorable<Thing>
             { "name", name},
             { "location", location },
             { "templates", templates },
+            { "flags", flags },
             { "externalDescription", externalDescription },
             { "properties", properties }
         };

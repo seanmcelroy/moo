@@ -126,6 +126,8 @@ public class Server
         var aether = ThingRepository.GetFromCacheOnly<Room>(new Dbref(0, DbrefObjectType.Room));
         var now = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
+        aether.SetPropertyPathValue("_sys/startuptime", new ForthVariable(now));
+
         playerHandlerTask = new Task(() =>
         {
             do
