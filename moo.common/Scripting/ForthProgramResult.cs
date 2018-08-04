@@ -14,14 +14,15 @@ public struct ForthProgramResult
         INTERNAL_ERROR,
         VARIABLE_ALREADY_DEFINED,
         DIVISION_BY_ZERO,
-        SYNTAX_ERROR
+        SYNTAX_ERROR,
+        VARIABLE_IS_CONSTANT
     }
 
     public bool isSuccessful;
     public object result;
     public string reason;
 
-    public Dictionary<string, object> dirtyVariables;
+    public Dictionary<string, ForthVariable> dirtyVariables;
 
     public ForthProgramResult(object result, string reason = null)
     {

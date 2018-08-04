@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using static ForthDatum;
 using static ForthProgramResult;
+using static ForthVariable;
 
 public struct ForthWord
 {
@@ -12,7 +13,7 @@ public struct ForthWord
     private readonly Action<Dbref, string> notifyAction;
     public readonly string name;
     public readonly List<ForthDatum> programData;
-    private readonly Dictionary<string, object> functionScopedVariables;
+    private readonly Dictionary<string, ForthVariable> functionScopedVariables;
 
     static ForthWord()
     {
@@ -152,7 +153,7 @@ public struct ForthWord
         this.notifyAction = notifyAction;
         this.name = name;
         this.programData = programData;
-        this.functionScopedVariables = new Dictionary<string, object>();
+        this.functionScopedVariables = new Dictionary<string, ForthVariable>();
     }
 
     public static ICollection<string> GetPrimatives()
@@ -213,7 +214,7 @@ public struct ForthWord
             // For each element in line
             var datumString = datum.Value?.ToString().ToLowerInvariant();
 
-            // Do we have something unknown on the top of the stack/
+            // Do we have something unknown on the top of the stack?
             if (stack.Count > 0 && stack.Peek().Type == ForthDatum.DatumType.Unknown)
             {
                 return new ForthProgramResult(ForthProgramErrorResult.SYNTAX_ERROR, $"Unable to handle datum: {stack.Peek()}");
@@ -493,7 +494,7 @@ public struct ForthWord
             if (controlFlow.Count > 0)
             {
                 var controlCurrent = controlFlow.Peek();
-                if (controlCurrent.Element == ControlFlowElement.InIfAndSkip 
+                if (controlCurrent.Element == ControlFlowElement.InIfAndSkip
                  || controlCurrent.Element == ControlFlowElement.InElseAndSkip
                  || controlCurrent.Element == ControlFlowElement.SkippedBranch
                  || controlCurrent.Element == ControlFlowElement.SkipToAfterNextUntilOrRepeat)
@@ -518,6 +519,12 @@ public struct ForthWord
                 continue;
             }
 
+            var xx = 0;
+            if (string.Compare("MIN_IDLE", datumString, true) == 0)
+            {
+                xx++;
+            }
+
             // Variables
             var variables = process.GetProgramLocalVariables()
                             .Union(functionScopedVariables)
@@ -525,9 +532,20 @@ public struct ForthWord
 
             if (datum.Type == ForthDatum.DatumType.Unknown &&
                 (string.Compare("me", datumString, true) == 0
-                || variables.ContainsKey(datumString)))
+                || string.Compare("here", datumString, true) == 0))
             {
                 stack.Push(new ForthDatum(datum.Value, DatumType.Variable));
+                continue;
+            }
+
+            if (datum.Type == ForthDatum.DatumType.Unknown &&
+                variables.ContainsKey(datumString))
+            {
+                var v = variables[datumString];
+                if (v.IsConstant)
+                    stack.Push(new ForthDatum(v.Value, v.Type == VariableType.String ? DatumType.String : (v.Type == VariableType.Float ? DatumType.Float : (v.Type == VariableType.Integer ? DatumType.Integer : (v.Type == VariableType.DbRef ? DatumType.DbRef : DatumType.Unknown)))));
+                else
+                    stack.Push(new ForthDatum(datum.Value, DatumType.Variable));
                 continue;
             }
 
@@ -559,7 +577,13 @@ public struct ForthWord
                         foreach (var dirty in result.dirtyVariables)
                         {
                             if (programLocalVariables.ContainsKey(dirty.Key))
+                            {
+                                var v = programLocalVariables[dirty.Key];
+                                if (v.IsConstant)
+                                    return new ForthProgramResult(ForthProgramErrorResult.VARIABLE_IS_CONSTANT, $"Variable {dirty.Key} is a constant in this scope and cannot be changed.");
+
                                 programLocalVariables[dirty.Key] = dirty.Value;
+                            }
 
                             if (functionScopedVariables.ContainsKey(dirty.Key))
                                 functionScopedVariables[dirty.Key] = dirty.Value;

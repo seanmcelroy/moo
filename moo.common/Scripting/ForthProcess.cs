@@ -12,9 +12,9 @@ public class ForthProcess
     private readonly List<ForthWord> words;
     private readonly Stack<ForthDatum> stack = new Stack<ForthDatum>();
     // Variables that came from a caller program
-    private readonly Dictionary<string, object> outerScopeVariables = new Dictionary<string, object>();
-    // Variables local to my process context, which I could pass on to programs I call and all my words can see (LVAR)
-    private readonly ConcurrentDictionary<string, object> programLocalVariables = new ConcurrentDictionary<string, object>();
+    private readonly Dictionary<string, ForthVariable> outerScopeVariables = new Dictionary<string, ForthVariable>();
+    // Variables local to my process context, which I could pass on to programs I call and all my words can see ($DEF, LVAR)
+    private readonly ConcurrentDictionary<string, ForthVariable> programLocalVariables = new ConcurrentDictionary<string, ForthVariable>();
 
     private readonly Server server;
     private readonly Dbref scriptId;
@@ -31,7 +31,7 @@ public class ForthProcess
         List<ForthWord> words,
         PlayerConnection connection,
         string outerScopeId = null,
-        Dictionary<string, object> outerScopeVariables = null)
+        Dictionary<string, ForthVariable> outerScopeVariables = null)
     {
         this.server = server;
         this.scriptId = scriptId;
@@ -51,12 +51,12 @@ public class ForthProcess
         }
     }
 
-    public ConcurrentDictionary<string, object> GetProgramLocalVariables()
+    public ConcurrentDictionary<string, ForthVariable> GetProgramLocalVariables()
     {
         return this.programLocalVariables;
     }
 
-    public void SetProgramLocalVariable(string name, object value)
+    public void SetProgramLocalVariable(string name, ForthVariable value)
     {
         if (!programLocalVariables.TryAdd(name, value))
         {

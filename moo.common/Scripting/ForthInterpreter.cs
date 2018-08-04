@@ -5,13 +5,14 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using static ForthVariable;
 
 public class ForthInterpreter
 {
     private readonly Server server;
     private readonly string program;
     private readonly List<ForthWord> words = new List<ForthWord>();
-    private readonly List<string> programLocalVariableDeclarations = new List<string>();
+    private readonly Dictionary<string, ForthVariable> programLocalVariableDeclarations = new Dictionary<string, ForthVariable>();
 
     public ForthInterpreter(Server server, string program)
     {
@@ -25,7 +26,7 @@ public class ForthInterpreter
         var lines = program.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
         Console.Out.WriteLine($"Parsed {lines.Length} lines");
 
-        var regexWordParsing = new Regex(@"(?:\([^\)]*\)|(?:lvar\s+(?<lvar>\w+))|(?<word>\:\s*(?<wordName>[\w\-]+)\s*(?<wordBody>[^;]+)\;))");
+        var regexWordParsing = new Regex(@"(?:\([^\)]*\)|(?:\$def\s+(?<defName>\w{1,20})\s+(?:(?:""(?<string>[^""]*)"")|(?<float>\-?(?:\d+\.\d*|\d*\.\d+))|(?<int>\-?\d+)|(?<dbref>#\-?\d+)))|(?:lvar\s+(?<lvar>\w{1,20}))|(?<word>\:\s*(?<wordName>[\w\-]+)\s*(?<wordBody>[^;]+)\;))");
         var regexDatumParsing = new Regex(@"(?:\([^\)]*\)|(?:""(?<string>[^""]*)"")|(?<float>\-?(?:\d+\.\d*|\d*\.\d+))|(?<int>\-?\d+)|(?<dbref>#\-?\d+)|(?<prim>[\w\.\-\+\*\/%\?!><=@;:{}]+))", RegexOptions.Compiled);
 
         //int lineRatchet = 0;
@@ -37,9 +38,36 @@ public class ForthInterpreter
                 lineRatchet++;
             }*/
 
+            if (!string.IsNullOrWhiteSpace(wordMatch.Groups["defName"].Value))
+            {
+                var defName = wordMatch.Groups["defName"].Value.ToLowerInvariant();
+                ForthVariable defValue;
+
+                if (!string.IsNullOrWhiteSpace(wordMatch.Groups["string"].Value))
+                {
+                    defValue = new ForthVariable(wordMatch.Groups["string"].Value, VariableType.String, true);
+                }
+                else if (!string.IsNullOrWhiteSpace(wordMatch.Groups["float"].Value))
+                {
+                    defValue = new ForthVariable(float.Parse(wordMatch.Groups["float"].Value), VariableType.Float, true);
+                }
+                else if (!string.IsNullOrWhiteSpace(wordMatch.Groups["int"].Value))
+                {
+                    defValue = new ForthVariable(int.Parse(wordMatch.Groups["int"].Value), VariableType.Integer, true);
+                }
+                else if (!string.IsNullOrWhiteSpace(wordMatch.Groups["dbref"].Value))
+                {
+                    defValue = new ForthVariable(new Dbref(wordMatch.Groups["dbref"].Value), VariableType.DbRef, true);
+                }
+                else
+                    return new ForthParseResult(false, $"Unable to parse line in $def program at index {wordMatch.Index}");
+
+                programLocalVariableDeclarations.Add(defName, defValue);
+            }
+
             if (!string.IsNullOrWhiteSpace(wordMatch.Groups["lvar"].Value))
             {
-                programLocalVariableDeclarations.Add(wordMatch.Groups["lvar"].Value);
+                programLocalVariableDeclarations.Add(wordMatch.Groups["lvar"].Value, default(ForthVariable));
             }
 
             if (!string.IsNullOrWhiteSpace(wordMatch.Groups["word"].Value))
@@ -120,8 +148,8 @@ public class ForthInterpreter
         }
 
         var process = new ForthProcess(server, scriptId, words, connection);
-        foreach (var lvar in programLocalVariableDeclarations)
-            process.SetProgramLocalVariable(lvar, null);
+        foreach (var v in programLocalVariableDeclarations)
+            process.SetProgramLocalVariable(v.Key, v.Value);
 
         return await server.ExecuteAsync(process, trigger, command, args, cancellationToken);
     }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using static ForthDatum;
 using static ForthProgramResult;
+using static ForthVariable;
 
 public static class Bang
 {
@@ -19,8 +20,8 @@ public static class Bang
         var sval = parameters.Stack.Pop();
 
         var result = new ForthProgramResult(null, $"Variable {svar.Value} set to {sval.Value}");
-        result.dirtyVariables = new Dictionary<string, object> {
-            { svar.Value.ToString().ToLowerInvariant(), sval.Value }
+        result.dirtyVariables = new Dictionary<string, ForthVariable> {
+            { svar.Value.ToString().ToLowerInvariant(), new ForthVariable(sval.Value, sval.Type == DatumType.String ? VariableType.String : (sval.Type == DatumType.Float ? VariableType.Float : (sval.Type == DatumType.Integer ? VariableType.Integer : (sval.Type == DatumType.DbRef ? VariableType.DbRef : VariableType.Unknown))), false) }
         };
         return result;
     }

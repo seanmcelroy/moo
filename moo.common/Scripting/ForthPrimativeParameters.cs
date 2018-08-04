@@ -6,7 +6,7 @@ public struct ForthPrimativeParameters
 {
     public readonly Server Server;
     public readonly Stack<ForthDatum> Stack;
-    public readonly Dictionary<string, object> Variables;
+    public readonly Dictionary<string, ForthVariable> Variables;
 
     public readonly PlayerConnection Connection;
 
@@ -18,7 +18,7 @@ public struct ForthPrimativeParameters
 
     public readonly CancellationToken CancellationToken;
 
-    public ForthPrimativeParameters(Server server, Stack<ForthDatum> stack, Dictionary<string, object> variables, PlayerConnection connection, Dbref trigger, string command, Action<Dbref, string> notify, CancellationToken cancellationToken)
+    public ForthPrimativeParameters(Server server, Stack<ForthDatum> stack, Dictionary<string, ForthVariable> variables, PlayerConnection connection, Dbref trigger, string command, Action<Dbref, string> notify, CancellationToken cancellationToken)
     {
         this.Server = server;
         this.Stack = stack;

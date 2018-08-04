@@ -34,7 +34,7 @@ public static class At
         return new ForthProgramResult(ForthProgramErrorResult.UNKNOWN_TYPE, $"Unable to determine data type for: " + variableValue.Value);
     }
 
-    public static ForthDatum ResolveVariableByName(Dictionary<string, object> variables, Dbref id, Dbref location, Dbref trigger, string command, string variableName)
+    public static ForthDatum ResolveVariableByName(Dictionary<string, ForthVariable> variables, Dbref id, Dbref location, Dbref trigger, string command, string variableName)
     {
         // Handle built-in variables.
         if (string.Compare("me", variableName) == 0)
@@ -53,18 +53,18 @@ public static class At
             return default(ForthDatum);
 
         var variableValue = variables[variableName];
-        if (variableValue == null)
+        if (variableValue.Value == null)
             return default(ForthDatum);
 
         if (variableValue.GetType() == typeof(float))
-            return new ForthDatum((float?)variableValue);
+            return new ForthDatum((float?)variableValue.Value);
 
         if (variableValue.GetType() == typeof(int))
-            return new ForthDatum((int?)variableValue);
+            return new ForthDatum((int?)variableValue.Value);
 
         if (variableValue.GetType() == typeof(string))
         {
-            return new ForthDatum((string)variableValue);
+            return new ForthDatum((string)variableValue.Value);
         }
 
         return default(ForthDatum);
