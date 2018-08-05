@@ -40,8 +40,9 @@ public static class ThingRepository
     public static T Insert<T>(T subject) where T : Thing
     {
         DbrefObjectType type;
-        // TODO: Exits
-        if (typeof(T) == typeof(Room))
+        if (typeof(T) == typeof(Exit))
+            type = DbrefObjectType.Exit;
+        else if (typeof(T) == typeof(Room))
             type = DbrefObjectType.Room;
         else if (typeof(T) == typeof(Player))
             type = DbrefObjectType.Thing;

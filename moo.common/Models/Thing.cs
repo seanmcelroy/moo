@@ -28,6 +28,7 @@ public class Thing : IStorable<Thing>
     {
     }
 
+    public virtual Dbref Link => Dbref.NOT_FOUND;
     public virtual Dbref Owner => owner;
 
     public async Task<VerbResult> MoveToAsync(Container target, CancellationToken cancellationToken)
@@ -281,6 +282,11 @@ public class Thing : IStorable<Thing>
     public bool HasFlag(string flag)
     {
         return this.flags != null && this.flags.Any(f => string.Compare(f, flag, true) == 0);
+    }
+
+    public bool IsControlledBy(Dbref player)
+    {
+        return this.owner.Equals(player);
     }
 
     public void SetFlag(string flag)

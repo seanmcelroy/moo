@@ -7,14 +7,14 @@ using static ForthDatum;
 using static ForthProgramResult;
 using static Property;
 
-public static class GetPropVal
+public static class GetPropStr
 {
     public static async Task<ForthProgramResult> ExecuteAsync(ForthPrimativeParameters parameters)
     {
         /*
-        GETPROPVAL ( d s -- i ) 
+        GETPROPSTR ( d s -- s ) 
 
-        s must be a string. Retrieves the integer value i associated with property s in object d. If the property is cleared, 0 is returned.
+        s must be a string. Retrieves string associated with property s in object d. If the property is cleared, "" (null string) is returned.
         */
         if (parameters.Stack.Count < 2)
             return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "GETPROPVAL requires two parameters");
@@ -32,17 +32,13 @@ public static class GetPropVal
             return new ForthProgramResult(ForthProgramErrorResult.NO_SUCH_OBJECT, $"Unable to find object with dbref {sTarget.UnwrapDbref()}");
 
         var property = targetResult.value.GetPropertyPathValue((string)sPath.Value);
-        if (property == null || property.Value.Type != PropertyType.Integer)
+        if (property == null || property.Value.Type != PropertyType.String)
         {
-            parameters.Stack.Push(new ForthDatum(0));
+            parameters.Stack.Push(new ForthDatum(""));
             return ForthProgramResult.SUCCESS;
         }
 
-        if (property.Value.Value.GetType() == typeof(long))
-            parameters.Stack.Push(new ForthDatum(Convert.ToInt32((long)property.Value.Value)));
-        else
-            parameters.Stack.Push(new ForthDatum((int)property.Value.Value));
-
+        parameters.Stack.Push(new ForthDatum((string)property.Value.Value));
         return ForthProgramResult.SUCCESS;
     }
 }

@@ -8,6 +8,7 @@ public class HumanPlayer : Player
     {
         var player = ThingRepository.Make<HumanPlayer>();
         player.name = name;
+        player.Home = location.id;
         player.location = location.id;
         return player;
     }

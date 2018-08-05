@@ -121,6 +121,9 @@ public struct ForthWord
 
         // PROPERTY MANIPULATION
         callTable.Add("getpropval", (p) => GetPropVal.ExecuteAsync(p).Result);
+        callTable.Add("getpropstr", (p) => GetPropStr.ExecuteAsync(p).Result);
+        callTable.Add("getpropfval", (p) => GetPropFVal.ExecuteAsync(p).Result);
+        callTable.Add("addprop", (p) => AddProp.ExecuteAsync(p).Result);
 
         // Database Related Operators
         callTable.Add("dbref", (p) => DbrefConvert.Execute(p));
@@ -136,6 +139,7 @@ public struct ForthWord
         callTable.Add("flag?", (p) => HasFlag.ExecuteAsync(p).Result);
         callTable.Add("player?", (p) => IsPlayer.ExecuteAsync(p).Result);
         callTable.Add("name", (p) => Name.ExecuteAsync(p).Result);
+        callTable.Add("getlink", (p) => GetLink.ExecuteAsync(p).Result);
 
         // TIME MANIPULATION
         callTable.Add("time", (p) => Time.Execute(p));
@@ -560,7 +564,10 @@ public struct ForthWord
 
             if (datum.Type == ForthDatum.DatumType.Unknown &&
                 (string.Compare("me", datumString, true) == 0
-                || string.Compare("here", datumString, true) == 0))
+                || string.Compare("here", datumString, true) == 0
+                || string.Compare("loc", datumString, true) == 0
+                || string.Compare("trigger", datumString, true) == 0
+                || string.Compare("command", datumString, true) == 0))
             {
                 stack.Push(new ForthDatum(datum.Value, DatumType.Variable));
                 continue;

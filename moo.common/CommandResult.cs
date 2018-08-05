@@ -55,6 +55,9 @@ public struct CommandResult
             DbrefObjectType type;
             switch (dobj[dobj.Length - 1])
             {
+                case 'E':
+                    type = DbrefObjectType.Exit;
+                    break;
                 case 'P':
                     type = DbrefObjectType.Player;
                     break;

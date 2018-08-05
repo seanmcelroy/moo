@@ -29,15 +29,15 @@ public static class Pick
                 return default(ForthProgramResult);
 
             parameters.Stack.Push(parameters.Stack.Peek());
-            return default(ForthProgramResult);
+            return ForthProgramResult.SUCCESS;
         }
 
         if (parameters.Stack.Count < i)
             return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, $"PICK would have the {Math.Abs(i)}th item from the top of the stack, but only {parameters.Stack.Count} were present.");
 
-        var ni = parameters.Stack.Reverse().Skip(1 - i).Take(1).Single();
+        var ni = parameters.Stack.Skip(i - 1).Take(1).Single();
         parameters.Stack.Push(ni);
 
-        return default(ForthProgramResult);
+        return ForthProgramResult.SUCCESS;
     }
 }

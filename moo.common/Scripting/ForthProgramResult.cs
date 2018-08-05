@@ -19,7 +19,9 @@ public struct ForthProgramResult
         VARIABLE_ALREADY_DEFINED,
         DIVISION_BY_ZERO,
         SYNTAX_ERROR,
-        VARIABLE_IS_CONSTANT
+        VARIABLE_IS_CONSTANT,
+        NO_SUCH_OBJECT,
+        INSUFFICIENT_PERMISSION
     }
 
     private bool isSuccessful;
