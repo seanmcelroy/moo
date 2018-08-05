@@ -9,7 +9,7 @@ using static ForthProgramResult;
 
 public class ForthProcess
 {
-    private readonly List<ForthWord> words;
+    private readonly IEnumerable<ForthWord> words;
     private readonly Stack<ForthDatum> stack = new Stack<ForthDatum>();
     // Variables that came from a caller program
     private readonly Dictionary<string, ForthVariable> outerScopeVariables = new Dictionary<string, ForthVariable>();
@@ -28,7 +28,7 @@ public class ForthProcess
     public ForthProcess(
         Server server,
         Dbref scriptId,
-        List<ForthWord> words,
+        IEnumerable<ForthWord> words,
         PlayerConnection connection,
         string outerScopeId = null,
         Dictionary<string, ForthVariable> outerScopeVariables = null)

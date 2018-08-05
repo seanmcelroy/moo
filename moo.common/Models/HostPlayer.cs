@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 
-public class HostPlayer : Player{
+public class HostPlayer : Player {
 
     public static HostPlayer make(string name, Container location) {
         var host = ThingRepository.Make<HostPlayer>();

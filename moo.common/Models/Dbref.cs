@@ -65,11 +65,16 @@ public struct Dbref
                 type = DbrefObjectType.Unknown;
                 break;
             default:
-                throw new System.InvalidOperationException("Unknown designator for #" + id + designator);
+                throw new System.ArgumentException("Unknown designator for #" + id + designator);
         }
 
         if (type == DbrefObjectType.Unknown)
-            this.id = int.Parse(id.Substring(1, id.Length - 1));
+        {
+            if (!int.TryParse(id.Substring(1, id.Length - 1), out int idInt))
+                throw new System.ArgumentException($"Could not parse '{id.Substring(1, id.Length - 1)}' as a dbref");
+
+            this.id = idInt;
+        }
         else
             this.id = int.Parse(id.Substring(1, id.Length - 2));
     }

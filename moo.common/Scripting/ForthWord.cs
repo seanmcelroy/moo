@@ -10,8 +10,6 @@ using static ForthVariable;
 public struct ForthWord
 {
     private static readonly Dictionary<string, Func<ForthPrimativeParameters, ForthProgramResult>> callTable = new Dictionary<string, Func<ForthPrimativeParameters, ForthProgramResult>>();
-    private readonly Action<Dbref, string> notifyAction;
-    private readonly Action<Dbref, string, List<Dbref>> notifyExcludeAction;
     public readonly string name;
     public readonly List<ForthDatum> programData;
     private readonly Dictionary<string, ForthVariable> functionScopedVariables;
@@ -160,19 +158,13 @@ public struct ForthWord
         callTable.Add("version", (p) => Version.Execute(p));
     }
 
-    public ForthWord(Action<Dbref, string> notifyAction, Action<Dbref, string, List<Dbref>> notifyExcludeAction, string name, List<ForthDatum> programData)
+    public ForthWord(string name, List<ForthDatum> programData)
     {
-        if (notifyAction == null)
-            throw new System.ArgumentNullException(nameof(notifyAction));
-        if (notifyExcludeAction == null)
-            throw new System.ArgumentNullException(nameof(notifyExcludeAction));
         if (name == null)
             throw new System.ArgumentNullException(nameof(name));
         if (programData == null)
             throw new System.ArgumentNullException(nameof(programData));
 
-        this.notifyAction = notifyAction;
-        this.notifyExcludeAction = notifyExcludeAction;
         this.name = name;
         this.programData = programData;
         this.functionScopedVariables = new Dictionary<string, ForthVariable>();
