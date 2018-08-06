@@ -1,4 +1,5 @@
 using System;
+using System.Text.RegularExpressions;
 using static Dbref;
 
 public struct ForthDatum
@@ -16,7 +17,7 @@ public struct ForthDatum
     }
 
     public readonly object Value;
-    public readonly DatumType Type;
+    public DatumType Type;
     public readonly int? LineNumber;
     public readonly int? ColumnNumber;
 
@@ -58,6 +59,36 @@ public struct ForthDatum
         this.Type = DatumType.Float;
         this.LineNumber = lineNumber;
         this.ColumnNumber = columnNumber;
+    }
+
+    public static bool TryInferType(string value, out Tuple<DatumType, object> result)
+    {
+        if (int.TryParse(value.Trim(), out int i))
+        {
+            result = new Tuple<DatumType, object>(DatumType.Integer, i);
+            return true;
+        }
+
+        if (float.TryParse(value.Trim(), out float f))
+        {
+            result = new Tuple<DatumType, object>(DatumType.Float, f);
+            return true;
+        }
+
+        if (Regex.IsMatch(value, @"#(\-?\d+|\d+[A-Z]?)"))
+        {
+            result = new Tuple<DatumType, object>(DatumType.DbRef, new Dbref(value));
+            return true;
+        }
+
+        if (value.StartsWith('\"') && value.EndsWith('\"'))
+        {
+            result = new Tuple<DatumType, object>(DatumType.String, value);
+            return true;
+        }
+
+        result = default(Tuple<DatumType, object>);
+        return false;
     }
 
     public bool isFalse()

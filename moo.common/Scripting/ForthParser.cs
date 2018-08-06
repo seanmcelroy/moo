@@ -1,14 +1,25 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using static ForthDatum;
 using static ForthVariable;
 
 public static class ForthParser
 {
+    public class ProgramReader : StringReader
+    {
+        public ProgramReader(string s) : base(s)
+        {
+        }
+    }
+
     public static ForthParseResult Parse(string program)
     {
         // Parse the program onto the stack
@@ -122,4 +133,278 @@ public static class ForthParser
 
         return new ForthParseResult(words, programLocalVariables);
     }
+
+    private enum ForwardOperation
+    {
+        None,
+        ReadingString,
+        ReadingWordName,
+        SkipUntilEndComment,
+        SkipUntilNonWhitespace,
+        SkipUntilWhitespace,
+        SkipUntilNonLineBreak
+    }
+
+
+    public static ForthParseResult ParseProgram(PlayerConnection connection, string program)
+    {
+        var defines = new Dictionary<string, string>();
+        var words = new List<ForthWord>();
+        var programLocalVariables = new Dictionary<string, ForthVariable>();
+
+        var lineNumber = 1;
+        var columnNumber = 0;
+        var preparserLine = false;
+        var forwardOperation = ForwardOperation.None;
+        var linebreakCharacters = new char[] { '\r', '\n' };
+        var whitespaceCharacters = new char[] { ' ', '\t' };
+        var currentWordName = new StringBuilder();
+        List<ForthDatum> currentWordData = null;
+        var currentDatum = new StringBuilder();
+        var currentNonDatum = new StringBuilder();
+
+        foreach (var c in program)
+        {
+            var xx = 0;
+            if (lineNumber == 100) {
+                xx++;
+            }
+
+            columnNumber++;
+            if (columnNumber == 1 && c == '$')
+                preparserLine = true;
+
+            switch (forwardOperation)
+            {
+                case ForwardOperation.ReadingString:
+                    if (c != '\"')
+                    {
+                        currentDatum.Append(c);
+                        continue;
+                    }
+                    else
+                    {
+                        Console.WriteLine($"STRING({lineNumber},{columnNumber - currentDatum.ToString().Length - 1}): \"{currentDatum.ToString()}\"");
+                        currentWordData.Add(new ForthDatum(currentDatum.ToString(), DatumType.String, lineNumber, columnNumber - currentDatum.ToString().Length - 1));
+                        currentDatum.Clear();
+                        forwardOperation = ForwardOperation.None;
+                        continue;
+                    }
+                case ForwardOperation.ReadingWordName:
+                    if (whitespaceCharacters.Contains(c) && currentWordName.Length == 0)
+                        continue;
+                    else if (!whitespaceCharacters.Contains(c) && !linebreakCharacters.Contains(c))
+                    {
+                        currentWordName.Append(c);
+                        continue;
+                    }
+                    else
+                    {
+                        Console.WriteLine($"WORD({lineNumber},{columnNumber - currentWordName.ToString().Length}): {currentWordName.ToString()}");
+                        forwardOperation = ForwardOperation.None;
+                        if (linebreakCharacters.Contains(c))
+                        {
+                            lineNumber++;
+                            columnNumber = 0;
+                            preparserLine = false;
+                        }
+                        continue;
+                    }
+                case ForwardOperation.SkipUntilEndComment:
+                    if (c != ')')
+                    {
+                        if (linebreakCharacters.Contains(c))
+                        {
+                            lineNumber++;
+                            columnNumber = 0;
+                                                        preparserLine = false;
+                        }
+                        continue;
+                    }
+                    else
+                    {
+                        forwardOperation = ForwardOperation.None;
+                        continue;
+                    }
+                case ForwardOperation.SkipUntilNonLineBreak:
+                    if (linebreakCharacters.Contains(c))
+                    {
+                        lineNumber++;
+                        columnNumber = 0;
+                                                    preparserLine = false;
+                        continue;
+                    }
+                    else
+                        forwardOperation = ForwardOperation.None;
+                    break;
+                case ForwardOperation.SkipUntilNonWhitespace:
+                    if (whitespaceCharacters.Contains(c))
+                        continue;
+                    else
+                        forwardOperation = ForwardOperation.None;
+                    break;
+            }
+
+            if (c == '(' && !preparserLine)
+            {
+                forwardOperation = ForwardOperation.SkipUntilEndComment;
+                continue;
+            }
+
+            if (linebreakCharacters.Contains(c))
+            {
+                // Handle word datum
+                if (currentWordName.Length > 0 && currentDatum.Length > 0 && !preparserLine)
+                {
+                    Console.WriteLine($"DATUM({lineNumber},{columnNumber - currentDatum.ToString().Length}): {currentDatum.ToString()}");
+                    if (ForthWord.GetPrimatives().Contains(currentDatum.ToString()))
+                    {
+                        if (currentDatum.ToString().Length == 1 && (new[] { '@', '!' }.Contains(currentDatum.ToString()[0])))
+                        {
+                            var last = currentWordData.Last();
+                            currentWordData.Remove(last);
+                            last.Type = DatumType.Variable;
+                            currentWordData.Add(last);
+                        }
+
+                        currentWordData.Add(new ForthDatum(currentDatum.ToString(), DatumType.Primitive, lineNumber, columnNumber - currentDatum.ToString().Length));
+                    }
+                    else if (ForthDatum.TryInferType(currentDatum.ToString(), out Tuple<DatumType, object> result))
+                        currentWordData.Add(new ForthDatum(result.Item2, result.Item1, lineNumber, columnNumber - currentDatum.ToString().Length));
+                    else
+                        currentWordData.Add(new ForthDatum(currentDatum.ToString(), DatumType.Unknown, lineNumber, columnNumber - currentDatum.ToString().Length));
+                    currentDatum.Clear();
+                }
+                else
+                {
+                    // Handle out-of-word primative
+                    var directive = currentNonDatum.ToString().Trim();
+                    if (directive.Length > 0)
+                    {
+                        var done = false;
+                        // LVAR
+                        {
+                            var lvarMatch = Regex.Match(directive, @"(?:lvar\s+(?<lvar>\w{1,20}))");
+                            if (lvarMatch.Success)
+                            {
+                                programLocalVariables.Add(lvarMatch.Groups["lvar"].Value, default(ForthVariable));
+                                done = true;
+                            }
+                        }
+
+                        // $def
+                        if (!done)
+                        {
+                            var defMatch = Regex.Match(directive, @"(?:\$def\s+(?<defName>\w{1,20})\s+(?<defValue>[^\(]+))");
+                            if (defMatch.Success)
+                            {
+                                if (ForthVariable.TryInferType(defMatch.Groups["defValue"].Value, out Tuple<VariableType, object> result))
+                                {
+                                    programLocalVariables.Add(defMatch.Groups["defName"].Value, new ForthVariable(result.Item2, result.Item1, true));
+                                    done = true;
+                                }
+                                else
+                                    programLocalVariables.Add(defMatch.Groups["defName"].Value, new ForthVariable(defMatch.Groups["defValue"].Value, VariableType.String, true));
+                            }
+                        }
+
+                        // $echo
+                        if (!done)
+                        {
+                            var echoMatch = Regex.Match(directive, @"(?:\$echo\s+\""(?<value>[^\""]*)\"")");
+                            if (echoMatch.Success)
+                            {
+                                connection.sendOutput(echoMatch.Groups["value"].Value);
+                                done = true;
+                            }
+                        }
+
+                        Console.WriteLine($"PRE({lineNumber},{columnNumber - currentNonDatum.ToString().Length}): {currentNonDatum.ToString()}");
+                    }
+                    currentNonDatum.Clear();
+                }
+
+                forwardOperation = ForwardOperation.SkipUntilNonLineBreak;
+
+                lineNumber++;
+                columnNumber = 0;
+                                            preparserLine = false;
+                continue;
+            }
+
+            if (c == '\"' && currentWordName.Length > 0 && !preparserLine)
+            {
+                forwardOperation = ForwardOperation.ReadingString;
+                continue;
+            }
+
+            if (whitespaceCharacters.Contains(c))
+            {
+                if (currentWordName.Length > 0 && currentDatum.Length > 0 && !preparserLine)
+                {
+                    Console.WriteLine($"DATUM({lineNumber},{columnNumber - currentDatum.ToString().Length}): {currentDatum.ToString()}");
+                    if (ForthWord.GetPrimatives().Contains(currentDatum.ToString()))
+                    {
+                        if (currentDatum.ToString().Length == 1 && (new[] { '@', '!' }.Contains(currentDatum.ToString()[0])))
+                        {
+                            var last = currentWordData.Last();
+                            currentWordData.Remove(last);
+                            last.Type = DatumType.Variable;
+                            currentWordData.Add(last);
+                        }
+                        currentWordData.Add(new ForthDatum(currentDatum.ToString(), DatumType.Primitive, lineNumber, columnNumber - currentDatum.ToString().Length));
+                    }
+                    else if (ForthDatum.TryInferType(currentDatum.ToString(), out Tuple<DatumType, object> result))
+                        currentWordData.Add(new ForthDatum(result.Item2, result.Item1, lineNumber, columnNumber - currentDatum.ToString().Length));
+                    else
+                        currentWordData.Add(new ForthDatum(currentDatum.ToString(), DatumType.Unknown, lineNumber, columnNumber - currentDatum.ToString().Length));
+                    currentDatum.Clear();
+                    forwardOperation = ForwardOperation.SkipUntilNonWhitespace;
+                }
+                else
+                {
+                    currentNonDatum.Append(c);
+                }
+                continue;
+            }
+
+            if (whitespaceCharacters.Contains(c) && currentDatum.Length == 0)
+                continue;
+            /*UNNECESSARY if (linebreakCharacters.Contains(c))
+            {
+                if (currentWordName.Length == 0)
+                {
+                    Console.WriteLine($"PREX({lineNumber},{columnNumber - currentNonDatum.ToString().Length}): {currentNonDatum.ToString()}");
+                    currentNonDatum.Clear();
+                }
+
+                lineNumber++;
+                columnNumber = 0;
+                                            preparserLine = false;
+                continue;
+            }*/
+
+            if (c == ':' && currentWordName.Length == 0&& !preparserLine)
+            {
+                currentWordData = new List<ForthDatum>();
+                forwardOperation = ForwardOperation.ReadingWordName;
+                continue;
+            }
+
+            if (c == ';' && currentWordName.Length > 0&& !preparserLine)
+            {
+                words.Add(new ForthWord(currentWordName.ToString(), currentWordData));
+                currentWordName.Clear();
+                currentWordData = null;
+            }
+
+            if (currentWordName.Length > 0&& !preparserLine)
+                currentDatum.Append(c);
+            else if (!linebreakCharacters.Contains(c))
+                currentNonDatum.Append(c);
+        }
+
+        return new ForthParseResult(words, programLocalVariables);
+    }
+
 }

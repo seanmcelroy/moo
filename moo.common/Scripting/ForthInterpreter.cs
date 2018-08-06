@@ -27,7 +27,7 @@ public class ForthInterpreter
         CancellationToken cancellationToken)
     {
         if (default(ForthParseResult).Equals(parsed))
-            parsed = ForthParser.Parse(program);
+            parsed = ForthParser.ParseProgram(connection, program);
         if (!parsed.IsSuccessful) {
             parsed = default(ForthParseResult);
             return new ForthProgramResult(ForthProgramResult.ForthProgramErrorResult.SYNTAX_ERROR, parsed.Reason);

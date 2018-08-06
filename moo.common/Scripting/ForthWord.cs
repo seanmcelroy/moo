@@ -228,7 +228,7 @@ public struct ForthWord
             */
 
             // For each element in line
-            var datumString = datum.Value?.ToString().ToLowerInvariant();
+            var datumLiteral = datum.Value?.ToString();
 
             // Do we have something unknown on the top of the stack?
             if (stack.Count > 0 && stack.Peek().Type == ForthDatum.DatumType.Unknown)
@@ -240,7 +240,7 @@ public struct ForthWord
             if (datum.Type == ForthDatum.DatumType.Unknown)
             {
                 // IF
-                if (string.Compare("if", datumString, true) == 0)
+                if (string.Compare("if", datumLiteral, true) == 0)
                 {
                     // I could be an 'if' inside a skipped branch.
                     if (controlFlow.Count > 0)
@@ -276,7 +276,7 @@ public struct ForthWord
                 }
 
                 // ELSE
-                if (string.Compare("else", datumString, true) == 0)
+                if (string.Compare("else", datumLiteral, true) == 0)
                 {
                     // I could be an 'else' inside a skipped branch.
                     if (controlFlow.Count > 0)
@@ -307,7 +307,7 @@ public struct ForthWord
                 }
 
                 // THEN
-                if (string.Compare("then", datumString, true) == 0)
+                if (string.Compare("then", datumLiteral, true) == 0)
                 {
                     // I could be an 'else' inside a skipped branch.
                     if (controlFlow.Count > 0)
@@ -335,7 +335,7 @@ public struct ForthWord
                 }
 
                 // EXIT
-                if (string.Compare("exit", datumString, true) == 0)
+                if (string.Compare("exit", datumLiteral, true) == 0)
                 {
                     // I could be an 'exit' inside a skipped branch.
                     if (controlFlow.Count > 0)
@@ -359,7 +359,7 @@ public struct ForthWord
                 }
 
                 // BEGIN
-                if (string.Compare("begin", datumString, true) == 0)
+                if (string.Compare("begin", datumLiteral, true) == 0)
                 {
                     // I could be an 'begin' inside a skipped branch.
                     if (controlFlow.Count > 0)
@@ -384,7 +384,7 @@ public struct ForthWord
                 }
 
                 // WHILE
-                if (string.Compare("while", datumString, true) == 0)
+                if (string.Compare("while", datumLiteral, true) == 0)
                 {
                     // I could be a 'while' inside a skipped branch.
                     if (controlFlow.Count > 0)
@@ -417,7 +417,7 @@ public struct ForthWord
                 }
 
                 // REPEAT
-                if (string.Compare("repeat", datumString, true) == 0)
+                if (string.Compare("repeat", datumLiteral, true) == 0)
                 {
                     await DumpStackToDebugAsync(stack, connection, lineCount, datum);
 
@@ -456,7 +456,7 @@ public struct ForthWord
                 }
 
                 // UNTIL
-                if (string.Compare("until", datumString, true) == 0)
+                if (string.Compare("until", datumLiteral, true) == 0)
                 {
                     // I could be an 'until' inside a skipped branch.
                     if (controlFlow.Count == 0)
@@ -543,32 +543,26 @@ public struct ForthWord
                 continue;
             }
 
-            var xx = 0;
-            if (string.Compare("MIN_IDLE", datumString, true) == 0)
-            {
-                xx++;
-            }
-
             // Variables
             var variables = process.GetProgramLocalVariables()
                             .Union(functionScopedVariables)
                             .ToDictionary(k => k.Key, v => v.Value);
 
-            if (datum.Type == ForthDatum.DatumType.Unknown &&
-                (string.Compare("me", datumString, true) == 0
-                || string.Compare("here", datumString, true) == 0
-                || string.Compare("loc", datumString, true) == 0
-                || string.Compare("trigger", datumString, true) == 0
-                || string.Compare("command", datumString, true) == 0))
+            if ((datum.Type == ForthDatum.DatumType.Unknown || datum.Type == ForthDatum.DatumType.Variable) &&
+                (string.Compare("me", datumLiteral, true) == 0
+                || string.Compare("here", datumLiteral, true) == 0
+                || string.Compare("loc", datumLiteral, true) == 0
+                || string.Compare("trigger", datumLiteral, true) == 0
+                || string.Compare("command", datumLiteral, true) == 0))
             {
                 stack.Push(new ForthDatum(datum.Value, DatumType.Variable));
                 continue;
             }
 
-            if (datum.Type == ForthDatum.DatumType.Unknown &&
-                variables.ContainsKey(datumString))
+            if ((datum.Type == ForthDatum.DatumType.Unknown || datum.Type == ForthDatum.DatumType.Variable)
+                && variables.ContainsKey(datumLiteral))
             {
-                var v = variables[datumString];
+                var v = variables[datumLiteral];
                 if (v.IsConstant)
                     stack.Push(new ForthDatum(v.Value, v.Type == VariableType.String ? DatumType.String : (v.Type == VariableType.Float ? DatumType.Float : (v.Type == VariableType.Integer ? DatumType.Integer : (v.Type == VariableType.DbRef ? DatumType.DbRef : DatumType.Unknown)))));
                 else
@@ -590,7 +584,7 @@ public struct ForthWord
             // Primatives
             if (datum.Type == ForthDatum.DatumType.Primitive)
             {
-                if (callTable.ContainsKey(datumString))
+                if (callTable.Keys.Contains(datumLiteral, StringComparer.InvariantCultureIgnoreCase))
                 {
                     var p = new ForthPrimativeParameters(process.Server, stack, variables, connection, trigger, command,
                         async (d, s) => await process.NotifyAsync(d, s),
@@ -598,7 +592,7 @@ public struct ForthWord
                         lastListItem,
                         cancellationToken);
 
-                    var result = callTable[datumString].Invoke(p);
+                    var result = callTable.Single(c => string.Compare(c.Key, datumLiteral, true) == 0).Value.Invoke(p);
                     if (result.LastListItem.HasValue)
                         lastListItem = result.LastListItem.Value;
 
