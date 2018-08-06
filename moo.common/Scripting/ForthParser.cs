@@ -165,11 +165,6 @@ public static class ForthParser
 
         foreach (var c in program)
         {
-            var xx = 0;
-            if (lineNumber == 100) {
-                xx++;
-            }
-
             columnNumber++;
             if (columnNumber == 1 && c == '$')
                 preparserLine = true;

@@ -9,7 +9,31 @@ using static ForthProgramResult;
 
 public class ForthProcess
 {
-    private readonly IEnumerable<ForthWord> words;
+    public enum MultitaskingMode
+    {
+        Preempt = 0,
+        Foreground = 1,
+        Background = 2
+    }
+
+    public enum ProcessState
+    {
+        Initializing,
+        Parsing,
+        Running,
+        WaitingForInput,
+        Paused,
+        Preempted,
+        Complete
+    }
+
+    private static int nextPid = 1;
+    private readonly static object nextPidLock = new Object();
+
+    private readonly int processId;
+    private MultitaskingMode mode;
+    public ProcessState State;
+    private IEnumerable<ForthWord> words;
     private readonly Stack<ForthDatum> stack = new Stack<ForthDatum>();
     // Variables that came from a caller program
     private readonly Dictionary<string, ForthVariable> outerScopeVariables = new Dictionary<string, ForthVariable>();
@@ -24,18 +48,20 @@ public class ForthProcess
     private bool hasRan;
 
     public Server Server => server;
+    public MultitaskingMode Mode => mode;
 
     public ForthProcess(
         Server server,
         Dbref scriptId,
-        IEnumerable<ForthWord> words,
         PlayerConnection connection,
         string outerScopeId = null,
         Dictionary<string, ForthVariable> outerScopeVariables = null)
     {
+        this.processId = GetNextPid();
+        this.State = ProcessState.Initializing;
+        this.mode = MultitaskingMode.Foreground;
         this.server = server;
         this.scriptId = scriptId;
-        this.words = words;
         this.connection = connection;
         this.scopeId = Guid.NewGuid().ToString();
 
@@ -48,6 +74,18 @@ public class ForthProcess
                 foreach (var kvp in outerScopeVariables)
                     this.outerScopeVariables.Add(kvp.Key, kvp.Value);
             }
+        }
+    }
+
+    public static int GetNextPid()
+    {
+        lock (nextPidLock)
+        {
+            var pid = Interlocked.Increment(ref nextPid);
+            if (pid < Int32.MaxValue)
+                return pid;
+            Interlocked.Exchange(ref nextPid, 1);
+            return 1;
         }
     }
 
@@ -81,7 +119,12 @@ public class ForthProcess
         await server.NotifyRoomAsync(target, message, exclude);
     }
 
-    public async Task<ForthProgramResult> RunAsync(Dbref trigger, string command, object[] args, CancellationToken cancellationToken)
+    public async Task<ForthProgramResult> RunAsync(
+        IEnumerable<ForthWord> words,
+        Dbref trigger,
+        string command,
+        object[] args,
+        CancellationToken cancellationToken)
     {
         if (hasRan)
         {
@@ -89,12 +132,18 @@ public class ForthProcess
         }
         hasRan = true;
 
+        this.words = words;
+
         // Execute the last word.
         if (args != null && args.Length > 0 && args[0] != null)
         {
             if (args[0].GetType() == typeof(string))
                 stack.Push(new ForthDatum((string)args[0]));
         }
-        return await words.Last().RunAsync(this, stack, connection, trigger, command, null, cancellationToken);
+
+        this.State = ProcessState.Running;
+        var result = await words.Last().RunAsync(this, stack, connection, trigger, command, null, cancellationToken);
+        this.State = ProcessState.Complete;
+        return result;
     }
 }

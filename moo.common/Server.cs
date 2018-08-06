@@ -65,13 +65,14 @@ public class Server
 
     public async Task<ForthProgramResult> ExecuteAsync(
         ForthProcess process,
+        IEnumerable<ForthWord> words,
         Dbref trigger,
         string command,
         object[] args,
         CancellationToken cancellationToken)
     {
         processes.Add(process);
-        var programResult = await process.RunAsync(trigger, command, args, cancellationToken);
+        var programResult = await process.RunAsync(words, trigger, command, args, cancellationToken);
         return programResult;
     }
 
@@ -120,7 +121,6 @@ public class Server
         foreach (var connection in _players.Where(p => p.Location == room && (exclude == null || !exclude.Contains(p.Dbref))))
             await connection.sendOutput(message);
     }
-
 
     public void Start(CancellationToken cancellationToken)
     {

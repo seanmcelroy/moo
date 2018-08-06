@@ -148,7 +148,9 @@ public struct ForthWord
         callTable.Add("timesplit", (p) => TimeSplit.Execute(p));
         callTable.Add("timefmt", (p) => TimeFormat.Execute(p));
 
-        // CONNECTION MANAGEMENT OPTIONS
+        // PROCESS MANAGEMENT OPERATORS
+
+        // CONNECTION MANAGEMENT OPERATORS
         callTable.Add("awake?", (p) => Awake.Execute(p));
         callTable.Add("conidle", (p) => ConIdle.Execute(p));
         callTable.Add("descrcon", (p) => DescRcon.Execute(p));
