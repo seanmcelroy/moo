@@ -5,7 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using static ForthDatum;
-using static ForthProgramResult;
+using static ForthWordResult;
 
 public class ForthProcess
 {
@@ -22,8 +22,11 @@ public class ForthProcess
         Parsing,
         Running,
         WaitingForInput,
+        Pausing,
         Paused,
+        Preempting,
         Preempted,
+        RunningPreempt,
         Complete
     }
 
@@ -48,6 +51,7 @@ public class ForthProcess
     private bool hasRan;
 
     public Server Server => server;
+    public int ProcessId => processId;
     public MultitaskingMode Mode => mode;
 
     public ForthProcess(
@@ -104,7 +108,7 @@ public class ForthProcess
 
     public bool HasWord(string wordName) => this.words.Any(w => string.Compare(w.name, wordName, true) == 0);
 
-    public async Task<ForthProgramResult> RunWordAsync(string wordName, Dbref trigger, string command, Dbref? lastListItem, CancellationToken cancellationToken)
+    public async Task<ForthWordResult> RunWordAsync(string wordName, Dbref trigger, string command, Dbref? lastListItem, CancellationToken cancellationToken)
     {
         return await this.words.Single(w => string.Compare(w.name, wordName, true) == 0).RunAsync(this, stack, connection, trigger, command, lastListItem, cancellationToken);
     }
@@ -119,7 +123,19 @@ public class ForthProcess
         await server.NotifyRoomAsync(target, message, exclude);
     }
 
-    public async Task<ForthProgramResult> RunAsync(
+    public void Pause()
+    {
+        if (this.State == ProcessState.Running)
+            this.State = ProcessState.Pausing;
+    }
+
+    public void Preempt()
+    {
+        if (this.State == ProcessState.Running)
+            this.State = ProcessState.Preempting;
+    }
+
+    public async Task<ForthWordResult> RunAsync(
         IEnumerable<ForthWord> words,
         Dbref trigger,
         string command,
@@ -128,7 +144,7 @@ public class ForthProcess
     {
         if (hasRan)
         {
-            return new ForthProgramResult(ForthProgramErrorResult.INTERNAL_ERROR, $"Execution scope {scopeId} tried to run twice.");
+            return new ForthWordResult(ForthErrorResult.INTERNAL_ERROR, $"Execution scope {scopeId} tried to run twice.");
         }
         hasRan = true;
 
@@ -145,5 +161,10 @@ public class ForthProcess
         var result = await words.Last().RunAsync(this, stack, connection, trigger, command, null, cancellationToken);
         this.State = ProcessState.Complete;
         return result;
+    }
+
+    public void Unpaused()
+    {
+        this.State = ProcessState.Running;
     }
 }

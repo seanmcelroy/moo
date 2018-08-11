@@ -1,28 +1,11 @@
 using System.Collections.Generic;
 
-public struct ForthProgramResult
+public struct ForthWordResult
 {
-    public static ForthProgramResult SUCCESS = new ForthProgramResult
+    public static ForthWordResult SUCCESS = new ForthWordResult
     {
         isSuccessful = true
     };
-
-    public enum ForthProgramErrorResult : byte
-    {
-        INTERRUPTED,
-        STACK_UNDERFLOW,
-        TYPE_MISMATCH,
-        INVALID_VALUE,
-        VARIABLE_NOT_FOUND,
-        UNKNOWN_TYPE,
-        INTERNAL_ERROR,
-        VARIABLE_ALREADY_DEFINED,
-        DIVISION_BY_ZERO,
-        SYNTAX_ERROR,
-        VARIABLE_IS_CONSTANT,
-        NO_SUCH_OBJECT,
-        INSUFFICIENT_PERMISSION
-    }
 
     private bool isSuccessful;
     private object result;
@@ -36,7 +19,7 @@ public struct ForthProgramResult
 
     public Dictionary<string, ForthVariable> dirtyVariables;
 
-    public ForthProgramResult(string reason, Dbref? lastListItem = null)
+    public ForthWordResult(string reason, Dbref? lastListItem = null)
     {
         this.isSuccessful = true;
         this.result = null;
@@ -45,11 +28,11 @@ public struct ForthProgramResult
         this.dirtyVariables = null;
     }
 
-    public ForthProgramResult(ForthProgramErrorResult errorCode, string reason)
+    public ForthWordResult(ForthErrorResult errorCode, string reason)
     {
         this.isSuccessful = false;
         this.result = errorCode;
-        this.reason = reason ?? System.Enum.GetName(typeof(ForthProgramErrorResult), errorCode);
+        this.reason = reason ?? System.Enum.GetName(typeof(ForthErrorResult), errorCode);
         this.lastListItem = null;
         this.dirtyVariables = null;
     }

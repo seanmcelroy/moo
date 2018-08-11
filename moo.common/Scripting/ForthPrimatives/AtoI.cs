@@ -5,11 +5,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using static Dbref;
 using static ForthDatum;
-using static ForthProgramResult;
+using static ForthPrimativeResult;
 
 public static class AtoI
 {
-    public static ForthProgramResult Execute(ForthPrimativeParameters parameters)
+    public static ForthPrimativeResult Execute(ForthPrimativeParameters parameters)
     {
         /*
         ATOI ( s -- i ) 
@@ -17,7 +17,7 @@ public static class AtoI
         Turns string s into integer i. If s is not a string, then 0 is pushed onto the stack.
         */
         if (parameters.Stack.Count < 1)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "ATOI requires one parameter");
+            return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, "ATOI requires one parameter");
 
         var n1 = parameters.Stack.Pop();
         if (n1.Type != DatumType.String)
@@ -31,6 +31,6 @@ public static class AtoI
                 parameters.Stack.Push(new ForthDatum(0));
         }
 
-        return ForthProgramResult.SUCCESS;
+        return ForthPrimativeResult.SUCCESS;
     }
 }

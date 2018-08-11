@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using static ForthDatum;
-using static ForthProgramResult;
+using static ForthPrimativeResult;
 
 public static class MarkerEnd
 {
-    public static ForthProgramResult Execute(ForthPrimativeParameters parameters)
+    public static ForthPrimativeResult Execute(ForthPrimativeParameters parameters)
     {
         /*
         } ( marker ?n ... ?1 -- ?n ... ?1 i ) 
@@ -14,7 +14,7 @@ public static class MarkerEnd
         Finds the topmost marker in the stack, and counts how many stack items are between it and the top of the stack. The marker is removed from the stack, and the count is pushed onto the stack.
         */
         if (parameters.Stack.Count < 1)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "} requires at least one parameter");
+            return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, "} requires at least one parameter");
 
         var temp = new Stack<ForthDatum>();
         bool found = false;
@@ -30,7 +30,7 @@ public static class MarkerEnd
         }
 
         if (!found)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "} found no opening { on the stack.");
+            return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, "} found no opening { on the stack.");
 
         int count = temp.Count;
 
@@ -39,6 +39,6 @@ public static class MarkerEnd
 
         parameters.Stack.Push(new ForthDatum(count));
 
-        return default(ForthProgramResult);
+        return ForthPrimativeResult.SUCCESS;
     }
 }

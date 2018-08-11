@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using static ForthDatum;
-using static ForthProgramResult;
+using static ForthPrimativeResult;
 
 public static class IntoStr
 {
-    public static ForthProgramResult Execute(ForthPrimativeParameters parameters)
+    public static ForthPrimativeResult Execute(ForthPrimativeParameters parameters)
     {
         /*
         INTOSTR ( x -- s ) 
@@ -14,13 +14,13 @@ public static class IntoStr
         x must be an integer or a dbref. Converts x into string s.
         */
         if (parameters.Stack.Count < 1)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "INTOSTR requires one parameter");
+            return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, "INTOSTR requires one parameter");
 
         var n1 = parameters.Stack.Pop();
         if (n1.Type != DatumType.Integer && n1.Type != DatumType.DbRef)
-            return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "< requires the top parameter on the stack to be a number");
+            return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "< requires the top parameter on the stack to be a number");
 
         parameters.Stack.Push(new ForthDatum(n1.Value.ToString()));
-        return default(ForthProgramResult);
+        return ForthPrimativeResult.SUCCESS;
     }
 }

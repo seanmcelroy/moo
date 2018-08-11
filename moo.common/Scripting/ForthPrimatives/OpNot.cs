@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using static ForthDatum;
-using static ForthProgramResult;
+using static ForthPrimativeResult;
 
 public static class OpNot
 {
-    public static ForthProgramResult Execute(ForthPrimativeParameters parameters)
+    public static ForthPrimativeResult Execute(ForthPrimativeParameters parameters)
     {
         /*
         NOT ( x -- i ) 
@@ -18,10 +18,10 @@ public static class OpNot
             String       ""
         */
         if (parameters.Stack.Count < 1)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "NOT requires at least one parameter");
+            return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, "NOT requires at least one parameter");
 
         var n1 = parameters.Stack.Pop();
         parameters.Stack.Push(new ForthDatum(n1.isFalse() ? 1 : 0));
-        return default(ForthProgramResult);
+        return ForthPrimativeResult.SUCCESS;
     }
 }

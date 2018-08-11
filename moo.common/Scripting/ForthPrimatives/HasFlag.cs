@@ -4,12 +4,12 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using static ForthDatum;
-using static ForthProgramResult;
+using static ForthPrimativeResult;
 using static Property;
 
 public static class HasFlag
 {
-    public static async Task<ForthProgramResult> ExecuteAsync(ForthPrimativeParameters parameters)
+    public static async Task<ForthPrimativeResult> ExecuteAsync(ForthPrimativeParameters parameters)
     {
         /*
         FLAG? ( d s -- i ) 
@@ -23,24 +23,24 @@ public static class HasFlag
         bit of the mucker level and the "Nucker" flag returns the least significant bit. (Use MLEVEL instead.)
         */
         if (parameters.Stack.Count < 2)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "FLAG? requires two parameters");
+            return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, "FLAG? requires two parameters");
 
         var sFlag = parameters.Stack.Pop();
         if (sFlag.Type != DatumType.String)
-            return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "FLAG? requires the top parameter on the stack to be an string");
+            return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "FLAG? requires the top parameter on the stack to be an string");
 
         var sTarget = parameters.Stack.Pop();
         if (sTarget.Type != DatumType.DbRef)
-            return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "FLAG? requires the second-to-top parameter on the stack to be a dbref");
+            return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "FLAG? requires the second-to-top parameter on the stack to be a dbref");
 
         if (((Dbref)sTarget.Value).ToInt32() < 0)
-            return default(ForthProgramResult);
+            return ForthPrimativeResult.SUCCESS;
 
         var flag = (string)sFlag.Value;
         if (flag == null || string.IsNullOrWhiteSpace(flag))
         {
             parameters.Stack.Push(new ForthDatum(0));
-            return default(ForthProgramResult);
+            return ForthPrimativeResult.SUCCESS;
         }
 
         var target = (Dbref)sTarget.Value;
@@ -49,12 +49,12 @@ public static class HasFlag
          if (!targetResult.isSuccess)
         {
             parameters.Stack.Push(new ForthDatum(0));
-            return default(ForthProgramResult);
+            return ForthPrimativeResult.SUCCESS;
         }
 
         var negate = flag.StartsWith("!");
         var hasFlag = targetResult.value.HasFlag(negate ? flag.Substring(1) : flag);
         parameters.Stack.Push(new ForthDatum(hasFlag ^ negate ? 1 : 0));
-        return default(ForthProgramResult);
+        return ForthPrimativeResult.SUCCESS;
     }
 }

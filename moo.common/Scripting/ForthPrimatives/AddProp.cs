@@ -4,12 +4,12 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using static ForthDatum;
-using static ForthProgramResult;
+using static ForthPrimativeResult;
 using static Property;
 
 public static class AddProp
 {
-    public static async Task<ForthProgramResult> ExecuteAsync(ForthPrimativeParameters parameters)
+    public static async Task<ForthPrimativeResult> ExecuteAsync(ForthPrimativeParameters parameters)
     {
         /*
         ADDPROP ( d s1 s2 i -- ) 
@@ -22,38 +22,38 @@ public static class AddProp
         beginning with a dot `.' which cannot be read without permission.
         */
         if (parameters.Stack.Count < 4)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "ADDPROP requires four parameters");
+            return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, "ADDPROP requires four parameters");
 
         var i = parameters.Stack.Pop();
         if (i.Type != DatumType.Integer)
-            return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "ADDPROP requires the top parameter on the stack to be an integer");
+            return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "ADDPROP requires the top parameter on the stack to be an integer");
 
         var s2 = parameters.Stack.Pop();
         if (s2.Type != DatumType.String)
-            return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "ADDPROP requires the second-to-top parameter on the stack to be a string");
+            return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "ADDPROP requires the second-to-top parameter on the stack to be a string");
 
         var s1 = parameters.Stack.Pop();
         if (s1.Type != DatumType.String)
-            return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "ADDPROP requires the third-to-top parameter on the stack to be a string");
+            return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "ADDPROP requires the third-to-top parameter on the stack to be a string");
 
         var d = parameters.Stack.Pop();
         if (d.Type != DatumType.DbRef)
-            return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "ADDPROP requires the fourth-to-top parameter on the stack to be a dbref");
+            return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "ADDPROP requires the fourth-to-top parameter on the stack to be a dbref");
 
         var targetResult = await ThingRepository.GetAsync<Thing>(d.UnwrapDbref(), parameters.CancellationToken);
         if (!targetResult.isSuccess)
-            return new ForthProgramResult(ForthProgramErrorResult.NO_SUCH_OBJECT, $"Unable to find object with dbref {d.UnwrapDbref()}");
+            return new ForthPrimativeResult(ForthErrorResult.NO_SUCH_OBJECT, $"Unable to find object with dbref {d.UnwrapDbref()}");
 
         var path = ((string)s1.Value);
 
         if (!targetResult.value.IsControlledBy(parameters.Connection.Dbref) && path.Contains('_'))
-            return new ForthProgramResult(ForthProgramErrorResult.INSUFFICIENT_PERMISSION, $"Permission not granted to write protected property {path} on {d.UnwrapDbref()}");
+            return new ForthPrimativeResult(ForthErrorResult.INSUFFICIENT_PERMISSION, $"Permission not granted to write protected property {path} on {d.UnwrapDbref()}");
 
         if (s2.isTrue())
              targetResult.value.SetPropertyPathValue(path, new ForthVariable((string)s2.Value));
         else
              targetResult.value.SetPropertyPathValue(path, new ForthVariable((int)i.Value));
 
-        return ForthProgramResult.SUCCESS;
+        return ForthPrimativeResult.SUCCESS;
     }
 }

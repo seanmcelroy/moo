@@ -5,11 +5,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using static Dbref;
 using static ForthDatum;
-using static ForthProgramResult;
+using static ForthPrimativeResult;
 
 public static class Trig
 {
-    public static ForthProgramResult Execute(ForthPrimativeParameters parameters)
+    public static ForthPrimativeResult Execute(ForthPrimativeParameters parameters)
     {
         /*
         TRIG ( -- d) 
@@ -17,6 +17,6 @@ public static class Trig
         Returns the dbref of the original trigger.
         */
         parameters.Stack.Push(new ForthDatum(parameters.Trigger, 0));
-        return default(ForthProgramResult);
+        return ForthPrimativeResult.SUCCESS;
     }
 }

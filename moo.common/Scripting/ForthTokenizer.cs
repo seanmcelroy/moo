@@ -11,16 +11,9 @@ using System.Threading.Tasks;
 using static ForthDatum;
 using static ForthVariable;
 
-public static class ForthParser
+public static class ForthTokenizer
 {
-    public class ProgramReader : StringReader
-    {
-        public ProgramReader(string s) : base(s)
-        {
-        }
-    }
-
-    public static ForthParseResult Parse(string program)
+    public static ForthTokenizerResult TokenizeOLD(string program)
     {
         // Parse the program onto the stack
         var lines = program.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
@@ -63,7 +56,7 @@ public static class ForthParser
                     defValue = new ForthVariable(new Dbref(wordMatch.Groups["dbref"].Value), VariableType.DbRef, true);
                 }
                 else
-                    return new ForthParseResult($"Unable to parse line in $def program at index {wordMatch.Index}");
+                    return new ForthTokenizerResult($"Unable to parse line in $def program at index {wordMatch.Index}");
 
                 programLocalVariables.Add(defName, defValue);
             }
@@ -120,7 +113,7 @@ public static class ForthParser
                                     }
                             }
 
-                            return new ForthParseResult($"Unable to parse line in word {wordName}: {match.Value}.  Full line: {wordBodySplit[i]}");
+                            return new ForthTokenizerResult($"Unable to parse line in word {wordName}: {match.Value}.  Full line: {wordBodySplit[i]}");
                         }
 
                     }
@@ -131,7 +124,7 @@ public static class ForthParser
             }
         }
 
-        return new ForthParseResult(words, programLocalVariables);
+        return new ForthTokenizerResult(words, programLocalVariables);
     }
 
     private enum ForwardOperation
@@ -146,7 +139,7 @@ public static class ForthParser
     }
 
 
-    public static ForthParseResult ParseProgram(PlayerConnection connection, string program)
+    public static ForthTokenizerResult Tokenzie(PlayerConnection connection, string program)
     {
         var defines = new Dictionary<string, string>();
         var words = new List<ForthWord>();
@@ -399,7 +392,7 @@ public static class ForthParser
                 currentNonDatum.Append(c);
         }
 
-        return new ForthParseResult(words, programLocalVariables);
+        return new ForthTokenizerResult(words, programLocalVariables);
     }
 
 }

@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using static ForthDatum;
-using static ForthProgramResult;
+using static ForthPrimativeResult;
 
 public static class SysTime
 {
-    public static ForthProgramResult Execute(ForthPrimativeParameters parameters)
+    public static ForthPrimativeResult Execute(ForthPrimativeParameters parameters)
     {
         /*
         SYSTIME ( -- i ) 
@@ -16,6 +16,6 @@ public static class SysTime
         */
         parameters.Stack.Push(new ForthDatum((int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()));
 
-        return default(ForthProgramResult);
+        return ForthPrimativeResult.SUCCESS;
     }
 }

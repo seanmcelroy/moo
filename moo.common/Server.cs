@@ -15,9 +15,13 @@ public class Server
 
     private static readonly ConcurrentBag<ForthProcess> processes = new ConcurrentBag<ForthProcess>();
 
+    private static readonly ConcurrentQueue<ForthProcess> processesWaitingForPreempt = new ConcurrentQueue<ForthProcess>();
+
     private readonly TextWriter statusWriter;
 
     private Task playerHandlerTask;
+
+    private long preemptProcessId;
 
     public Server(TextWriter statusWriter)
     {
@@ -63,7 +67,7 @@ public class Server
         return insertedScriptObject;
     }
 
-    public async Task<ForthProgramResult> ExecuteAsync(
+    public async Task<ForthWordResult> ExecuteAsync(
         ForthProcess process,
         IEnumerable<ForthWord> words,
         Dbref trigger,
@@ -76,6 +80,48 @@ public class Server
         return programResult;
     }
 
+    public async Task PreemptProcess(int processId, CancellationToken cancellationToken)
+    {
+        var target = processes.SingleOrDefault(p => p.ProcessId == processId);
+        if (target == null)
+            return;
+
+        processesWaitingForPreempt.Enqueue(target);
+        await statusWriter.WriteLineAsync($"PID {target.ProcessId} queueing for preempt mode");
+
+        var task = Task.Factory.StartNew(async () =>
+        {
+            while (!cancellationToken.IsCancellationRequested &&
+                (Interlocked.Read(ref preemptProcessId) != 0 ||
+                !(processesWaitingForPreempt.TryPeek(out ForthProcess nextInLine) && nextInLine.ProcessId == processId)) &&
+                !processesWaitingForPreempt.TryDequeue(out ForthProcess dequeued))
+            {
+                Thread.Yield();
+                Thread.Sleep(50);
+            }
+
+            await statusWriter.WriteLineAsync($"PID {target.ProcessId} is up, waiting to pre-empt other tasks");
+
+            while (
+                !cancellationToken.IsCancellationRequested &&
+                processes.Any(p => p.State != ForthProcess.ProcessState.Paused && p.ProcessId != processId))
+            {
+                foreach (var p in processes.Where(p => p.State != ForthProcess.ProcessState.Paused && p.ProcessId != processId))
+                {
+                    p.Pause();
+                }
+
+                Thread.Yield();
+                Thread.Sleep(100);
+            }
+
+            Interlocked.Exchange(ref preemptProcessId, target.ProcessId);
+            target.State = ForthProcess.ProcessState.RunningPreempt;
+            await statusWriter.WriteLineAsync($"PID {target.ProcessId} in preempt mode");
+        });
+
+        Task.WaitAll(new[] { task }, 60 * 1000, cancellationToken);
+    }
 
     public IEnumerable<int> GetConnectionNumber(Dbref playerId)
     {
@@ -112,7 +158,7 @@ public class Server
 
     public async Task NotifyAsync(Dbref player, string message)
     {
-        foreach (var connection in _players.Where(p => p.Dbref == player ))
+        foreach (var connection in _players.Where(p => p.Dbref == player))
             await connection.sendOutput(message);
     }
 

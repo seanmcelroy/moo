@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using static ForthDatum;
-using static ForthProgramResult;
+using static ForthPrimativeResult;
 
 public static class TimeSplit
 {
-    public static ForthProgramResult Execute(ForthPrimativeParameters parameters)
+    public static ForthPrimativeResult Execute(ForthPrimativeParameters parameters)
     {
         /*
         TIMESPLIT ( i -- is im ih id im iy iw iyd ) 
@@ -16,11 +16,11 @@ public static class TimeSplit
         Weekday starts with sunday as 1, and yearday is the day of the year (1-366).
         */
         if (parameters.Stack.Count < 1)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "TIMESPLIT requires one parameter");
+            return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, "TIMESPLIT requires one parameter");
 
         var si = parameters.Stack.Pop();
         if (si.Type != DatumType.Integer)
-            return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "TIMESPLIT requires the top parameter on the stack to be an integer");
+            return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "TIMESPLIT requires the top parameter on the stack to be an integer");
 
         var offset = DateTimeOffset.FromUnixTimeSeconds((int)si.Value);
         var dt = offset.DateTime;
@@ -34,6 +34,6 @@ public static class TimeSplit
         parameters.Stack.Push(new ForthDatum(((int)offset.DateTime.DayOfWeek) + 1));
         parameters.Stack.Push(new ForthDatum(offset.DateTime.DayOfYear));
 
-        return default(ForthProgramResult);
+        return ForthPrimativeResult.SUCCESS;
     }
 }

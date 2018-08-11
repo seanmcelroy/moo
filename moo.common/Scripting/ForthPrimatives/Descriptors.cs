@@ -5,11 +5,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using static Dbref;
 using static ForthDatum;
-using static ForthProgramResult;
+using static ForthPrimativeResult;
 
 public static class Descriptors
 {
-    public static ForthProgramResult Execute(ForthPrimativeParameters parameters)
+    public static ForthPrimativeResult Execute(ForthPrimativeParameters parameters)
     {
         /*
         DESCRIPTORS (d -- ix...i1 i) 
@@ -18,11 +18,11 @@ public static class Descriptors
         Also see: DESCRCON and CONDESCR
         */
         if (parameters.Stack.Count < 1)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "DESCRIPTORS requires two parameters");
+            return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, "DESCRIPTORS requires two parameters");
 
         var n1 = parameters.Stack.Pop();
         if (n1.Type != DatumType.DbRef)
-            return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "DESCRIPTORS requires the top parameter on the stack to be a dbref");
+            return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "DESCRIPTORS requires the top parameter on the stack to be a dbref");
 
         var connectionDescriptors = parameters.Server.GetConnectionDescriptors((Dbref)n1.Value).ToArray();
 
@@ -30,6 +30,6 @@ public static class Descriptors
             parameters.Stack.Push(new ForthDatum(connectionDescriptor));
 
         parameters.Stack.Push(new ForthDatum(connectionDescriptors.Length));
-        return default(ForthProgramResult);
+        return ForthPrimativeResult.SUCCESS;
     }
 }

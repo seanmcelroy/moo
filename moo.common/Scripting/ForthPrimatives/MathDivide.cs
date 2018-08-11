@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using static Dbref;
 using static ForthDatum;
-using static ForthProgramResult;
+using static ForthPrimativeResult;
 
 public static class MathDivide
 {
-    public static ForthProgramResult Execute(ForthPrimativeParameters parameters)
+    public static ForthPrimativeResult Execute(ForthPrimativeParameters parameters)
     {
         /*
         / ( n1 n2 -- n ) 
@@ -17,7 +17,7 @@ public static class MathDivide
         second argument is an integer. In those cases, this will return a dbref or variable number, respectively.
         */
         if (parameters.Stack.Count < 2)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "* requires two parameters");
+            return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, "* requires two parameters");
 
         var n2 = parameters.Stack.Pop();
         var n1 = parameters.Stack.Pop();
@@ -26,10 +26,10 @@ public static class MathDivide
         {
             var n2v = (int)n2.Value;
             if (n2v == 0)
-                return new ForthProgramResult(ForthProgramErrorResult.DIVISION_BY_ZERO, "Attempt to divide by zero was aborted");
+                return new ForthPrimativeResult(ForthErrorResult.DIVISION_BY_ZERO, "Attempt to divide by zero was aborted");
 
             parameters.Stack.Push(new ForthDatum((int)n1.Value / n2v));
-            return default(ForthProgramResult);
+            return ForthPrimativeResult.SUCCESS;
         }
 
         if ((n1.Type == DatumType.Integer || n1.Type == DatumType.Float) &&
@@ -37,10 +37,10 @@ public static class MathDivide
         {
             var n2v = Convert.ToSingle(n2.Value);
             if (n2v == 0)
-                return new ForthProgramResult(ForthProgramErrorResult.DIVISION_BY_ZERO, "Attempt to divide by zero was aborted");
+                return new ForthPrimativeResult(ForthErrorResult.DIVISION_BY_ZERO, "Attempt to divide by zero was aborted");
 
             parameters.Stack.Push(new ForthDatum(Convert.ToSingle(n1.Value) / n2v));
-            return default(ForthProgramResult);
+            return ForthPrimativeResult.SUCCESS;
         }
 
         if (n1.Type == DatumType.DbRef || n2.Type == DatumType.Integer)
@@ -49,13 +49,13 @@ public static class MathDivide
 
             var n2v = (int)n2.Value;
             if (n2v == 0)
-                return new ForthProgramResult(ForthProgramErrorResult.DIVISION_BY_ZERO, "Attempt to divide by zero was aborted");
+                return new ForthPrimativeResult(ForthErrorResult.DIVISION_BY_ZERO, "Attempt to divide by zero was aborted");
 
             parameters.Stack.Push(new ForthDatum(new Dbref(n1v / n2v, DbrefObjectType.Thing), 0));
-            return default(ForthProgramResult);
+            return ForthPrimativeResult.SUCCESS;
         }
 
-        return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "/ expects integers or floating point numbers, or no more than one dbref and an integer");
+        return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "/ expects integers or floating point numbers, or no more than one dbref and an integer");
 
         // TODO: We do not support variable numbers today.  They're depreciated anyway.
     }

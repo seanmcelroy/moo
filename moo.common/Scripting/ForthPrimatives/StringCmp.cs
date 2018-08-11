@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using static ForthDatum;
-using static ForthProgramResult;
+using static ForthPrimativeResult;
 
 public static class StringCmp
 {
-    public static ForthProgramResult Execute(ForthPrimativeParameters parameters)
+    public static ForthPrimativeResult Execute(ForthPrimativeParameters parameters)
     {
         /*
         STRINGCMP ( s1 s2 -- i ) 
@@ -16,15 +16,15 @@ public static class StringCmp
         For example, "z" "a" stringcmp returns 25. This function is not case sensitive, unlike strcmp.
         */
         if (parameters.Stack.Count < 2)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "STRINGCMP requires two parameters");
+            return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, "STRINGCMP requires two parameters");
 
         var n2 = parameters.Stack.Pop();
         if (n2.Type != DatumType.String)
-            return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "STRINGCMP requires the second-to-top parameter on the stack to be a string");
+            return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "STRINGCMP requires the second-to-top parameter on the stack to be a string");
 
         var n1 = parameters.Stack.Pop();
         if (n1.Type != DatumType.String)
-            return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "STRINGCMP requires the top parameter on the stack to be a string");
+            return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "STRINGCMP requires the top parameter on the stack to be a string");
 
         var s1 = ((string)n1.Value).ToUpperInvariant();
         var s2 = ((string)n2.Value).ToUpperInvariant();
@@ -34,12 +34,12 @@ public static class StringCmp
             if (n > s1.Length - 1)
             {
                 parameters.Stack.Push(new ForthDatum((int)Encoding.ASCII.GetBytes(s2[n].ToString())[0]));
-                return default(ForthProgramResult);
+                return ForthPrimativeResult.SUCCESS;
             }
             else if (n > s2.Length - 1)
             {
                 parameters.Stack.Push(new ForthDatum(-1 * (int)Encoding.ASCII.GetBytes(s1[n].ToString())[0]));
-                return default(ForthProgramResult);
+                return ForthPrimativeResult.SUCCESS;
             }
             else
             {
@@ -48,12 +48,12 @@ public static class StringCmp
                 if (c1 != c2)
                 {
                     parameters.Stack.Push(new ForthDatum(c2 - c1));
-                    return default(ForthProgramResult);
+                    return ForthPrimativeResult.SUCCESS;
                 }
             }
         }
 
         parameters.Stack.Push(new ForthDatum(0));
-        return default(ForthProgramResult);
+        return ForthPrimativeResult.SUCCESS;
     }
 }

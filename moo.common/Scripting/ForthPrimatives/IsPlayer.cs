@@ -4,12 +4,12 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using static ForthDatum;
-using static ForthProgramResult;
+using static ForthPrimativeResult;
 using static Property;
 
 public static class IsPlayer
 {
-    public static async Task<ForthProgramResult> ExecuteAsync(ForthPrimativeParameters parameters)
+    public static async Task<ForthPrimativeResult> ExecuteAsync(ForthPrimativeParameters parameters)
     {
         /*
         PLAYER? ( d -- i ) 
@@ -17,29 +17,29 @@ public static class IsPlayer
         Returns 1 if object d is a player object, otherwise returns 0. If the dbref is that of an invalid object, it will return 0.
         */
         if (parameters.Stack.Count < 1)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "PLAYER? requires one parameter");
+            return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, "PLAYER? requires one parameter");
 
         var sTarget = parameters.Stack.Pop();
         if (sTarget.Type != DatumType.DbRef)
-            return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "PLAYER? requires the top parameter on the stack to be a dbref");
+            return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "PLAYER? requires the top parameter on the stack to be a dbref");
 
         if (((Dbref)sTarget.Value).ToInt32() < 0)
         {
             parameters.Stack.Push(new ForthDatum(0));
-            return default(ForthProgramResult);
+            return ForthPrimativeResult.SUCCESS;
         }
 
         var targetResult = await ThingRepository.GetAsync<Thing>(sTarget.UnwrapDbref(), parameters.CancellationToken);
         if (!targetResult.isSuccess)
         {
             parameters.Stack.Push(new ForthDatum(0));
-            return default(ForthProgramResult);
+            return ForthPrimativeResult.SUCCESS;
         }
 
         if (!typeof(Player).IsAssignableFrom(targetResult.value.GetType()))
             parameters.Stack.Push(new ForthDatum(0));
 
         parameters.Stack.Push(new ForthDatum(1));
-        return default(ForthProgramResult);
+        return ForthPrimativeResult.SUCCESS;
     }
 }

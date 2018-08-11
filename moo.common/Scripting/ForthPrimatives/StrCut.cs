@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using static ForthDatum;
-using static ForthProgramResult;
+using static ForthPrimativeResult;
 
 public static class StrCut
 {
-    public static ForthProgramResult Execute(ForthPrimativeParameters parameters)
+    public static ForthPrimativeResult Execute(ForthPrimativeParameters parameters)
     {
         /*
         STRCUT ( s i -- s1 s2 ) 
@@ -18,15 +18,15 @@ public static class StrCut
         "Foo" "bar" If i is zero or greater than the length of s, returns a null string in the first or second position, respectively.
         */
         if (parameters.Stack.Count < 2)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "STRCUT requires two parameters");
+            return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, "STRCUT requires two parameters");
 
         var ni = parameters.Stack.Pop();
         if (ni.Type != DatumType.Integer)
-            return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "STRCUT requires the top parameter on the stack to be an integer");
+            return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "STRCUT requires the top parameter on the stack to be an integer");
 
         var sSource = parameters.Stack.Pop();
         if (sSource.Type != DatumType.String)
-            return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "STRCUT requires the second-to-top parameter on the stack to be a string");
+            return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "STRCUT requires the second-to-top parameter on the stack to be a string");
 
         var index = (int)ni.Value;
         var source = (string)sSource.Value;
@@ -47,6 +47,6 @@ public static class StrCut
             parameters.Stack.Push(new ForthDatum(source.Substring(index)));
         }
 
-        return default(ForthProgramResult);
+        return ForthPrimativeResult.SUCCESS;
     }
 }

@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
 using static ForthDatum;
-using static ForthProgramResult;
+using static ForthPrimativeResult;
 
 public static class Rotate
 {
-    public static ForthProgramResult Execute(ForthPrimativeParameters parameters)
+    public static ForthPrimativeResult Execute(ForthPrimativeParameters parameters)
     {
         /*
         ROTATE ( ni ... n1 i -- n(i-1) ... n1 ni )
@@ -19,15 +19,15 @@ public static class Rotate
             "d" "a" "b" "c" on the stack.
         */
         if (parameters.Stack.Count == 0)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "ROTATE requires at least one parameter");
+            return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, "ROTATE requires at least one parameter");
 
         var si = parameters.Stack.Pop();
         if (si.Type != DatumType.Integer)
-            return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "ROTATE requires the top parameter on the stack to be an integer");
+            return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "ROTATE requires the top parameter on the stack to be an integer");
 
         int i = (int)si.Value;
         if (parameters.Stack.Count < i)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, $"ROTATE would have rotated {Math.Abs(i)} items on the stack, but only {parameters.Stack.Count} were present.");
+            return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, $"ROTATE would have rotated {Math.Abs(i)} items on the stack, but only {parameters.Stack.Count} were present.");
 
         var data = new ForthDatum[Math.Abs(i)];
         for (int n = Math.Abs(i) - 1; n >= 0; n--)
@@ -46,6 +46,6 @@ public static class Rotate
         //for (int n = 0; n < data.Length; n++)
         //    stack.Push(data[Math.Abs((n + shift) % (data.Length))]);
 
-        return default(ForthProgramResult);
+        return ForthPrimativeResult.SUCCESS;
     }
 }

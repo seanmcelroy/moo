@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using static ForthDatum;
-using static ForthProgramResult;
+using static ForthPrimativeResult;
 
 public static class MathModulo
 {
-    public static ForthProgramResult Execute(ForthPrimativeParameters parameters)
+    public static ForthPrimativeResult Execute(ForthPrimativeParameters parameters)
     {
         /*
         % ( n1 n2 -- i ) 
@@ -15,18 +15,18 @@ public static class MathModulo
         Floats cannot use the % modulo function. For them, use either the FMOD or MODF primitives.
         */
         if (parameters.Stack.Count < 2)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "% requires two parameters");
+            return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, "% requires two parameters");
 
         var n2 = parameters.Stack.Pop();
         var n1 = parameters.Stack.Pop();
 
         if (n2.Type != DatumType.Integer)
-            return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "% requires arguments to be integers");
+            return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "% requires arguments to be integers");
 
         if (n1.Type != DatumType.Integer)
-            return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "% requires arguments to be integers");
+            return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "% requires arguments to be integers");
 
         parameters.Stack.Push(new ForthDatum((int)n1.Value % (int)n2.Value));
-        return default(ForthProgramResult);
+        return ForthPrimativeResult.SUCCESS;
     }
 }

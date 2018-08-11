@@ -21,6 +21,34 @@ public struct ForthDatum
     public readonly int? LineNumber;
     public readonly int? ColumnNumber;
 
+    public ForthDatum(ForthVariable variable, int? lineNumber = null, int? columnNumber = null)
+    {
+        this.Value = variable.Value;
+        switch (variable.Type)
+        {
+            case ForthVariable.VariableType.DbRef:
+                this.Type = ForthDatum.DatumType.DbRef;
+                break;
+            case ForthVariable.VariableType.Float:
+                this.Type = ForthDatum.DatumType.Float;
+                break;
+            case ForthVariable.VariableType.Integer:
+                this.Type = ForthDatum.DatumType.Integer;
+                break;
+            case ForthVariable.VariableType.String:
+                this.Type = ForthDatum.DatumType.DbRef;
+                break;
+            case ForthVariable.VariableType.Unknown:
+                this.Type = ForthDatum.DatumType.Unknown;
+                break;
+            default:
+                throw new System.ArgumentException("Unhandled variable type: " + variable.Type, nameof(variable));
+        }
+
+        this.LineNumber = lineNumber;
+        this.ColumnNumber = columnNumber;
+    }
+
     public ForthDatum(object value, DatumType type, int? lineNumber = null, int? columnNumber = null)
     {
         this.Value = value;

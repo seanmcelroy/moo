@@ -13,17 +13,17 @@ public class Script : Action
         var process = new ForthProcess(server, id, connection);
 
         process.State = ForthProcess.ProcessState.Parsing;
-        var parsed = ForthParser.ParseProgram(connection, programText);
-        if (!parsed.IsSuccessful)
+        var tokenized = ForthTokenizer.Tokenzie(connection, programText);
+        if (!tokenized.IsSuccessful)
         {
             process.State = ForthProcess.ProcessState.Complete;
-            return new VerbResult(false, parsed.Reason);
+            return new VerbResult(false, tokenized.Reason);
         }
 
-        foreach (var v in parsed.ProgramLocalVariables)
+        foreach (var v in tokenized.ProgramLocalVariables)
             process.SetProgramLocalVariable(v.Key, v.Value);
 
-        var result = await server.ExecuteAsync(process, parsed.Words, connection.Dbref, command.getVerb(), new[] { command.getNonVerbPhrase() }, cancellationToken);
+        var result = await server.ExecuteAsync(process, tokenized.Words, connection.Dbref, command.getVerb(), new[] { command.getNonVerbPhrase() }, cancellationToken);
         var scriptResult = new VerbResult(result.IsSuccessful, result.Reason?.ToString());
 
         process.State = ForthProcess.ProcessState.Complete;

@@ -4,12 +4,12 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using static ForthDatum;
-using static ForthProgramResult;
+using static ForthPrimativeResult;
 using static Property;
 
 public static class Notify
 {
-    public static async Task<ForthProgramResult> ExecuteAsync(ForthPrimativeParameters parameters)
+    public static async Task<ForthPrimativeResult> ExecuteAsync(ForthPrimativeParameters parameters)
     {
         /*
         NOTIFY ( d s -- ) 
@@ -19,25 +19,25 @@ public static class Notify
         unless the program that would be run is the same as one one currently running.
         */
         if (parameters.Stack.Count < 2)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "NOTIFY requires two parameters");
+            return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, "NOTIFY requires two parameters");
 
         var sMessage = parameters.Stack.Pop();
         if (sMessage.Type != DatumType.String)
-            return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "NOTIFY requires the top parameter on the stack to be an string");
+            return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "NOTIFY requires the top parameter on the stack to be an string");
 
         var sTarget = parameters.Stack.Pop();
         if (sTarget.Type != DatumType.DbRef)
-            return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "NOTIFY requires the second-to-top parameter on the stack to be a dbref");
+            return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "NOTIFY requires the second-to-top parameter on the stack to be a dbref");
 
         if (((Dbref)sTarget.Value).ToInt32() < 0)
-            return default(ForthProgramResult);
+            return ForthPrimativeResult.SUCCESS;
 
         var message = (string)sMessage.Value;
         if (message == null || string.IsNullOrWhiteSpace(message))
-            return default(ForthProgramResult);
+            return ForthPrimativeResult.SUCCESS;
 
         await parameters.Notify.Invoke(sTarget.UnwrapDbref(), message);
 
-        return default(ForthProgramResult);
+        return ForthPrimativeResult.SUCCESS;
     }
 }

@@ -5,11 +5,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using static Dbref;
 using static ForthDatum;
-using static ForthProgramResult;
+using static ForthPrimativeResult;
 
 public static class StrLen
 {
-    public static ForthProgramResult Execute(ForthPrimativeParameters parameters)
+    public static ForthPrimativeResult Execute(ForthPrimativeParameters parameters)
     {
         /*
         STRLEN ( s -- i ) 
@@ -17,14 +17,14 @@ public static class StrLen
         Returns the length of string s.
         */
         if (parameters.Stack.Count < 1)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "STRLEN requires one parameter");
+            return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, "STRLEN requires one parameter");
 
         var n1 = parameters.Stack.Pop();
         if (n1.Type != DatumType.String)
-            return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "STRLEN requires the top parameter on the stack to be a string");
+            return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "STRLEN requires the top parameter on the stack to be a string");
 
         parameters.Stack.Push(new ForthDatum(n1.Value == null ? 0 : ((string)n1.Value).Length));
 
-        return default(ForthProgramResult);
+        return ForthPrimativeResult.SUCCESS;
     }
 }

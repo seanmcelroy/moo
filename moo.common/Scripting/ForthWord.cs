@@ -4,12 +4,13 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using static ForthDatum;
-using static ForthProgramResult;
+using static ForthTokenizerResult;
 using static ForthVariable;
+using static ForthWordResult;
 
 public struct ForthWord
 {
-    private static readonly Dictionary<string, Func<ForthPrimativeParameters, ForthProgramResult>> callTable = new Dictionary<string, Func<ForthPrimativeParameters, ForthProgramResult>>();
+    private static readonly Dictionary<string, Func<ForthPrimativeParameters, ForthPrimativeResult>> callTable = new Dictionary<string, Func<ForthPrimativeParameters, ForthPrimativeResult>>();
     public readonly string name;
     public readonly List<ForthDatum> programData;
     private readonly Dictionary<string, ForthVariable> functionScopedVariables;
@@ -50,14 +51,14 @@ public struct ForthWord
             // DEPTH ( -- i ) 
             // Returns the number of items currently on the stack.
             p.Stack.Push(new ForthDatum(p.Stack.Count));
-            return default(ForthProgramResult);
+            return default(ForthPrimativeResult);
         });
         callTable.Add("{", (p) =>
         {
             // { ( -- marker) 
             // Pushes a marker onto the stack, to be used with } or }list or }dict.
             p.Stack.Push(new ForthDatum("{", DatumType.Marker));
-            return default(ForthProgramResult);
+            return default(ForthPrimativeResult);
         });
         callTable.Add("}", (p) => MarkerEnd.Execute(p));
         callTable.Add("@", (p) => At.Execute(p));
@@ -177,7 +178,7 @@ public struct ForthWord
         return callTable.Keys;
     }
 
-    public async Task<ForthProgramResult> RunAsync(
+    public async Task<ForthWordResult> RunAsync(
         ForthProcess process,
         Stack<ForthDatum> stack,
         PlayerConnection connection,
@@ -199,7 +200,20 @@ public struct ForthWord
             lineCount++;
 
             if (cancellationToken.IsCancellationRequested)
-                return new ForthProgramResult(ForthProgramErrorResult.INTERRUPTED, "Cancellation received");
+                return new ForthWordResult(ForthErrorResult.INTERRUPTED, "Cancellation received");
+
+            if (process.State == ForthProcess.ProcessState.Pausing)
+                process.State = ForthProcess.ProcessState.Paused;
+
+            if (process.State == ForthProcess.ProcessState.Preempting)
+                process.State = ForthProcess.ProcessState.Preempted;
+
+            while (process.State == ForthProcess.ProcessState.Paused
+            || process.State == ForthProcess.ProcessState.Preempted)
+            {
+                Thread.Yield();
+                Thread.Sleep(1000);
+            }
 
             // Line-level items
 
@@ -209,7 +223,7 @@ public struct ForthWord
             {
                 var varKey = line[1].Value.ToString().ToLowerInvariant();
                 if (functionScopedVariables.ContainsKey(varKey))
-                    return new ForthProgramResult(ForthProgramErrorResult.VARIABLE_ALREADY_DEFINED, $"Variable '{varKey}' is already defined.");
+                    return new ForthProgramResult(ForthErrorResult.VARIABLE_ALREADY_DEFINED, $"Variable '{varKey}' is already defined.");
 
                 functionScopedVariables.Add(varKey, null);
                 await connection.sendOutput(line.Select(d => d.Value.ToString()).Aggregate((c, n) => c + " " + n));
@@ -221,7 +235,7 @@ public struct ForthWord
             {
                 var varKey = line[1].Value.ToString().ToLowerInvariant();
                 if (functionScopedVariables.ContainsKey(varKey))
-                    return new ForthProgramResult(ForthProgramErrorResult.VARIABLE_ALREADY_DEFINED, $"Variable '{varKey}' is already defined.");
+                    return new ForthProgramResult(ForthErrorResult.VARIABLE_ALREADY_DEFINED, $"Variable '{varKey}' is already defined.");
 
                 functionScopedVariables.Add(varKey, stack.Count > 0 ? (object)stack.Pop() : null);
                 await connection.sendOutput(line.Select(d => d.Value.ToString()).Aggregate((c, n) => c + " " + n));
@@ -235,7 +249,7 @@ public struct ForthWord
             // Do we have something unknown on the top of the stack?
             if (stack.Count > 0 && stack.Peek().Type == ForthDatum.DatumType.Unknown)
             {
-                return new ForthProgramResult(ForthProgramErrorResult.SYNTAX_ERROR, $"Unable to handle datum: {stack.Peek()}");
+                return new ForthWordResult(ForthErrorResult.SYNTAX_ERROR, $"Unable to handle datum: {stack.Peek()}");
             }
 
             // Execution Control
@@ -266,7 +280,7 @@ public struct ForthWord
                     if (stack.Count == 0)
                     {
                         await DumpVariablesToDebugAsync(process, connection);
-                        return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "IF had no value on the stack to evaluate");
+                        return new ForthWordResult(ForthErrorResult.STACK_UNDERFLOW, "IF had no value on the stack to evaluate");
                     }
 
                     var eval = stack.Pop();
@@ -297,7 +311,7 @@ public struct ForthWord
                     await DumpStackToDebugAsync(stack, connection, lineCount, datum);
 
                     if (controlFlow.Count == 0)
-                        return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "ELSE encountered without preceding IF");
+                        return new ForthWordResult(ForthErrorResult.STACK_UNDERFLOW, "ELSE encountered without preceding IF");
 
                     var currentControl = controlFlow.Pop();
                     if (currentControl.Element == ControlFlowElement.InIfAndContinue)
@@ -331,7 +345,7 @@ public struct ForthWord
 
 
                     if (controlFlow.Count == 0)
-                        return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "THEN encountered without preceding IF");
+                        return new ForthWordResult(ForthErrorResult.STACK_UNDERFLOW, "THEN encountered without preceding IF");
                     controlFlow.Pop();
                     continue;
                 }
@@ -357,7 +371,7 @@ public struct ForthWord
                     // Debug, print stack
                     await DumpStackToDebugAsync(stack, connection, lineCount, datum);
 
-                    return new ForthProgramResult($"Word {name} completed via exit");
+                    return new ForthWordResult($"Word {name} completed via exit");
                 }
 
                 // BEGIN
@@ -407,7 +421,7 @@ public struct ForthWord
 
                     if (stack.Count == 0)
                     {
-                        return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "WHILE had no value on the stack to evaluate");
+                        return new ForthWordResult(ForthErrorResult.STACK_UNDERFLOW, "WHILE had no value on the stack to evaluate");
                     }
 
                     var eval = stack.Pop();
@@ -425,7 +439,7 @@ public struct ForthWord
 
                     // I could be an 'repeat' inside a skipped branch.
                     if (controlFlow.Count == 0)
-                        return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "REPEAT but no previous BEGIN, FOR, or FOREACH on the stack");
+                        return new ForthWordResult(ForthErrorResult.STACK_UNDERFLOW, "REPEAT but no previous BEGIN, FOR, or FOREACH on the stack");
 
                     var controlCurrent = controlFlow.Peek();
 
@@ -454,7 +468,7 @@ public struct ForthWord
                     if (found)
                         continue;
 
-                    return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "REPEAT but no previous BEGIN, FOR, or FOREACH");
+                    return new ForthWordResult(ForthErrorResult.STACK_UNDERFLOW, "REPEAT but no previous BEGIN, FOR, or FOREACH");
                 }
 
                 // UNTIL
@@ -462,7 +476,7 @@ public struct ForthWord
                 {
                     // I could be an 'until' inside a skipped branch.
                     if (controlFlow.Count == 0)
-                        return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "UNTIL but no previous BEGIN, FOR, or FOREACH on the stack");
+                        return new ForthWordResult(ForthErrorResult.STACK_UNDERFLOW, "UNTIL but no previous BEGIN, FOR, or FOREACH on the stack");
 
                     var controlCurrent = controlFlow.Peek();
 
@@ -487,7 +501,7 @@ public struct ForthWord
                     if (stack.Count == 0)
                     {
                         await DumpStackToDebugAsync(stack, connection, lineCount, datum);
-                        return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "UNTIL had no value on the stack to evaluate");
+                        return new ForthWordResult(ForthErrorResult.STACK_UNDERFLOW, "UNTIL had no value on the stack to evaluate");
                     }
 
                     var eval = stack.Pop();
@@ -512,7 +526,7 @@ public struct ForthWord
                         continue;
 
                     await DumpStackToDebugAsync(stack, connection, lineCount, datum);
-                    return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "UNTIL but no previous BEGIN or FOR");
+                    return new ForthWordResult(ForthErrorResult.STACK_UNDERFLOW, "UNTIL but no previous BEGIN or FOR");
                 }
             }
 
@@ -608,7 +622,7 @@ public struct ForthWord
                             {
                                 var v = programLocalVariables[dirty.Key];
                                 if (v.IsConstant)
-                                    return new ForthProgramResult(ForthProgramErrorResult.VARIABLE_IS_CONSTANT, $"Variable {dirty.Key} is a constant in this scope and cannot be changed.");
+                                    return new ForthWordResult(ForthErrorResult.VARIABLE_IS_CONSTANT, $"Variable {dirty.Key} is a constant in this scope and cannot be changed.");
 
                                 programLocalVariables[dirty.Key] = dirty.Value;
                             }
@@ -618,26 +632,26 @@ public struct ForthWord
                         }
                     }
 
-                    if (default(ForthProgramResult).Equals(result))
+                    if (default(ForthWordResult).Equals(result))
                         continue;
                     if (!result.IsSuccessful)
-                        return result;
+                        return new ForthWordResult((ForthErrorResult)result.Result, result.Reason);
 
                     continue;
                 }
 
                 // Unable to handle!
-                return new ForthProgramResult(ForthProgramErrorResult.SYNTAX_ERROR, $"Unable to handle datum: {datum}");
+                return new ForthWordResult(ForthErrorResult.SYNTAX_ERROR, $"Unable to handle datum: {datum}");
             }
 
             // Unable to handle!
-            return new ForthProgramResult(ForthProgramErrorResult.INTERNAL_ERROR, $"Unable to handle datum: {datum}");
+            return new ForthWordResult(ForthErrorResult.INTERNAL_ERROR, $"Unable to handle datum: {datum}");
         }
 
         // Debug, print stack at end of program
         await DumpStackToDebugAsync(stack, connection, lineCount);
 
-        return new ForthProgramResult($"Word {name} completed");
+        return new ForthWordResult($"Word {name} completed");
     }
 
     private async Task DumpStackToDebugAsync(Stack<ForthDatum> stack, PlayerConnection connection, int lineCount, ForthDatum currentDatum = default(ForthDatum), string extra = null)

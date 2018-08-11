@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using static ForthDatum;
-using static ForthProgramResult;
+using static ForthPrimativeResult;
 
 public static class TimeFormat
 {
-    public static ForthProgramResult Execute(ForthPrimativeParameters parameters)
+    public static ForthPrimativeResult Execute(ForthPrimativeParameters parameters)
     {
         /*
         TIMEFMT (s i -- s) 
@@ -78,15 +78,15 @@ public static class TimeFormat
         %Z -- Time zone. "GMT", "EDT", "PST", etc.
         */
         if (parameters.Stack.Count < 2)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "TIMEFMT requires two parameters");
+            return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, "TIMEFMT requires two parameters");
 
         var si = parameters.Stack.Pop();
         if (si.Type != DatumType.Integer)
-            return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "TIMEFMT requires the top parameter on the stack to be an integer");
+            return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "TIMEFMT requires the top parameter on the stack to be an integer");
 
         var sfmt = parameters.Stack.Pop();
         if (sfmt.Type != DatumType.String)
-            return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "TIMEFMT requires the second-to-top parameter on the stack to be a format string");
+            return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "TIMEFMT requires the second-to-top parameter on the stack to be a format string");
 
         var offset = DateTimeOffset.FromUnixTimeSeconds((int)si.Value);
         var dt = offset.DateTime;
@@ -133,7 +133,7 @@ public static class TimeFormat
 
         parameters.Stack.Push(new ForthDatum(formatted));
 
-        return default(ForthProgramResult);
+        return ForthPrimativeResult.SUCCESS;
     }
 
     // This presumes that weeks start with Monday.

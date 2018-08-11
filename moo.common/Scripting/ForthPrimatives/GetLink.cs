@@ -4,12 +4,12 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using static ForthDatum;
-using static ForthProgramResult;
+using static ForthPrimativeResult;
 using static Property;
 
 public static class GetLink
 {
-    public static async Task<ForthProgramResult> ExecuteAsync(ForthPrimativeParameters parameters)
+    public static async Task<ForthPrimativeResult> ExecuteAsync(ForthPrimativeParameters parameters)
     {
         /*
         GETLINK ( d -- d' ) 
@@ -20,17 +20,17 @@ public static class GetLink
         For a player or thing, it returns its `home', and for rooms returns the drop-to.
         */
         if (parameters.Stack.Count < 1)
-            return new ForthProgramResult(ForthProgramErrorResult.STACK_UNDERFLOW, "GETLINK requires one parameter");
+            return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, "GETLINK requires one parameter");
 
         var sTarget = parameters.Stack.Pop();
         if (sTarget.Type != DatumType.DbRef)
-            return new ForthProgramResult(ForthProgramErrorResult.TYPE_MISMATCH, "GETLINK requires the top parameter on the stack to be a dbref");
+            return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "GETLINK requires the top parameter on the stack to be a dbref");
 
         var targetResult = await ThingRepository.GetAsync<Thing>(sTarget.UnwrapDbref(), parameters.CancellationToken);
         if (!targetResult.isSuccess)
-            return new ForthProgramResult(ForthProgramErrorResult.NO_SUCH_OBJECT, $"Unable to find object with dbref {sTarget.UnwrapDbref()}");
+            return new ForthPrimativeResult(ForthErrorResult.NO_SUCH_OBJECT, $"Unable to find object with dbref {sTarget.UnwrapDbref()}");
         
         parameters.Stack.Push(new ForthDatum(targetResult.value.Link, 0));
-        return ForthProgramResult.SUCCESS;
+        return ForthPrimativeResult.SUCCESS;
     }
 }

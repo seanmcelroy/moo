@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
-public struct ForthParseResult
+public struct ForthTokenizerResult
 {
-    private readonly bool isSuccessful;
+     private readonly bool isSuccessful;
     private readonly string reason;
     private readonly List<ForthWord> words;
     private readonly Dictionary<string, ForthVariable> programLocalVariables;
@@ -13,7 +13,7 @@ public struct ForthParseResult
     public ReadOnlyCollection<ForthWord> Words => words.AsReadOnly();
     public Dictionary<string, ForthVariable> ProgramLocalVariables => programLocalVariables;
 
-    public ForthParseResult(string failureReason)
+    public ForthTokenizerResult(string failureReason)
     {
         this.isSuccessful = false;
         this.reason = failureReason;
@@ -21,7 +21,7 @@ public struct ForthParseResult
         this.programLocalVariables = null;
     }
 
-    public ForthParseResult(List<ForthWord> words, Dictionary<string, ForthVariable> programLocalVariables)
+    public ForthTokenizerResult(List<ForthWord> words, Dictionary<string, ForthVariable> programLocalVariables)
     {
         this.isSuccessful = true;
         this.reason = null;
