@@ -249,7 +249,7 @@ public struct ForthWord
             // Do we have something unknown on the top of the stack?
             if (stack.Count > 0 && stack.Peek().Type == ForthDatum.DatumType.Unknown)
             {
-                return new ForthWordResult(ForthErrorResult.SYNTAX_ERROR, $"Unable to handle datum: {stack.Peek()}");
+                return new ForthWordResult(ForthErrorResult.SYNTAX_ERROR, $"Unable to handle datum on top of stack: {stack.Peek()}");
             }
 
             // Execution Control
@@ -641,7 +641,7 @@ public struct ForthWord
                 }
 
                 // Unable to handle!
-                return new ForthWordResult(ForthErrorResult.SYNTAX_ERROR, $"Unable to handle datum: {datum}");
+                return new ForthWordResult(ForthErrorResult.SYNTAX_ERROR, $"Unable to handle datum primative: {datum}");
             }
 
             // Unable to handle!

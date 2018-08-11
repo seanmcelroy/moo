@@ -24,7 +24,7 @@ namespace Tests
             local.Push(new ForthDatum(3));
             var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default(CancellationToken));
             var result = Pick.Execute(parameters);
-            Assert.AreEqual(default(ForthProgramResult), result);
+            Assert.AreEqual(default(ForthPrimativeResult), result);
 
             var b = local.Pop();
             Assert.AreEqual(ForthDatum.DatumType.String, b.Type);

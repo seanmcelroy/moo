@@ -10,7 +10,7 @@ namespace moo.console
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("\r\n\r\nMoo!\r\n");
+            Console.Out.WriteLine("\r\n\r\nMoo!\r\n");
             var cts = new CancellationTokenSource();
 
             var server = new Server(Console.Out);
@@ -23,15 +23,8 @@ namespace moo.console
                 server.RegisterBuiltInAction(action);
 
             Console.Out.WriteLine("Loading script directory");
-            var scriptDirectoryPath = "scripts";
-            var scriptSearchPattern = "cmd-*.muf";
-            var scriptFilePrefix = "cmd-";
-            foreach (var file in System.IO.Directory.GetFiles(scriptDirectoryPath, scriptSearchPattern))
-            {
-                var commandName = file.Substring(scriptDirectoryPath.Length + 1).Replace(scriptFilePrefix, "").Replace(".muf", "");
-                var script = server.RegisterScript(commandName, LoadScriptFile(file));
-                Console.WriteLine($"Created new script {script.name}({script.id})");
-            }
+            LoadScriptDirectory(server, "scripts", "lib-*.muf", null);
+            LoadScriptDirectory(server, "scripts", "cmd-*.muf", "cmd-");
 
             Console.Out.WriteLine("Starting server");
             server.Start(cts.Token);
@@ -55,7 +48,7 @@ namespace moo.console
             HostPlayer.make("God", aether);
             var player = HumanPlayer.make("Wizard", aether);
 
-            Console.WriteLine($"Created new player {player.name}({player.id})");
+            Console.Out.WriteLine($"Created new player {player.name}({player.id})");
 
             var moveResult = player.MoveToAsync(aether, cancellationToken).Result;
 
@@ -76,9 +69,20 @@ namespace moo.console
             return player;
         }
 
-        private static string LoadScriptFile(string path)
+
+        private static void LoadScriptDirectory(Server server, string scriptDirectoryPath, string scriptSearchPattern, string scriptFilePrefix = null)
         {
-            return System.IO.File.ReadAllText(path);
+            foreach (var file in System.IO.Directory.GetFiles(scriptDirectoryPath, scriptSearchPattern))
+            {
+                var commandName = file.Substring(scriptDirectoryPath.Length + 1);
+                if (scriptFilePrefix != null)
+                    commandName = commandName.Replace(scriptFilePrefix, "");
+                commandName = commandName.Replace(".muf", "");
+                var script = server.RegisterScript(commandName, LoadScriptFile(file));
+                Console.Out.WriteLine($"Created new script {script.name}({script.id})");
+            }
         }
+
+        private static string LoadScriptFile(string path) => System.IO.File.ReadAllText(path);
     }
 }
