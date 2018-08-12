@@ -10,7 +10,7 @@ public struct ForthTokenizerResult
 
     public bool IsSuccessful => isSuccessful;
     public string Reason => reason;
-    public ReadOnlyCollection<ForthWord> Words => words.AsReadOnly();
+    public ReadOnlyCollection<ForthWord> Words => words?.AsReadOnly();
     public Dictionary<string, ForthVariable> ProgramLocalVariables => programLocalVariables;
 
     public ForthTokenizerResult(string failureReason)

@@ -115,8 +115,17 @@ public struct ForthWord
         callTable.Add("instr", (p) => Instr.Execute(p));
         callTable.Add("rinstr", (p) => RInstr.Execute(p));
         callTable.Add("strcut", (p) => StrCut.Execute(p));
+        callTable.Add("midstr", (p) => MidStr.Execute(p));
+        callTable.Add("split", (p) => Split.Execute(p));
+
+        callTable.Add("subst", (p) => Subst.Execute(p));
 
         callTable.Add("intostr", (p) => IntoStr.Execute(p));
+
+        callTable.Add("toupper", (p) => ToUpper.Execute(p));
+        callTable.Add("tolower", (p) => ToLower.Execute(p));
+        callTable.Add("striplead", (p) => StripLead.Execute(p));
+        callTable.Add("striptail", (p) => StripTail.Execute(p));
 
         // PROPERTY MANIPULATION
         callTable.Add("getpropval", (p) => GetPropVal.ExecuteAsync(p).Result);
@@ -135,8 +144,17 @@ public struct ForthWord
         callTable.Add("contents", (p) => Contents.ExecuteAsync(p).Result);
         callTable.Add("next", (p) => Next.ExecuteAsync(p).Result);
         callTable.Add("match", (p) => Match.ExecuteAsync(p).Result);
+        callTable.Add("pmatch", (p) => PMatch.Execute(p));
+        callTable.Add("part_pmatch", (p) => PartPMatch.Execute(p));
+        callTable.Add("pennies", (p) => Pennies.ExecuteAsync(p).Result);
         callTable.Add("flag?", (p) => HasFlag.ExecuteAsync(p).Result);
+        callTable.Add("ok?", (p) => IsOk.ExecuteAsync(p).Result);
         callTable.Add("player?", (p) => IsPlayer.ExecuteAsync(p).Result);
+        callTable.Add("room?", (p) => IsRoom.ExecuteAsync(p).Result);
+        callTable.Add("thing?", (p) => IsThing.ExecuteAsync(p).Result);
+        callTable.Add("exit?", (p) => IsExit.ExecuteAsync(p).Result);
+        callTable.Add("program?", (p) => IsProgram.ExecuteAsync(p).Result);
+        callTable.Add("sysparm", (p) => SysParm.Execute(p));
         callTable.Add("name", (p) => Name.ExecuteAsync(p).Result);
         callTable.Add("getlink", (p) => GetLink.ExecuteAsync(p).Result);
 
@@ -150,6 +168,7 @@ public struct ForthWord
         callTable.Add("timefmt", (p) => TimeFormat.Execute(p));
 
         // PROCESS MANAGEMENT OPERATORS
+        callTable.Add("setmode", (p) => SetMode.Execute(p));
 
         // CONNECTION MANAGEMENT OPERATORS
         callTable.Add("awake?", (p) => Awake.Execute(p));
@@ -206,13 +225,27 @@ public struct ForthWord
                 process.State = ForthProcess.ProcessState.Paused;
 
             if (process.State == ForthProcess.ProcessState.Preempting)
-                process.State = ForthProcess.ProcessState.Preempted;
+            {
+                await process.Server.PreemptProcess(process.ProcessId, cancellationToken);
+                process.State = ForthProcess.ProcessState.RunningPreempt;
+            }
 
-            while (process.State == ForthProcess.ProcessState.Paused
-            || process.State == ForthProcess.ProcessState.Preempted)
+            while (process.State == ForthProcess.ProcessState.Paused)
             {
                 Thread.Yield();
                 Thread.Sleep(1000);
+            }
+
+            // If I'm pre-empted, then spin until 
+            if (process.Server.PreemptProcessId != 0 && process.Server.PreemptProcessId != process.ProcessId)
+            {
+                process.State = ForthProcess.ProcessState.Preempted;
+                while (process.State == ForthProcess.ProcessState.Preempted)
+                {
+                    Thread.Yield();
+                    Thread.Sleep(100);
+                }
+                process.State = ForthProcess.ProcessState.Running;
             }
 
             // Line-level items
@@ -247,9 +280,10 @@ public struct ForthWord
             var datumLiteral = datum.Value?.ToString();
 
             // Do we have something unknown on the top of the stack?
-            if (stack.Count > 0 && stack.Peek().Type == ForthDatum.DatumType.Unknown)
+            var topOfStack = stack.Count > 0 ? stack.Peek() : default(ForthDatum);
+            if (stack.Count > 0 && topOfStack.Type == ForthDatum.DatumType.Unknown)
             {
-                return new ForthWordResult(ForthErrorResult.SYNTAX_ERROR, $"Unable to handle datum on top of stack: {stack.Peek()}");
+                return new ForthWordResult(ForthErrorResult.SYNTAX_ERROR, $"Unable to handle datum on top of stack: {topOfStack}({topOfStack.LineNumber},{topOfStack.ColumnNumber})");
             }
 
             // Execution Control
@@ -430,6 +464,8 @@ public struct ForthWord
                         controlFlow.Push(new ControlFlowMarker(ControlFlowElement.SkipToAfterNextUntilOrRepeat, x));
                         continue;
                     }
+                    else
+                        continue;
                 }
 
                 // REPEAT
@@ -437,11 +473,19 @@ public struct ForthWord
                 {
                     await DumpStackToDebugAsync(stack, connection, lineCount, datum);
 
-                    // I could be an 'repeat' inside a skipped branch.
                     if (controlFlow.Count == 0)
                         return new ForthWordResult(ForthErrorResult.STACK_UNDERFLOW, "REPEAT but no previous BEGIN, FOR, or FOREACH on the stack");
 
+                    // I could be a 'repeat' inside a skipped branch.
                     var controlCurrent = controlFlow.Peek();
+                    if (controlCurrent.Element == ControlFlowElement.InIfAndSkip
+                     || controlCurrent.Element == ControlFlowElement.InElseAndSkip
+                     || controlCurrent.Element == ControlFlowElement.SkippedBranch)
+                    {
+                        if (verbosity >= 2)
+                            await DumpStackToDebugAsync(stack, connection, lineCount, datum, "(skipped)");
+                        continue;
+                    }
 
                     if (controlCurrent.Element == ControlFlowElement.SkipToAfterNextUntilOrRepeat)
                     {
@@ -602,7 +646,7 @@ public struct ForthWord
             {
                 if (callTable.Keys.Contains(datumLiteral, StringComparer.InvariantCultureIgnoreCase))
                 {
-                    var p = new ForthPrimativeParameters(process.Server, stack, variables, connection, trigger, command,
+                    var p = new ForthPrimativeParameters(process, stack, variables, connection, trigger, command,
                         async (d, s) => await process.NotifyAsync(d, s),
                         async (d, s, e) => await process.NotifyRoomAsync(d, s, e),
                         lastListItem,
@@ -632,7 +676,7 @@ public struct ForthWord
                         }
                     }
 
-                    if (default(ForthWordResult).Equals(result))
+                    if (ForthPrimativeResult.SUCCESS.Equals(result))
                         continue;
                     if (!result.IsSuccessful)
                         return new ForthWordResult((ForthErrorResult)result.Result, result.Reason);

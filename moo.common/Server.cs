@@ -21,7 +21,7 @@ public class Server
 
     private Task playerHandlerTask;
 
-    private long preemptProcessId;
+    public long PreemptProcessId;
 
     public Server(TextWriter statusWriter)
     {
@@ -92,7 +92,7 @@ public class Server
         var task = Task.Factory.StartNew(async () =>
         {
             while (!cancellationToken.IsCancellationRequested &&
-                (Interlocked.Read(ref preemptProcessId) != 0 ||
+                (Interlocked.Read(ref PreemptProcessId) != 0 ||
                 !(processesWaitingForPreempt.TryPeek(out ForthProcess nextInLine) && nextInLine.ProcessId == processId)) &&
                 !processesWaitingForPreempt.TryDequeue(out ForthProcess dequeued))
             {
@@ -104,7 +104,11 @@ public class Server
 
             while (
                 !cancellationToken.IsCancellationRequested &&
-                processes.Any(p => p.State != ForthProcess.ProcessState.Paused && p.ProcessId != processId))
+                processes.Any(p =>
+                (p.State != ForthProcess.ProcessState.Paused &&
+                 p.State != ForthProcess.ProcessState.Preempted &&
+                 p.State != ForthProcess.ProcessState.Complete
+                 ) && p.ProcessId != processId))
             {
                 foreach (var p in processes.Where(p => p.State != ForthProcess.ProcessState.Paused && p.ProcessId != processId))
                 {
@@ -115,7 +119,7 @@ public class Server
                 Thread.Sleep(100);
             }
 
-            Interlocked.Exchange(ref preemptProcessId, target.ProcessId);
+            Interlocked.Exchange(ref PreemptProcessId, target.ProcessId);
             target.State = ForthProcess.ProcessState.RunningPreempt;
             await statusWriter.WriteLineAsync($"PID {target.ProcessId} in preempt mode");
         });
@@ -141,20 +145,16 @@ public class Server
         }
     }
 
-    public int? GetConnectionNumberForConnectionDescriptor(int connectionDescriptor)
-    {
-        return _players.Select((conn, index) => new { conn, index }).Where(x => x.conn.ConnectorDescriptor == connectionDescriptor).Select(x => x.index).SingleOrDefault();
-    }
+    public int? GetConnectionNumberForConnectionDescriptor(int connectionDescriptor) => _players
+        .Select((conn, index) => new { conn, index })
+        .Where(x => x.conn.ConnectorDescriptor == connectionDescriptor)
+        .Select(x => x.index).SingleOrDefault();
 
-    public int GetConnectionCount(Dbref playerId)
-    {
-        return _players.Count(p => p.Dbref == playerId);
-    }
+    public int GetConnectionCount(Dbref playerId) => _players.Count(p => p.Dbref == playerId);
 
-    public IEnumerable<int> GetConnectionDescriptors(Dbref playerId)
-    {
-        return _players.Where(p => p.Dbref == playerId).Select(p => p.ConnectorDescriptor);
-    }
+    public IEnumerable<int> GetConnectionDescriptors(Dbref playerId) => _players.Where(p => p.Dbref == playerId).Select(p => p.ConnectorDescriptor);
+
+    public IEnumerable<Tuple<Dbref, string>> GetConnectionPlayers() => _players.Select(conn => new Tuple<Dbref, string>(conn.Dbref, conn.Name));
 
     public async Task NotifyAsync(Dbref player, string message)
     {

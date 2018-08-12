@@ -35,8 +35,9 @@ public class Script : Action
             }
         }
 
-        foreach (var v in tokenized.ProgramLocalVariables)
-            process.SetProgramLocalVariable(v.Key, v.Value);
+        if (tokenized.ProgramLocalVariables != null)
+            foreach (var v in tokenized.ProgramLocalVariables)
+                process.SetProgramLocalVariable(v.Key, v.Value);
 
         var result = await server.ExecuteAsync(process, tokenized.Words, connection.Dbref, command.getVerb(), new[] { command.getNonVerbPhrase() }, cancellationToken);
         var scriptResult = new VerbResult(result.IsSuccessful, result.Reason?.ToString());

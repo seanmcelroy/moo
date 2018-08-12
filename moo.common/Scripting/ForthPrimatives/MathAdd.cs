@@ -24,7 +24,7 @@ public static class MathAdd
 
         if (n1.Type == DatumType.Integer && n2.Type == DatumType.Integer)
         {
-            parameters.Stack.Push(new ForthDatum((int)n1.Value + (int)n2.Value));
+            parameters.Stack.Push(new ForthDatum(n1.UnwrapInt() + n2.UnwrapInt()));
             return ForthPrimativeResult.SUCCESS;
         }
 
@@ -37,9 +37,9 @@ public static class MathAdd
 
         if (n1.Type == DatumType.DbRef || n2.Type == DatumType.Integer)
         {
-            var n1v = ((Dbref)n1.Value).ToInt32();
+            var n1v = n1.UnwrapDbref().ToInt32();
 
-            var n2v = (int)n2.Value;
+            var n2v = n2.UnwrapInt();
             if (n2v == 0)
                 return new ForthPrimativeResult(ForthErrorResult.DIVISION_BY_ZERO, "Attempt to divide by zero was aborted");
 

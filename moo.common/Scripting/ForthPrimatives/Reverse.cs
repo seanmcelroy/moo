@@ -23,7 +23,7 @@ public static class Reverse
         if (si.Type != DatumType.Integer)
             return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "REVERSE requires the top parameter on the stack to be an integer");
 
-        int i = (int)si.Value;
+        int i = si.UnwrapInt();
         if (i < 1)
             return new ForthPrimativeResult(ForthErrorResult.INVALID_VALUE, "REVERSE requires the top parameter to be greater than or equal to 1");
 

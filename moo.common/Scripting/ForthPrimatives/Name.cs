@@ -23,7 +23,7 @@ public static class Name
             return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "NAME requires the top parameter on the stack to be a dbref");
 
 
-        var target = (Dbref)n1.Value;
+        var target = n1.UnwrapDbref();
         var targetResult = await ThingRepository.GetAsync<Thing>(target, parameters.CancellationToken);
 
         if (!targetResult.isSuccess)

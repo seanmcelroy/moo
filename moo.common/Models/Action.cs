@@ -8,6 +8,11 @@ public abstract class Action : Thing
 {
     public HashSet<string> aliases = new HashSet<string>();
 
+    public Action()
+    {
+        this.type = (int)Dbref.DbrefObjectType.Program;
+    }
+
     public virtual Tuple<bool, string> CanProcess(PlayerConnection player, CommandResult command)
     {
         string verb = command.getVerb().ToLowerInvariant();

@@ -16,9 +16,9 @@ public static class ForthPreprocessor
             { "PR_MODE", "0" },
             { "FG_MODE", "1" },
             { "BG_MODE", "2" },
-            { "PREEMPT", "pr_mode setmode" },
-            { "FOREGROUND", "fg_mode setmode" },
-            { "BACKGROUND", "bg_mode setmode" },
+            { "PREEMPT", "0 setmode" },
+            { "FOREGROUND", "1 setmode" },
+            { "BACKGROUND", "2 setmode" },
             { "EVENT_WAIT", "0 array_make event_waitfor" },
             { "NOTIFY_EXCEPT", "1 swap notify_exclude" },
             { "INSTRING", "tolower swap tolower swap instr" },
@@ -28,13 +28,21 @@ public static class ForthPreprocessor
             { "}TELL", "} array_make me @ 1 array_make array_notify" },
             { "}JOIN", "} array_make \"\" array_join" },
             { "}CAT", "} array_make array_interpret" },
+            { "SETDESC", "\"_/de\" swap 0 addprop" },
+            { "SETSUCC", "\"_/sc\" swap 0 addprop" },
+            { "SETFAIL", "\"_/fl\" swap 0 addprop" },
+            { "SETDROP", "\"_/dr\" swap 0 addprop" },
+            { "SETOSUCC", "\"_/osc\" swap 0 addprop" },
+            { "SETOFAIL", "\"_/ofl\" swap 0 addprop" },
+            { "SETODROP", "\"_/odr\" swap 0 addprop" },
             { "SORTTYPE_CASEINSENS", "1" },
             { "SORTTYPE_DESCENDING", "2" },
             { "SORTTYPE_SHUFFLE", "4" },
             { "SORTTYPE_NOCASE_ASCEND", "1" },
             { "SORTTYPE_CASE_DESCEND", "2" },
             { "SORTTYPE_NOCASE_DESCEND", "3" },
-            { "ARRAY_INTERSECT", "2 array_nintersect" }
+            { "ARRAY_INTERSECT", "2 array_nintersect" },
+            { "STRIP", "striplead striptail" }
         };
         var controlFlow = new Stack<ControlFlowMarker>();
         var verbosity = 0;
@@ -48,7 +56,7 @@ public static class ForthPreprocessor
             {
                 // $ifdef
                 {
-                    var ifdefMatch = Regex.Match(line, @"^\s*\$if(?<negate>n)?def\s+(?<defName>[^\s\r\n\=]{1,20})(?:\s*$|\s*\=\s*(?<defValue>[^\r\n]+)$)");
+                    var ifdefMatch = Regex.Match(line, @"^\s*\$if(?<negate>n)?def\s+(?<defName>[^\s\=]{1,20})(?:\s*$|\s*\=\s*(?<defValue>[^\r\n]+)$)");
                     if (ifdefMatch.Success)
                     {
                         // I could be an 'if' inside a skipped branch.
@@ -68,8 +76,8 @@ public static class ForthPreprocessor
                         }
 
                         var isTrue = ifdefMatch.Groups["defValue"].Success
-                        ? (defines.ContainsKey(ifdefMatch.Groups["defName"].Value) && defines[ifdefMatch.Groups["defName"].Value].Equals(ifdefMatch.Groups["defValue"].Value))
-                        : (defines.ContainsKey(ifdefMatch.Groups["defName"].Value));
+                        ? (defines.ContainsKey(ifdefMatch.Groups["defName"].Value.ToUpperInvariant()) && defines[ifdefMatch.Groups["defName"].Value.ToUpperInvariant()].Equals(ifdefMatch.Groups["defValue"].Value))
+                        : (defines.ContainsKey(ifdefMatch.Groups["defName"].Value.ToUpperInvariant()));
 
                         var negate = ifdefMatch.Groups["negate"].Success;
 
@@ -150,15 +158,23 @@ public static class ForthPreprocessor
 
                 // $def
                 {
-                    var defMatch = Regex.Match(line, @"^\s*\$def\s+(?<defName>[^\s\r\n]{1,20})(?:\s*$|\s+(?<defValue>[^\r\n]+)$)");
+                    var defMatch = Regex.Match(line, @"^\s*\$def\s+(?<defName>[^\s]{1,20})(?:\s*$|\s+(?<defValue>[^\r\n]+)$)");
                     if (defMatch.Success)
                     {
+                        var key = defMatch.Groups["defName"].Value.ToUpperInvariant();
+
                         if (!defMatch.Groups["defValue"].Success)
                         {
-                            defines.Add(defMatch.Groups["defName"].Value, null);
+                            if (!defines.ContainsKey(key))
+                                defines.Add(key, null);
                         }
                         else
-                            defines.Add(defMatch.Groups["defName"].Value, defMatch.Groups["defValue"].Value);
+                        {
+                            if (defines.ContainsKey(key))
+                                defines[key] = defMatch.Groups["defValue"].Value;
+                            else
+                                defines.Add(key, defMatch.Groups["defValue"].Value);
+                        }
 
                         continue;
                     }
@@ -166,15 +182,23 @@ public static class ForthPreprocessor
 
                 // $define
                 {
-                    var defineMatch = Regex.Match(line, @"^\s*\$define\s+(?<defName>[^\s\r\n]{1,20})(?:\s*\$enddef$|\s+(?<defValue>[^\r\n]+)\s+\$enddef$)");
+                    var defineMatch = Regex.Match(line, @"^\s*\$define\s+(?<defName>[^\s]{1,20})(?:\s*\$enddef$|\s+(?<defValue>[^\r\n]+)\s+\$enddef$)");
                     if (defineMatch.Success)
                     {
+                        var key = defineMatch.Groups["defName"].Value.ToUpperInvariant();
+
                         if (!defineMatch.Groups["defValue"].Success)
                         {
-                            defines.Add(defineMatch.Groups["defName"].Value, null);
+                            if (!defines.ContainsKey(key))
+                                defines.Add(key, null);
                         }
                         else
-                            defines.Add(defineMatch.Groups["defName"].Value, defineMatch.Groups["defValue"].Value);
+                        {
+                            if (defines.ContainsKey(key))
+                                defines[key] = defineMatch.Groups["defValue"].Value;
+                            else
+                                defines.Add(key, defineMatch.Groups["defValue"].Value);
+                        }
 
                         continue;
                     }
@@ -192,11 +216,11 @@ public static class ForthPreprocessor
 
                 // $undef
                 {
-                    var undefMatch = Regex.Match(line, @"^\s*\$undef\s+(?<defName>[^\s\r\n]{1,20})\s*$");
+                    var undefMatch = Regex.Match(line, @"^\s*\$undef\s+(?<defName>[^\s]{1,20})\s*$");
                     if (undefMatch.Success)
                     {
-                        if (defines.ContainsKey(undefMatch.Groups["defName"].Value))
-                            defines.Remove(undefMatch.Groups["defName"].Value);
+                        if (defines.ContainsKey(undefMatch.Groups["defName"].Value.ToUpperInvariant()))
+                            defines.Remove(undefMatch.Groups["defName"].Value.ToUpperInvariant());
                     }
                 }
 
@@ -208,7 +232,7 @@ public static class ForthPreprocessor
                 var line2 = line;
 
                 var holdingPen = new Dictionary<string, string>();
-                foreach (System.Text.RegularExpressions.Match match in Regex.Matches(line, @"\""[^\r\n]*?(?<!\\)\""(?=[\s\r\n])"))
+                foreach (System.Text.RegularExpressions.Match match in Regex.Matches(line, @"\""[^\r\n]*?(?<!\\)\""(?=\s)"))
                 {
                     var key = RandomString(match.Length);
                     holdingPen.Add(key, match.Value);
@@ -217,10 +241,10 @@ public static class ForthPreprocessor
 
                 // Strip comments
                 if (line2.IndexOf('(') > -1)
-                    line2 = Regex.Replace(line2, @"\([^\)]*\)", "", RegexOptions.Compiled);
+                    line2 = Regex.Replace(line2, @"\([^\r\n]*$|\([^\)]*\)", "", RegexOptions.Compiled);
 
                 foreach (var define in defines.Where(d => d.Value != null))
-                    line2 = Regex.Replace(line2, @"(?<=[\s\r\n])" + Regex.Escape(define.Key) + @"(?=[\s\r\n])", define.Value, RegexOptions.IgnoreCase);
+                    line2 = Regex.Replace(line2, @"(?<=\s|^)" + Regex.Escape(define.Key) + @"(?=\s|$)", define.Value, RegexOptions.IgnoreCase);
 
                 foreach (var hold in holdingPen)
                     line2 = line2.Replace(hold.Key, hold.Value);

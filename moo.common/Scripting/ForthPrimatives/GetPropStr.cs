@@ -21,7 +21,7 @@ public static class GetPropStr
 
         var sPath = parameters.Stack.Pop();
         if (sPath.Type != DatumType.String)
-            return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "GETPROPVAL requires the top parameter on the stack to be an string");
+            return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "GETPROPVAL requires the top parameter on the stack to be a string");
 
         var sTarget = parameters.Stack.Pop();
         if (sTarget.Type != DatumType.DbRef)

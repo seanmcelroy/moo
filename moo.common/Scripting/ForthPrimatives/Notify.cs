@@ -23,13 +23,13 @@ public static class Notify
 
         var sMessage = parameters.Stack.Pop();
         if (sMessage.Type != DatumType.String)
-            return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "NOTIFY requires the top parameter on the stack to be an string");
+            return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "NOTIFY requires the top parameter on the stack to be a string");
 
         var sTarget = parameters.Stack.Pop();
         if (sTarget.Type != DatumType.DbRef)
             return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "NOTIFY requires the second-to-top parameter on the stack to be a dbref");
 
-        if (((Dbref)sTarget.Value).ToInt32() < 0)
+        if (sTarget.UnwrapDbref().ToInt32() < 0)
             return ForthPrimativeResult.SUCCESS;
 
         var message = (string)sMessage.Value;

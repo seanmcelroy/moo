@@ -22,10 +22,13 @@ public class Thing : IStorable<Thing>
     public Dbref location;
     public Dbref owner;
     public string externalDescription;
+    public int pennies;
+    public int type;
     public PropertyDirectory properties = new PropertyDirectory();
 
     public Thing()
     {
+        this.type = (int)Dbref.DbrefObjectType.Thing;
     }
 
     public virtual Dbref Link => Dbref.NOT_FOUND;
@@ -326,6 +329,7 @@ public class Thing : IStorable<Thing>
             { "templates", templates },
             { "flags", flags },
             { "externalDescription", externalDescription },
+            { "pennies", pennies },
             { "properties", properties }
         };
     }

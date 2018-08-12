@@ -57,7 +57,7 @@ public struct ForthDatum
         this.ColumnNumber = columnNumber;
     }
 
-    public ForthDatum(Dbref value, byte dud, int? lineNumber = null, int? columnNumber = null)
+    public ForthDatum(Dbref value, int? lineNumber = null, int? columnNumber = null)
     {
         this.Value = value;
         this.Type = DatumType.DbRef;
@@ -124,11 +124,11 @@ public struct ForthDatum
         switch (Type)
         {
             case DatumType.Integer:
-                return (int)Value == 0;
+                return UnwrapInt() == 0;
             case DatumType.Float:
                 return (float)Value == 0;
             case DatumType.DbRef:
-                return ((Dbref)Value).ToInt32() == -1;
+                return UnwrapDbref().ToInt32() == -1;
             case DatumType.String:
                 return string.IsNullOrEmpty((string)Value);
         }
@@ -150,7 +150,7 @@ public struct ForthDatum
             case DatumType.Integer:
                 return this;
             case DatumType.DbRef:
-                return new ForthDatum((Dbref)Value, DatumType.Integer);
+                return new ForthDatum(UnwrapDbref().ToInt32());
         }
 
         return new ForthDatum(0);
@@ -179,6 +179,27 @@ public struct ForthDatum
         if (Value.GetType() == typeof(int))
         {
             return new Dbref((int)Value, DbrefObjectType.Thing);
+        }
+
+        throw new InvalidCastException("Cannot unwrap property as dbref, underlying type is: " + Value.GetType().Name);
+    }
+
+    public int UnwrapInt()
+    {
+        if (Type != DatumType.Integer)
+            throw new InvalidCastException("Cannot unwrap property as int, since it is of type: " + Type);
+
+        if (Value.GetType() == typeof(int))
+        {
+            return (int)Value;
+        }
+
+        if (Value.GetType() == typeof(string))
+        {
+            if (int.TryParse((string)Value, out int i))
+                return i;
+
+            throw new InvalidCastException("Cannot unwrap property as int, unable to parse: " + Value);
         }
 
         throw new InvalidCastException("Cannot unwrap property as dbref, underlying type is: " + Value.GetType().Name);

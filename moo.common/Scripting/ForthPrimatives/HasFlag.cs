@@ -27,13 +27,13 @@ public static class HasFlag
 
         var sFlag = parameters.Stack.Pop();
         if (sFlag.Type != DatumType.String)
-            return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "FLAG? requires the top parameter on the stack to be an string");
+            return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "FLAG? requires the top parameter on the stack to be a string");
 
         var sTarget = parameters.Stack.Pop();
         if (sTarget.Type != DatumType.DbRef)
             return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "FLAG? requires the second-to-top parameter on the stack to be a dbref");
 
-        if (((Dbref)sTarget.Value).ToInt32() < 0)
+        if (sTarget.UnwrapDbref().ToInt32() < 0)
             return ForthPrimativeResult.SUCCESS;
 
         var flag = (string)sFlag.Value;
@@ -43,7 +43,7 @@ public static class HasFlag
             return ForthPrimativeResult.SUCCESS;
         }
 
-        var target = (Dbref)sTarget.Value;
+        var target = sTarget.UnwrapDbref();
         var targetResult = await ThingRepository.GetAsync<Thing>(target, parameters.CancellationToken);
 
          if (!targetResult.isSuccess)

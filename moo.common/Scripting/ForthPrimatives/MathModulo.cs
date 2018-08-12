@@ -26,7 +26,7 @@ public static class MathModulo
         if (n1.Type != DatumType.Integer)
             return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "% requires arguments to be integers");
 
-        parameters.Stack.Push(new ForthDatum((int)n1.Value % (int)n2.Value));
+        parameters.Stack.Push(new ForthDatum(n1.UnwrapInt() % n2.UnwrapInt()));
         return ForthPrimativeResult.SUCCESS;
     }
 }

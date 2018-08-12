@@ -24,7 +24,7 @@ public static class DbCmp
         if (n1.Type != DatumType.DbRef)
             return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "DBCMP requires the top parameter on the stack to be a dbref");
 
-        parameters.Stack.Push(new ForthDatum(((Dbref)n1.Value) == ((Dbref)n2.Value) ? 1 : 0));
+        parameters.Stack.Push(new ForthDatum(n1.UnwrapDbref() == n2.UnwrapDbref() ? 1 : 0));
         return ForthPrimativeResult.SUCCESS;
     }
 }

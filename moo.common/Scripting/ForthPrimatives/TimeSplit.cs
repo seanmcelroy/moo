@@ -22,7 +22,7 @@ public static class TimeSplit
         if (si.Type != DatumType.Integer)
             return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "TIMESPLIT requires the top parameter on the stack to be an integer");
 
-        var offset = DateTimeOffset.FromUnixTimeSeconds((int)si.Value);
+        var offset = DateTimeOffset.FromUnixTimeSeconds(si.UnwrapInt());
         var dt = offset.DateTime;
 
         parameters.Stack.Push(new ForthDatum(offset.DateTime.Second));

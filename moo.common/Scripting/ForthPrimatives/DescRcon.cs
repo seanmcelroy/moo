@@ -22,7 +22,7 @@ public static class DescRcon
         if (n1.Type != DatumType.Integer)
             return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "DESCRCON requires the top parameter on the stack to be an integer");
 
-        var connectionNumber = parameters.Server.GetConnectionNumberForConnectionDescriptor((int)n1.Value);
+        var connectionNumber = parameters.Server.GetConnectionNumberForConnectionDescriptor(n1.UnwrapInt());
         parameters.Stack.Push(new ForthDatum(connectionNumber ?? 0));
         return ForthPrimativeResult.SUCCESS;
     }

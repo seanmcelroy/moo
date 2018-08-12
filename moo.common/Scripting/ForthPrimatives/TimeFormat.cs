@@ -88,7 +88,7 @@ public static class TimeFormat
         if (sfmt.Type != DatumType.String)
             return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "TIMEFMT requires the second-to-top parameter on the stack to be a format string");
 
-        var offset = DateTimeOffset.FromUnixTimeSeconds((int)si.Value);
+        var offset = DateTimeOffset.FromUnixTimeSeconds(si.UnwrapInt());
         var dt = offset.DateTime;
         var formatString = (string)sfmt.Value;
 

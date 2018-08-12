@@ -28,7 +28,7 @@ public static class StrCut
         if (sSource.Type != DatumType.String)
             return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "STRCUT requires the second-to-top parameter on the stack to be a string");
 
-        var index = (int)ni.Value;
+        var index = ni.UnwrapInt();
         var source = (string)sSource.Value;
 
         if (index == 0)

@@ -24,7 +24,7 @@ public static class Descriptors
         if (n1.Type != DatumType.DbRef)
             return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "DESCRIPTORS requires the top parameter on the stack to be a dbref");
 
-        var connectionDescriptors = parameters.Server.GetConnectionDescriptors((Dbref)n1.Value).ToArray();
+        var connectionDescriptors = parameters.Server.GetConnectionDescriptors(n1.UnwrapDbref()).ToArray();
 
         foreach (var connectionDescriptor in connectionDescriptors)
             parameters.Stack.Push(new ForthDatum(connectionDescriptor));

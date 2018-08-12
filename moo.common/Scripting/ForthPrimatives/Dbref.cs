@@ -23,7 +23,7 @@ public static class DbrefConvert
         if (n1.Type != DatumType.Integer)
             return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "DBREF requires the top parameter on the stack to be an integer");
 
-        var ni = (int)n1.Value;
+        var ni = n1.UnwrapInt();
         if (ni < 0)
             parameters.Stack.Push(new ForthDatum(Dbref.NOT_FOUND, 0));
         else

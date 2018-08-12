@@ -22,14 +22,14 @@ public static class NotifyExclude
 
         var sMessage = parameters.Stack.Pop();
         if (sMessage.Type != DatumType.String)
-            return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "NOTIFY_EXCLUDE requires the top parameter on the stack to be an string");
+            return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "NOTIFY_EXCLUDE requires the top parameter on the stack to be a string");
 
         var iExcludeCount = parameters.Stack.Pop();
         if (iExcludeCount.Type != DatumType.Integer)
             return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "NOTIFY_EXCLUDE requires the second-to-top parameter on the stack to be an integer");
 
         var excludeList = new List<Dbref>();
-        for (int i = 0; i < (int)iExcludeCount.Value; i++)
+        for (int i = 0; i < iExcludeCount.UnwrapInt(); i++)
         {
             if (parameters.Stack.Count < 1)
                 return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, $"NOTIFY_EXCLUDE specified {iExcludeCount.Value} exclusions, but we ran out at position {i}");
@@ -37,8 +37,8 @@ public static class NotifyExclude
             var sExclude = parameters.Stack.Pop();
             if (sExclude.Type != DatumType.DbRef)
                 return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "NOTIFY_EXCLUDE requires the exclude list members to be dbrefs");
-            if (((Dbref)sExclude.Value).ToInt32() >= 0)
-                excludeList.Add((Dbref)sExclude.Value);
+            if (sExclude.UnwrapDbref().ToInt32() >= 0)
+                excludeList.Add(sExclude.UnwrapDbref());
         }
 
         if (parameters.Stack.Count < 1)
@@ -47,7 +47,7 @@ public static class NotifyExclude
         if (sTarget.Type != DatumType.DbRef)
             return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "NOTIFY_EXCLUDE requires the target room parameter on the stack to be a dbref");
 
-        if (((Dbref)sTarget.Value).ToInt32() < 0)
+        if (sTarget.UnwrapDbref().ToInt32() < 0)
             return ForthPrimativeResult.SUCCESS;
 
         var message = (string)sMessage.Value;

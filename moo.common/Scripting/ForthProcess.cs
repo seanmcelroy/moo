@@ -129,8 +129,30 @@ public class ForthProcess
             this.State = ProcessState.Pausing;
     }
 
+    public void Background()
+    {
+        this.mode = MultitaskingMode.Background;
+    }
+
+    public void Foreground()
+    {
+        if (this.Mode == MultitaskingMode.Background)
+        {
+            // Programs cannot be moved out of background mode.
+            return;
+        }
+
+        this.mode = MultitaskingMode.Foreground;
+    }
+
     public void Preempt()
     {
+        if (this.Mode == MultitaskingMode.Background)
+        {
+            // Programs cannot be moved out of background mode.
+            return;
+        }
+
         if (this.State == ProcessState.Running)
             this.State = ProcessState.Preempting;
     }
@@ -160,6 +182,10 @@ public class ForthProcess
         this.State = ProcessState.Running;
         var result = await words.Last().RunAsync(this, stack, connection, trigger, command, null, cancellationToken);
         this.State = ProcessState.Complete;
+
+        if (server.PreemptProcessId == this.processId)
+            server.PreemptProcessId = 0;
+
         return result;
     }
 

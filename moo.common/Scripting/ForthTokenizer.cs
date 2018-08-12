@@ -85,18 +85,18 @@ public static class ForthTokenizer
                         continue;
                     }
                 case ForwardOperation.SkipUntilEndComment:
-                    if (c != ')')
+                    if (c == ')')
+                    {
+                        forwardOperation = ForwardOperation.None;
+                        continue;
+                    }
+                    else
                     {
                         if (linebreakCharacters.Contains(c))
                         {
                             lineNumber++;
                             columnNumber = 0;
                         }
-                        continue;
-                    }
-                    else
-                    {
-                        forwardOperation = ForwardOperation.None;
                         continue;
                     }
                 case ForwardOperation.SkipUntilNonLineBreak:
@@ -254,6 +254,9 @@ public static class ForthTokenizer
             foreach (var word in words)
                 await connection.sendOutput($" {word.name}");
         }
+
+        if (words.Count == 0)
+            return new ForthTokenizerResult("No Forth words could be found");
 
         return new ForthTokenizerResult(words, programLocalVariables);
     }

@@ -4,13 +4,14 @@ using Newtonsoft.Json;
 [JsonConverter(typeof(DbrefSerializer))]
 public struct Dbref
 {
-    public enum DbrefObjectType
+    public enum DbrefObjectType : int
     {
         Unknown = 0,
         Thing = 1,
         Room = 2,
         Player = 3,
-        Exit = 4
+        Exit = 4,
+        Program = 5
     }
 
     public static readonly Dbref NOT_FOUND = new Dbref(-1, DbrefObjectType.Thing);

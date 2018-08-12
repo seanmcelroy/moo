@@ -17,7 +17,7 @@ public static class PopN
         if (si.Type != DatumType.Integer)
             return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "POPN requires the top parameter on the stack to be an integer");
 
-        int i = (int)si.Value;
+        int i = si.UnwrapInt();
         if (parameters.Stack.Count < i)
             return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, $"POPN would have removed {i} items on the stack, but only {parameters.Stack.Count} were present.");
 

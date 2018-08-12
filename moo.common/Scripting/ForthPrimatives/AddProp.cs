@@ -46,13 +46,13 @@ public static class AddProp
 
         var path = ((string)s1.Value);
 
-        if (!targetResult.value.IsControlledBy(parameters.Connection.Dbref) && path.Contains('_'))
-            return new ForthPrimativeResult(ForthErrorResult.INSUFFICIENT_PERMISSION, $"Permission not granted to write protected property {path} on {d.UnwrapDbref()}");
+        //if (!targetResult.value.IsControlledBy(parameters.Connection.Dbref) && path.Contains('_'))
+        //    return new ForthPrimativeResult(ForthErrorResult.INSUFFICIENT_PERMISSION, $"Permission not granted to write protected property {path} on {d.UnwrapDbref()}");
 
         if (s2.isTrue())
              targetResult.value.SetPropertyPathValue(path, new ForthVariable((string)s2.Value));
         else
-             targetResult.value.SetPropertyPathValue(path, new ForthVariable((int)i.Value));
+             targetResult.value.SetPropertyPathValue(path, new ForthVariable(i.UnwrapInt()));
 
         return ForthPrimativeResult.SUCCESS;
     }
