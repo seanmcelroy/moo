@@ -9,9 +9,11 @@ using static Dbref;
 
 public class Server
 {
+    private static Server Instance;
+
     private static ConcurrentQueue<PlayerConnection> _players = new ConcurrentQueue<PlayerConnection>();
 
-    private static readonly ConcurrentDictionary<Dbref, Action> actions = new ConcurrentDictionary<Dbref, Action>();
+    private static readonly ConcurrentBag<IRunnable> globalActions = new ConcurrentBag<IRunnable>();
 
     private static readonly ConcurrentBag<ForthProcess> processes = new ConcurrentBag<ForthProcess>();
 
@@ -23,9 +25,24 @@ public class Server
 
     public long PreemptProcessId;
 
-    public Server(TextWriter statusWriter)
+    private Server(TextWriter statusWriter)
     {
         this.statusWriter = statusWriter;
+    }
+
+    public static Server Initialize(TextWriter statusWriter)
+    {
+        if (Instance != null)
+            throw new InvalidOperationException("Already initialized");
+        Instance = new Server(statusWriter);
+        return Instance;
+    }
+
+    public static Server GetInstance()
+    {
+        if (Instance == null)
+            throw new InvalidOperationException("Not initialized");
+        return Instance;
     }
 
     public static IEnumerable<PlayerConnection> GetConnectedPlayers()
@@ -36,23 +53,23 @@ public class Server
         }
     }
 
-    public void AttachConsolePlayer(HumanPlayer player, TextReader input, TextWriter output)
+    public ConsoleConnection AttachConsolePlayer(HumanPlayer player, TextReader input, TextWriter output, CancellationToken cancellationToken)
     {
-        var consoleConnection = new ConsoleConnection(player, input, output);
+        var consoleConnection = new ConsoleConnection(player, input, output, cancellationToken);
         _players.Enqueue(consoleConnection);
-        statusWriter.WriteLine($"Console player {player.name}({player.id}) attached");
+        statusWriter.WriteLine($"Console player {player.UnparseObject()} attached");
+        return consoleConnection;
     }
 
-    public void RegisterBuiltInAction(Action action)
+    public void RegisterBuiltInAction(IRunnable action)
     {
         if (action == null)
             throw new System.ArgumentNullException(nameof(action));
 
-        var actionObject = ThingRepository.Insert(action);
-        actions.TryAdd(actionObject.id, actionObject);
+        globalActions.Add(action);
     }
 
-    public Script RegisterScript(string name, string programText)
+    public static Script RegisterScript(string name, Dbref owner, string programText)
     {
         if (name == null)
             throw new System.ArgumentNullException(nameof(name));
@@ -61,9 +78,10 @@ public class Server
 
         var scriptObject = ThingRepository.Make<Script>();
         scriptObject.name = name;
+        scriptObject.owner = owner;
         scriptObject.programText = programText;
         var insertedScriptObject = ThingRepository.Insert(scriptObject);
-        actions.TryAdd(insertedScriptObject.id, insertedScriptObject);
+        globalActions.Add(insertedScriptObject);
         return insertedScriptObject;
     }
 
@@ -176,7 +194,7 @@ public class Server
         storageProvider.Initialize();
         ThingRepository.setStorageProvider(storageProvider);
 
-        var aether = ThingRepository.GetFromCacheOnly<Room>(new Dbref(0, DbrefObjectType.Room));
+        var aether = ThingRepository.GetFromCacheOnly<Room>(Dbref.AETHER);
         var now = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
         aether.SetPropertyPathValue("_sys/startuptime", new ForthVariable(now));
@@ -185,35 +203,7 @@ public class Server
         {
             do
             {
-                Parallel.ForEach(GetConnectedPlayers(), async (connection) =>
-                {
-                    var command = await connection.popCommand();
-                    if (default(CommandResult).Equals(command))
-                        return;
-
-                    await statusWriter.WriteLineAsync($"{connection.Name}({connection.Dbref}): {command.raw}");
-
-                    VerbResult actionResult;
-                    foreach (var action in actions.Values)
-                    {
-                        if (action.CanProcess(connection, command).Item1)
-                        {
-                            // TODO: Right now we block on programs
-                            actionResult = await action.Process(this, connection, command, cancellationToken);
-                            if (!actionResult.isSuccess)
-                            {
-                                await connection.sendOutput("ERROR: " + actionResult.reason);
-                                return;
-                            }
-
-                            return;
-                        }
-                    }
-
-                    await connection.sendOutput("Huh?");
-                    actionResult = new VerbResult(false, "Command not found for verb " + command.getVerb());
-                });
-
+                Parallel.ForEach(GetConnectedPlayers(), async (connection) => await connection.RunNextCommand(globalActions, cancellationToken));
             } while (!cancellationToken.IsCancellationRequested);
 
         }, cancellationToken);

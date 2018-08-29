@@ -127,6 +127,8 @@ public struct ForthWord
         callTable.Add("striplead", (p) => StripLead.Execute(p));
         callTable.Add("striptail", (p) => StripTail.Execute(p));
 
+        callTable.Add("unparseobj", (p) => UnparseObj.ExecuteAsync(p).Result);
+
         // PROPERTY MANIPULATION
         callTable.Add("getpropval", (p) => GetPropVal.ExecuteAsync(p).Result);
         callTable.Add("getpropstr", (p) => GetPropStr.ExecuteAsync(p).Result);
@@ -468,6 +470,28 @@ public struct ForthWord
                         continue;
                 }
 
+                // BREAK
+                if (string.Compare("break", datumLiteral, true) == 0)
+                {
+                    // I could be a 'break' inside a skipped branch.
+                    if (controlFlow.Count > 0)
+                    {
+                        var controlCurrent = controlFlow.Peek();
+
+                        if (controlCurrent.Element == ControlFlowElement.SkippedBranch
+                         || controlCurrent.Element == ControlFlowElement.SkipToAfterNextUntilOrRepeat)
+                        {
+                            if (verbosity >= 2)
+                                await DumpStackToDebugAsync(stack, connection, lineCount, datum, "(skipped)");
+                            continue;
+                        }
+                    }
+
+                    await DumpStackToDebugAsync(stack, connection, lineCount, datum);
+                    controlFlow.Push(new ControlFlowMarker(ControlFlowElement.SkipToAfterNextUntilOrRepeat, x));
+                    continue;
+                }
+
                 // REPEAT
                 if (string.Compare("repeat", datumLiteral, true) == 0)
                 {
@@ -631,14 +655,21 @@ public struct ForthWord
             }
 
             // Literals
-            if (datum.Type == ForthDatum.DatumType.Float ||
-                datum.Type == ForthDatum.DatumType.Integer ||
-                datum.Type == ForthDatum.DatumType.String ||
-                datum.Type == ForthDatum.DatumType.Unknown ||
-                datum.Type == ForthDatum.DatumType.DbRef)
+            switch (datum.Type)
             {
-                stack.Push(datum);
-                continue;
+                case ForthDatum.DatumType.Float:
+                case ForthDatum.DatumType.Integer:
+                case ForthDatum.DatumType.String:
+                case ForthDatum.DatumType.Unknown:
+                    stack.Push(datum);
+                    continue;
+                case ForthDatum.DatumType.DbRef:
+                    // Correct type for built-in's.
+                    if (((Dbref)datum.Value).ToInt32() == 0)
+                        stack.Push(new ForthDatum(Dbref.AETHER, datum.LineNumber, datum.ColumnNumber));
+                    else
+                        stack.Push(datum);
+                    continue;
             }
 
             // Primatives

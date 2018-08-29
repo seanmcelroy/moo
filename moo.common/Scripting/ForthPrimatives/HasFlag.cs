@@ -54,10 +54,11 @@ public static class HasFlag
 
         var negate = flagString.StartsWith("!");
         var flagChar = negate ? flagString[1] : flagString[0];
-        if (!Enum.TryParse(typeof(Thing.Flag), flagChar.ToString(), true, out object flag))
+        var flagValue = (Thing.Flag)Enum.ToObject(typeof(Thing.Flag), (UInt16)flagChar.ToString().ToUpperInvariant()[0]);
+        if (flagValue == default(Thing.Flag))
             return new ForthPrimativeResult(ForthErrorResult.SYNTAX_ERROR, $"FLAG? understands no flag named {flagChar}");
 
-        var hasFlag = targetResult.value.HasFlag((Thing.Flag)flag);
+        var hasFlag = targetResult.value.HasFlag(flagValue);
         parameters.Stack.Push(new ForthDatum(hasFlag ^ negate ? 1 : 0));
         return ForthPrimativeResult.SUCCESS;
     }

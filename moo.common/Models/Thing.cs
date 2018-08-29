@@ -12,12 +12,35 @@ using static Property;
 
 public class Thing : IStorable<Thing>
 {
+    public enum Flag : UInt16
+    {
+        //ABCDHJKLMQSW
+        LEVEL_0 = '0',
+        LEVEL_1 = '1',
+        LEVEL_2 = '2',
+        LEVEL_3 = '3',
+        ABODE = 'A',
+        BUILDER = 'B',
+        CHOWN_OK = 'C',
+        DARK = 'D',
+        HAVEN = 'H',
+        JUMP_OK = 'J',
+        KILL_OK = 'K',
+        LINK_OK = 'L',
+        MUCKER = 'M',
+        QUELL = 'Q',
+        STICKY = 'S',
+        VEHICLE = 'V',
+        WIZARD = 'W',
+        ZOMBIE = 'Z'
+    }
+
     public Dbref id;
     public string name;
 
-    public List<Dbref> templates = new List<Dbref>();
+    public Dbref[] templates = Dbref.EMPTY_SET;
 
-    public string[] flags;
+    public Flag[] flags;
 
     public Dbref location;
     public Dbref owner;
@@ -31,8 +54,22 @@ public class Thing : IStorable<Thing>
         this.type = (int)Dbref.DbrefObjectType.Thing;
     }
 
-    public virtual Dbref Link => Dbref.NOT_FOUND;
+    public Dbref[] links = Dbref.EMPTY_SET;
+    public virtual Dbref[] Links => links;
     public virtual Dbref Owner => owner;
+    public Dbref.DbrefObjectType Type => (Dbref.DbrefObjectType)type;
+
+    public async Task<VerbResult> MoveToAsync(Dbref targetId, CancellationToken cancellationToken)
+    {
+        if (targetId == id)
+            return new VerbResult(false, "I am already in that.");
+
+        var targetLookup = await ThingRepository.GetAsync<Container>(targetId, cancellationToken);
+        if (!targetLookup.isSuccess)
+            return new VerbResult(false, $"Unable to find {targetId}");
+
+        return await MoveToAsync(targetLookup.value, cancellationToken);
+    }
 
     public async Task<VerbResult> MoveToAsync(Container target, CancellationToken cancellationToken)
     {
@@ -57,6 +94,11 @@ public class Thing : IStorable<Thing>
         }
         else
             return resultTakeOut;
+    }
+
+    public virtual void SetLinkTargets(params Dbref[] targets)
+    {
+        this.links = targets;
     }
 
     public static T Deserialize<T>(string serialized) where T : Thing, new()
@@ -205,7 +247,7 @@ public class Thing : IStorable<Thing>
             else if (typeof(PropertyDirectory) == propertyValue.GetType())
                 property = new Property(propertyName, (PropertyDirectory)propertyValue);
             else
-                throw new InvalidOperationException("Unknown property type: " + propertyValue.GetType());
+                throw new InvalidOperationException($"Unknown property type: {propertyValue.GetType()}");
 
             var substring = serialized.Substring(m.Length);
             yield return Tuple.Create<object, string>(property, substring);
@@ -273,7 +315,7 @@ public class Thing : IStorable<Thing>
         }
         else
         {
-            throw new InvalidOperationException("Can't handle: " + serialized);
+            throw new InvalidOperationException($"Can't handle: {serialized}");
         }
     }
 
@@ -282,29 +324,103 @@ public class Thing : IStorable<Thing>
         return this.properties?.GetPropertyPathValue(path);
     }
 
-    public bool HasFlag(string flag)
+    public bool HasFlag(Flag flag)
     {
-        return this.flags != null && this.flags.Any(f => string.Compare(f, flag, true) == 0);
+        return this.flags != null && this.flags.Any(f => f == flag);
     }
 
-    public bool IsControlledBy(Dbref player)
+    public async Task<bool> IsControlledByAsync(Dbref playerId, CancellationToken cancellationToken)
     {
-        return this.owner.Equals(player);
+        /*
+        You control anything you own.
+        A wizard or God controls everything.
+        Anybody controls an unlinked exit, even if it is locked. Builders should beware of 3, lest their exits be linked or stolen.
+        Players control all exits which are linked to their areas, to better facilitate border control.
+        If an object is set CHOWN_OK, anyone may @chown object=me and gain control of the object.
+        */
+        if (this.owner.Equals(playerId))
+            return true;
+
+        if (playerId.Equals(Dbref.GOD))
+            return true;
+
+        var playerLookup = await ThingRepository.GetAsync<Thing>(playerId, cancellationToken);
+        if (!playerLookup.isSuccess)
+            return false;
+
+        var player = playerLookup.value;
+        if (player.HasFlag(Flag.WIZARD))
+            return true;
+
+        if (this.Type == Dbref.DbrefObjectType.Exit)
+        {
+            if (this.links.Length == 0)
+                return true;
+
+            var linkTargetTasks = this.links.Select(l => ThingRepository.GetAsync<Thing>(l, cancellationToken)).ToArray();
+            await Task.WhenAll(linkTargetTasks);
+            var linkTargets = linkTargetTasks.Where(l => l.IsCompleted).Select(l => l.Result);
+            if (linkTargets.Any(l => l.isSuccess && l.value.owner == playerId))
+                return true;
+        }
+
+        return false;
     }
 
-    public void SetFlag(string flag)
+    public async Task<bool> IsControlledByAsync(Player player, CancellationToken cancellationToken)
+    {
+        /*
+        You control anything you own.
+        A wizard or God controls everything.
+        Anybody controls an unlinked exit, even if it is locked. Builders should beware of 3, lest their exits be linked or stolen.
+        Players control all exits which are linked to their areas, to better facilitate border control.
+        If an object is set CHOWN_OK, anyone may @chown object=me and gain control of the object.
+        */
+        if (this.owner.Equals(player.id))
+            return true;
+
+        if (player.id.Equals(Dbref.GOD))
+            return true;
+
+        if (player.HasFlag(Flag.WIZARD))
+            return true;
+
+        if (this.Type == Dbref.DbrefObjectType.Exit)
+        {
+            if (this.links.Length == 0)
+                return true;
+
+            var linkTargetTasks = this.links.Select(l => ThingRepository.GetAsync<Thing>(l, cancellationToken)).ToArray();
+            await Task.WhenAll(linkTargetTasks);
+            var linkTargets = linkTargetTasks.Where(l => l.IsCompleted).Select(l => l.Result);
+            if (linkTargets.Any(l => l.isSuccess && l.value.owner == player.id))
+                return true;
+        }
+
+        return false;
+    }
+
+    public void SetFlag(Flag flag)
     {
         if (HasFlag(flag))
             return;
         if (this.flags == null)
-            this.flags = new string[] { flag };
+            this.flags = new Flag[] { flag };
         else
         {
-            var newArray = new string[this.flags.Length + 1];
+            var newArray = new Flag[this.flags.Length + 1];
             Array.Copy(this.flags, newArray, this.flags.Length);
             newArray[newArray.Length - 1] = flag;
             this.flags = newArray;
         }
+    }
+
+    public void SetPropertyPathValue(string path, Dbref value)
+    {
+        if (this.properties == null)
+            this.properties = new PropertyDirectory();
+
+        this.properties.SetPropertyPathValue(path, new ForthVariable(value, 0));
     }
 
     public void SetPropertyPathValue(string path, ForthVariable value)
@@ -326,6 +442,7 @@ public class Thing : IStorable<Thing>
             { "id", id},
             { "name", name},
             { "location", location },
+            { "links", links },
             { "templates", templates },
             { "flags", flags },
             { "externalDescription", externalDescription },
@@ -436,5 +553,11 @@ public class Thing : IStorable<Thing>
             return $"<date/>";
 
         return $"<date>{value.Value.ToString("o")}</date>";
+    }
+
+    public string UnparseObject()
+    {
+        var flagString = this.flags == null || this.flags.Length == 0 ? string.Empty : this.flags.Select(f => ((char)f).ToString()).Aggregate((c, n) => $"{c}{n}");
+        return $"{this.name}(#{this.id.ToInt32()}{(char)this.id.Type}{flagString})";
     }
 }

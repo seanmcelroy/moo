@@ -141,7 +141,7 @@ public class PropertyDirectory : Dictionary<string, Property>
                     this.Add(path, (float)value.Value);
                     break;
                 default:
-                    throw new System.InvalidOperationException("Unable to handle property type: " + value.Type);
+                    throw new System.InvalidOperationException($"Unable to handle property type: {value.Type}");
             }
         }
     }

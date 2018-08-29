@@ -36,7 +36,7 @@ public struct ForthDatum
                 this.Type = ForthDatum.DatumType.Integer;
                 break;
             case ForthVariable.VariableType.String:
-                this.Type = ForthDatum.DatumType.DbRef;
+                this.Type = ForthDatum.DatumType.String;
                 break;
             case ForthVariable.VariableType.Unknown:
                 this.Type = ForthDatum.DatumType.Unknown;

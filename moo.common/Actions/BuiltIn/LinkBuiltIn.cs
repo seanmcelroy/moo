@@ -63,7 +63,14 @@ public class LinkBuiltIn : IRunnable
             }
 
             var target = targetLookup.value;
-            if (!await target.IsControlledByAsync(player, cancellationToken)) // TODO: Or LINK_OK
+            var controlsTarget = await target.IsControlledByAsync(player, cancellationToken);
+
+            if (target.Type == Dbref.DbrefObjectType.Room &&
+                !source.HasFlag(Thing.Flag.LINK_OK) &&
+                !source.HasFlag(Thing.Flag.ABODE) &&
+                !controlsTarget)
+                return new VerbResult(false, $"You don't control {target.id.ToString()}");
+            else if (!controlsTarget)
                 return new VerbResult(false, $"You don't control {target.id.ToString()}");
 
             linkTargets.Add(targetLookup.value.id);

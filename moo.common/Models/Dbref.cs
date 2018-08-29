@@ -1,19 +1,24 @@
 using System;
+using System.Text.RegularExpressions;
 using Newtonsoft.Json;
 
 [JsonConverter(typeof(DbrefSerializer))]
 public struct Dbref
 {
-    public enum DbrefObjectType : int
+    public enum DbrefObjectType : UInt16
     {
-        Unknown = 0,
-        Thing = 1,
-        Room = 2,
-        Player = 3,
-        Exit = 4,
-        Program = 5
+        Unknown = '?',
+        Garbage = 'G',
+        Thing = 'T',
+        Room = 'R',
+        Player = 'P',
+        Exit = 'E',
+        Program = 'F'
     }
 
+    public static readonly Dbref[] EMPTY_SET = new Dbref[0];
+    public static readonly Dbref GOD = new Dbref(1, DbrefObjectType.Player);
+    public static readonly Dbref AETHER = new Dbref(0, DbrefObjectType.Room);
     public static readonly Dbref NOT_FOUND = new Dbref(-1, DbrefObjectType.Thing);
     public static readonly Dbref AMBIGUOUS = new Dbref(-2, DbrefObjectType.Thing);
     public static readonly Dbref HOME = new Dbref(-3, DbrefObjectType.Thing);
@@ -47,6 +52,9 @@ public struct Dbref
             case 'P':
                 type = DbrefObjectType.Player;
                 break;
+            case 'F':
+                type = DbrefObjectType.Program;
+                break;
             case 'R':
                 type = DbrefObjectType.Room;
                 break;
@@ -66,7 +74,7 @@ public struct Dbref
                 type = DbrefObjectType.Unknown;
                 break;
             default:
-                throw new System.ArgumentException("Unknown designator for #" + id + designator);
+                throw new System.ArgumentException($"Unknown designator for #{id}{designator}");
         }
 
         if (type == DbrefObjectType.Unknown)
@@ -122,14 +130,47 @@ public struct Dbref
         if (NOT_FOUND.Equals(left) && NOT_FOUND.Equals(right))
             return NOT_FOUND;
 
-        var leftDefined = !AMBIGUOUS.Equals(left) && !AMBIGUOUS.Equals(left) & !AMBIGUOUS.Equals(left) && !default(Dbref).Equals(left);
-        var rightDefined = !AMBIGUOUS.Equals(right) && !AMBIGUOUS.Equals(right) & !AMBIGUOUS.Equals(right) && !default(Dbref).Equals(right);
+        var leftDefined = !AMBIGUOUS.Equals(left) && !NOT_FOUND.Equals(left) && !default(Dbref).Equals(left);
+        var rightDefined = !AMBIGUOUS.Equals(right) && !NOT_FOUND.Equals(right) && !default(Dbref).Equals(right);
 
         if (leftDefined && rightDefined)
             return AMBIGUOUS;
         if (!leftDefined && !rightDefined)
             return NOT_FOUND;
         return leftDefined ? left : right;
+    }
+
+    public static bool TryParse(string s, out Dbref result)
+    {
+        s = s.Trim();
+        if (Regex.IsMatch(s, @"#\d+[A-Z]?"))
+        {
+            DbrefObjectType type;
+            switch (s[s.Length - 1])
+            {
+                case 'E':
+                    type = DbrefObjectType.Exit;
+                    break;
+                case 'P':
+                    type = DbrefObjectType.Player;
+                    break;
+                case 'F':
+                    type = DbrefObjectType.Program;
+                    break;
+                case 'R':
+                    type = DbrefObjectType.Room;
+                    break;
+                default:
+                    type = DbrefObjectType.Thing;
+                    break;
+            }
+
+            result = new Dbref(int.Parse(s.Substring(1)), type);
+            return true;
+        }
+
+        result = default(Dbref);
+        return false;
     }
 
     public override int GetHashCode()
@@ -150,6 +191,11 @@ public struct Dbref
         return this.Equals((Dbref)obj);
     }
 
+    public bool IsValid()
+    {
+        return !(Equals(Dbref.NOT_FOUND) || Equals(Dbref.AMBIGUOUS) || Equals(default(Dbref)));
+    }
+
     public int ToInt32()
     {
         return this.id;
@@ -157,29 +203,9 @@ public struct Dbref
 
     public override string ToString()
     {
-        if (id <= 0)
-            return "#" + id;
+        if (id < 0)
+            return $"#{id}";
 
-        char designator;
-        switch (type)
-        {
-            case DbrefObjectType.Exit:
-                designator = 'E';
-                break;
-            case DbrefObjectType.Player:
-                designator = 'P';
-                break;
-            case DbrefObjectType.Room:
-                designator = 'R';
-                break;
-            case DbrefObjectType.Thing:
-                designator = 'T';
-                break;
-            default:
-                designator = '?';
-                break;
-        }
-
-        return "#" + id + designator;
+        return $"#{id}{(char)type}";
     }
 }

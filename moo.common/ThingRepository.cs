@@ -44,10 +44,16 @@ public static class ThingRepository
             type = DbrefObjectType.Exit;
         else if (typeof(T) == typeof(Room))
             type = DbrefObjectType.Room;
-        else if (typeof(T) == typeof(Player))
+        else if (typeof(T) == typeof(HostPlayer))
+            type = DbrefObjectType.Player;
+        else if (typeof(T) == typeof(HumanPlayer))
+            type = DbrefObjectType.Player;
+        else if (typeof(T) == typeof(Script))
+            type = DbrefObjectType.Program;
+        else if (typeof(T) == typeof(Thing))
             type = DbrefObjectType.Thing;
         else
-            type = DbrefObjectType.Room;
+            throw new InvalidOperationException($"Unkonwn type: {typeof(T).Name}");
 
         subject.id = new Dbref(Interlocked.Increment(ref nextThingId), type);
         if (_cache.TryAdd(subject.id, subject))
@@ -78,6 +84,59 @@ public static class ThingRepository
         }
 
         return null;
+    }
+
+    public static async Task<GetResult<Thing>> GetAsync(Dbref id, CancellationToken cancellationToken)
+    {
+        bool isSuccess;
+        Thing thing;
+        string reason;
+
+        switch (id.Type)
+        {
+            case DbrefObjectType.Unknown:
+            case DbrefObjectType.Thing:
+                return await GetAsync<Thing>(id, cancellationToken);
+            case DbrefObjectType.Exit:
+                {
+                    var result = await GetAsync<Exit>(id, cancellationToken);
+                    isSuccess = result.isSuccess;
+                    thing = result.value;
+                    reason = result.reason;
+                    break;
+                }
+            case DbrefObjectType.Player:
+                {
+                    var result = await GetAsync<HumanPlayer>(id, cancellationToken);
+                    isSuccess = result.isSuccess;
+                    thing = result.value;
+                    reason = result.reason;
+                    break;
+                }
+            case DbrefObjectType.Program:
+                {
+                    var result = await GetAsync<Script>(id, cancellationToken);
+                    isSuccess = result.isSuccess;
+                    thing = result.value;
+                    reason = result.reason;
+                    break;
+                }
+            case DbrefObjectType.Room:
+                {
+                    var result = await GetAsync<Script>(id, cancellationToken);
+                    isSuccess = result.isSuccess;
+                    thing = result.value;
+                    reason = result.reason;
+                    break;
+                }
+            default:
+                throw new InvalidOperationException($"Unable to handle id.Type={id.Type}");
+        }
+
+        if (isSuccess)
+            return new GetResult<Thing>(thing, reason);
+        else
+            return new GetResult<Thing>(null, reason);
     }
 
     public static async Task<GetResult<T>> GetAsync<T>(Dbref id, CancellationToken cancellationToken) where T : Thing, new()

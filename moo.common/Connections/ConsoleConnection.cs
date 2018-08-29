@@ -1,20 +1,18 @@
 using System;
 using System.IO;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 public class ConsoleConnection : PlayerConnection
 {
-
-    private readonly StringBuilder buffer = new StringBuilder();
-
     private readonly TextReader input;
 
     private readonly TextWriter output;
 
     private readonly Task consoleTask;
 
-    public ConsoleConnection(HumanPlayer player, TextReader input, TextWriter output) : base(player)
+    public ConsoleConnection(HumanPlayer player, TextReader input, TextWriter output, CancellationToken cancellationToken) : base(player)
     {
         this.output = output;
 
@@ -24,33 +22,10 @@ public class ConsoleConnection : PlayerConnection
                 do
                 {
                     var text = await input.ReadLineAsync();
-                    receiveInput(text + "\r\n");
+                    ReceiveInput(text + "\r\n");
                 } while (true);
-            });
+            }, cancellationToken);
     }
 
-    public override void receiveInput(string input)
-    {
-        buffer.Append(input);
-    }
-
-    public override Task<CommandResult> popCommand()
-    {
-        if (buffer.Length < 2)
-            return Task.FromResult(default(CommandResult));
-
-        var bufferString = buffer.ToString();
-        int firstBreak = bufferString.IndexOf("\r\n");
-        if (firstBreak == -1)
-            return Task.FromResult(default(CommandResult));
-
-        var raw = bufferString.Substring(0, firstBreak);
-        buffer.Remove(0, raw.Length + 2);
-        return Task.FromResult(new CommandResult(raw));
-    }
-
-    public override async Task sendOutput(string output)
-    {
-        await Console.Out.WriteLineAsync(output);
-    }
+    public override async Task sendOutput(string output) => await this.output.WriteLineAsync(output);
 }

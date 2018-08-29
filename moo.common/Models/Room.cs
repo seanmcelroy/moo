@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 public class Room : Container {
 
@@ -10,11 +12,12 @@ public class Room : Container {
         this.type = (int)Dbref.DbrefObjectType.Room;
     }
 
-    public static Room Make(string name) {
+    public static Room Make(string name, Dbref owner) {
         var room = ThingRepository.Make<Room>();
         room.name = name;
         room.DropTo = room.id;
-        Console.WriteLine($"Created new room {name}({room.id})");
+        room.owner = owner;
+        Console.WriteLine($"Created new room {room.UnparseObject()}");
         return room;
     }
 }

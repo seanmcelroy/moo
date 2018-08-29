@@ -55,6 +55,9 @@ public static class At
         if (variableValue.Value == null)
             return default(ForthVariable);
 
+        if (variableValue.Value.GetType() == typeof(Dbref))
+            return new ForthVariable((Dbref)variableValue.Value, 0);
+
         if (variableValue.Value.GetType() == typeof(float))
             return new ForthVariable((float?)variableValue.Value);
 
@@ -62,9 +65,7 @@ public static class At
             return new ForthVariable((int?)variableValue.Value);
 
         if (variableValue.Value.GetType() == typeof(string))
-        {
             return new ForthVariable((string)variableValue.Value);
-        }
 
         return default(ForthVariable);
     }

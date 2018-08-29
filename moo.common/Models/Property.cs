@@ -123,7 +123,7 @@ public struct Property
             case PropertyType.Directory:
                 return PropertyDirectory.Serialize((PropertyDirectory)Value);
             default:
-                throw new System.InvalidOperationException($"Unknown property type for {Name}: " + Type);
+                throw new System.InvalidOperationException($"Unknown property type for {Name}: {Type}");
         }
     }
 

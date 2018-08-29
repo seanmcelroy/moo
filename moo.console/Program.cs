@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using static Dbref;
@@ -13,18 +14,41 @@ namespace moo.console
             Console.Out.WriteLine("\r\n\r\nMoo!\r\n");
             var cts = new CancellationTokenSource();
 
-            var server = new Server(Console.Out);
+            var server = Server.Initialize(Console.Out);
 
             var consolePlayer = LoadSandbox(cts.Token);
-            server.AttachConsolePlayer(consolePlayer, Console.In, Console.Out);
+            var consoleConnection = server.AttachConsolePlayer(consolePlayer, Console.In, Console.Out, cts.Token);
 
             Console.Out.WriteLine("Loading built-in actions");
-            foreach (var action in new Action[] { new @Load(), new Look(), new @Save() })
+            foreach (var action in new IRunnable[] {
+                new ActionBuiltIn(),
+                new LinkBuiltIn(),
+                new LoadBuiltIn(),
+                new SaveBuiltIn(),
+                new ProgramBuiltIn() })
                 server.RegisterBuiltInAction(action);
 
             Console.Out.WriteLine("Loading script directory");
-            LoadScriptDirectory(server, "scripts", "lib-*.muf", null);
-            LoadScriptDirectory(server, "scripts", "cmd-*.muf", "cmd-");
+            ReadInScriptDirectory(consoleConnection, "scripts", "cmd-@register.muf", null);
+            ReadInScriptDirectory(consoleConnection, "scripts", "std-defs.muf", null);
+            /*ReadInScriptDirectory(consoleConnection, "scripts", "lib-strings", null);
+            ReadInScriptDirectory(consoleConnection, "scripts", "lib-stackrng", null);
+            ReadInScriptDirectory(consoleConnection, "scripts", "lib-props", null);
+            ReadInScriptDirectory(consoleConnection, "scripts", "lib-lmgr", null);
+            ReadInScriptDirectory(consoleConnection, "scripts", "lib-edit", null);
+            ReadInScriptDirectory(consoleConnection, "scripts", "lib-gui", null);
+            ReadInScriptDirectory(consoleConnection, "scripts", "lib-editor", null);
+            ReadInScriptDirectory(consoleConnection, "scripts", "lib-match", null);
+            ReadInScriptDirectory(consoleConnection, "scripts", "lib-mesg", null);
+            ReadInScriptDirectory(consoleConnection, "scripts", "lib-mesgbox", null);
+            ReadInScriptDirectory(consoleConnection, "scripts", "lib-look", null);
+            ReadInScriptDirectory(consoleConnection, "scripts", "lib-reflist", null);
+            ReadInScriptDirectory(consoleConnection, "scripts", "lib-index", null);
+            ReadInScriptDirectory(consoleConnection, "scripts", "lib-case", null);
+            ReadInScriptDirectory(consoleConnection, "scripts", "lib-mpi", null);*/
+
+            //ReadInScriptDirectory(consoleConnection, "scripts", "lib-*.muf", null);
+            //ReadInScriptDirectory(consoleConnection, "scripts", "cmd-*.muf", "cmd-");
 
             Console.Out.WriteLine("Starting server");
             server.Start(cts.Token);
@@ -43,12 +67,14 @@ namespace moo.console
 
         private static HumanPlayer LoadSandbox(CancellationToken cancellationToken)
         {
-            var aether = Room.Make("The Aether");
+            var aether = Room.Make("The Aether", Dbref.GOD);
+            aether.id = Dbref.AETHER;
             aether.internalDescription = "You see a massless, infinite black void stretching forever in all directions and across all time.";
             HostPlayer.make("God", aether);
             var player = HumanPlayer.make("Wizard", aether);
+            player.SetFlag(Thing.Flag.WIZARD);
 
-            Console.Out.WriteLine($"Created new player {player.name}({player.id})");
+            Console.Out.WriteLine($"Created new player {player.UnparseObject()}");
 
             var moveResult = player.MoveToAsync(aether, cancellationToken).Result;
 
@@ -69,20 +95,36 @@ namespace moo.console
             return player;
         }
 
+        /* private static void LoadScriptDirectory(string scriptDirectoryPath, string scriptSearchPattern, string scriptFilePrefix = null)
+         {
+             foreach (var file in System.IO.Directory.GetFiles(scriptDirectoryPath, scriptSearchPattern))
+             {
+                 var commandName = file.Substring(scriptDirectoryPath.Length + 1);
+                 if (scriptFilePrefix != null)
+                     commandName = commandName.Replace(scriptFilePrefix, "");
+                 commandName = commandName.Replace(".muf", "");
+                 var script = Server.RegisterScript(commandName, LoadScriptFile(file));
+                 Console.Out.WriteLine($"Created new script {script.UnparseObject()}");
+             }
+         }
+         */
 
-        private static void LoadScriptDirectory(Server server, string scriptDirectoryPath, string scriptSearchPattern, string scriptFilePrefix = null)
+        private static string LoadScriptFile(string path) => System.IO.File.ReadAllText(path);
+
+        private static void ReadInScriptDirectory(PlayerConnection connection, string scriptDirectoryPath, string scriptSearchPattern, string scriptFilePrefix = null)
         {
-            foreach (var file in System.IO.Directory.GetFiles(scriptDirectoryPath, scriptSearchPattern))
+            foreach (var file in System.IO.Directory.GetFiles(scriptDirectoryPath, scriptSearchPattern).OrderBy(f => f))
             {
-                var commandName = file.Substring(scriptDirectoryPath.Length + 1);
-                if (scriptFilePrefix != null)
-                    commandName = commandName.Replace(scriptFilePrefix, "");
-                commandName = commandName.Replace(".muf", "");
-                var script = server.RegisterScript(commandName, LoadScriptFile(file));
-                Console.Out.WriteLine($"Created new script {script.name}({script.id})");
+                ReadInScriptFile(file, connection);
+                connection.sendOutput($"Read in script file {file}");
             }
         }
 
-        private static string LoadScriptFile(string path) => System.IO.File.ReadAllText(path);
+        private static void ReadInScriptFile(string path, PlayerConnection connection)
+        {
+            var lines = System.IO.File.ReadAllLines(path);
+
+            connection.ReceiveInput(lines);
+        }
     }
 }

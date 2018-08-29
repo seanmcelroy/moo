@@ -43,6 +43,12 @@ public class ActionBuiltIn : IRunnable
         }
 
         var source = sourceLookup.value;
+
+        if (source.Type == Dbref.DbrefObjectType.Exit)
+            return new VerbResult(false, $"An exit cannot be attached to another exit ({source.id.ToString()})");
+        if (source.Type == Dbref.DbrefObjectType.Program)
+            return new VerbResult(false, $"An exit cannot be attached to a program ({source.id.ToString()})");
+
         if (!await source.IsControlledByAsync(player, cancellationToken))
             return new VerbResult(false, $"You don't control {source.id.ToString()}");
 

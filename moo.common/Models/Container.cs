@@ -44,7 +44,7 @@ public class Container : Thing
         return contents.ContainsKey(thing.id);
     }
 
-    public async Task<Dbref> MatchAsync(string name, CancellationToken cancellationToken)
+    public async Task<Dbref> MatchAsync(string search, CancellationToken cancellationToken)
     {
 
         var tasks = this.contents.Keys
@@ -52,7 +52,7 @@ public class Container : Thing
         var results = await Task.WhenAll(tasks);
 
         var result = results
-            .Where(t => t.isSuccess && string.Compare(name, t.value.name) == 0)
+            .Where(t => t.isSuccess && (t.value.name.IndexOf(';') == -1 ? string.Compare(search, t.value.name) == 0 : t.value.name.Split(';').Any(sub => string.Compare(search, sub) == 0)))
             .Select(t => t.value.id)
             .DefaultIfEmpty(Dbref.NOT_FOUND)
             .Aggregate((c, n) => c | n);
