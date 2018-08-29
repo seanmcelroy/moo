@@ -28,7 +28,7 @@ public static class PartPMatch
 
         var prefix = (string)s.Value;
 
-        var matches = parameters.Server.GetConnectionPlayers()
+        var matches = Server.GetInstance().GetConnectionPlayers()
             .Where(x => x.Item2.StartsWith(prefix, StringComparison.InvariantCultureIgnoreCase))
             .Distinct()
             .ToArray();

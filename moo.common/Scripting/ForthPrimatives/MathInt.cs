@@ -28,7 +28,7 @@ public static class MathInt
                 return new ForthPrimativeResult(ForthErrorResult.VARIABLE_NOT_FOUND, $"No variable named {variableName} was found");
 
             if (default(ForthVariable).Equals(variable))
-                return new ForthPrimativeResult(ForthErrorResult.UNKNOWN_TYPE, $"Unable to determine data type for: " + variable.Value);
+                return new ForthPrimativeResult(ForthErrorResult.UNKNOWN_TYPE, $"Unable to determine data type for: {variable.Value}");
 
             datum = new ForthDatum(variable);
         }

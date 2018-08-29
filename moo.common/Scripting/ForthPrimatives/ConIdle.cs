@@ -21,7 +21,7 @@ public static class ConIdle
         if (n1.Type != DatumType.Integer)
             return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "CONIDLE requires the top parameter on the stack to be an integer");
 
-        var connection = parameters.Server.GetConnectionForConnectionNumber(n1.UnwrapInt());
+        var connection = Server.GetInstance().GetConnectionForConnectionNumber(n1.UnwrapInt());
         parameters.Stack.Push(new ForthDatum(Convert.ToInt32((DateTime.Now - connection.ConnectionTime).TotalSeconds)));
         return ForthPrimativeResult.SUCCESS;
     }

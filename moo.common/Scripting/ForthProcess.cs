@@ -43,19 +43,16 @@ public class ForthProcess
     // Variables local to my process context, which I could pass on to programs I call and all my words can see ($DEF, LVAR)
     private readonly ConcurrentDictionary<string, ForthVariable> programLocalVariables = new ConcurrentDictionary<string, ForthVariable>();
 
-    private readonly Server server;
     private readonly Dbref scriptId;
     private readonly PlayerConnection connection;
     private readonly String scopeId;
     private readonly String outerScopeId;
     private bool hasRan;
 
-    public Server Server => server;
     public int ProcessId => processId;
     public MultitaskingMode Mode => mode;
 
     public ForthProcess(
-        Server server,
         Dbref scriptId,
         PlayerConnection connection,
         string outerScopeId = null,
@@ -64,7 +61,6 @@ public class ForthProcess
         this.processId = GetNextPid();
         this.State = ProcessState.Initializing;
         this.mode = MultitaskingMode.Foreground;
-        this.server = server;
         this.scriptId = scriptId;
         this.connection = connection;
         this.scopeId = Guid.NewGuid().ToString();
@@ -111,16 +107,6 @@ public class ForthProcess
     public async Task<ForthWordResult> RunWordAsync(string wordName, Dbref trigger, string command, Dbref? lastListItem, CancellationToken cancellationToken)
     {
         return await this.words.Single(w => string.Compare(w.name, wordName, true) == 0).RunAsync(this, stack, connection, trigger, command, lastListItem, cancellationToken);
-    }
-
-    public async Task NotifyAsync(Dbref target, string message)
-    {
-        await server.NotifyAsync(target, message);
-    }
-
-    public async Task NotifyRoomAsync(Dbref target, string message, List<Dbref> exclude = null)
-    {
-        await server.NotifyRoomAsync(target, message, exclude);
     }
 
     public void Pause()
@@ -183,8 +169,8 @@ public class ForthProcess
         var result = await words.Last().RunAsync(this, stack, connection, trigger, command, null, cancellationToken);
         this.State = ProcessState.Complete;
 
-        if (server.PreemptProcessId == this.processId)
-            server.PreemptProcessId = 0;
+        if (Server.GetInstance().PreemptProcessId == this.processId)
+            Server.GetInstance().PreemptProcessId = 0;
 
         return result;
     }

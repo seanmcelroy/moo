@@ -57,7 +57,7 @@ public static class ForthTokenizer
                     }
                     else
                     {
-                        if (verbosity >= 2)
+                        if (verbosity >= 2 && connection != null)
                             await connection.sendOutput($"STRING({lineNumber},{columnNumber - currentDatum.ToString().Length - 1}): \"{currentDatum.ToString()}\"");
                         currentWordData.Add(new ForthDatum(currentDatum.ToString(), DatumType.String, lineNumber, columnNumber - currentDatum.ToString().Length - 1));
                         currentDatum.Clear();
@@ -74,7 +74,7 @@ public static class ForthTokenizer
                     }
                     else
                     {
-                        if (verbosity >= 1)
+                        if (verbosity >= 1 && connection != null)
                             await connection.sendOutput($"WORD({lineNumber},{columnNumber - currentWordName.ToString().Length}): {currentWordName.ToString()}");
                         forwardOperation = ForwardOperation.None;
                         if (linebreakCharacters.Contains(c))
@@ -128,8 +128,9 @@ public static class ForthTokenizer
                 // Handle word datum
                 if (currentWordName.Length > 0 && currentDatum.Length > 0)
                 {
-                    if (verbosity > 3)
+                    if (verbosity > 3 && connection != null)
                         await connection.sendOutput($"DATUM({lineNumber},{columnNumber - currentDatum.ToString().Length}): {currentDatum.ToString()}");
+
                     if (ForthWord.GetPrimatives().Contains(currentDatum.ToString()))
                     {
                         if (currentDatum.ToString().Length == 1 && (new[] { '@', '!' }.Contains(currentDatum.ToString()[0])))
@@ -161,7 +162,7 @@ public static class ForthTokenizer
                                 programLocalVariables.Add(lvarMatch.Groups["lvar"].Value, default(ForthVariable));
                         }
 
-                        if (verbosity > 3)
+                        if (verbosity > 3 && connection != null)
                             await connection.sendOutput($"PRE({lineNumber},{columnNumber - currentNonDatum.ToString().Length}): {currentNonDatum.ToString()}");
                     }
                     currentNonDatum.Clear();
@@ -184,7 +185,7 @@ public static class ForthTokenizer
             {
                 if (currentWordName.Length > 0 && currentDatum.Length > 0)
                 {
-                    if (verbosity > 3)
+                    if (verbosity > 3 && connection != null)
                         await connection.sendOutput($"DATUM({lineNumber},{columnNumber - currentDatum.ToString().Length}): {currentDatum.ToString()}");
 
                     if (ForthWord.GetPrimatives().Contains(currentDatum.ToString()))
@@ -248,7 +249,7 @@ public static class ForthTokenizer
                 currentNonDatum.Append(c);
         }
 
-        if (verbosity > 3)
+        if (verbosity > 3 && connection != null)
         {
             await connection.sendOutput($"Words: ({words.Count})");
             foreach (var word in words)

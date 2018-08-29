@@ -36,7 +36,7 @@ public static class Notify
         if (message == null || string.IsNullOrWhiteSpace(message))
             return ForthPrimativeResult.SUCCESS;
 
-        await parameters.Notify.Invoke(sTarget.UnwrapDbref(), message);
+        await Server.GetInstance().NotifyAsync(sTarget.UnwrapDbref(), message);
 
         return ForthPrimativeResult.SUCCESS;
     }

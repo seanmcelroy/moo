@@ -30,7 +30,7 @@ public static class GetLink
         if (!targetResult.isSuccess)
             return new ForthPrimativeResult(ForthErrorResult.NO_SUCH_OBJECT, $"Unable to find object with dbref {sTarget.UnwrapDbref()}");
         
-        parameters.Stack.Push(new ForthDatum(targetResult.value.Link, 0));
+        parameters.Stack.Push(new ForthDatum(targetResult.value.Links[0], 0));
         return ForthPrimativeResult.SUCCESS;
     }
 }

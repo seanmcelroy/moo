@@ -4,13 +4,17 @@ using System.Threading;
 using System.Threading.Tasks;
 using static ThingRepository;
 
-public class Look : Action
+public class Look : IRunnable
 {
-    public Look() {
-        this.aliases.Add("l");
+    public Tuple<bool, string> CanProcess(PlayerConnection connection, CommandResult command)
+    {
+        var verb = command.getVerb().ToLowerInvariant();
+        if (verb == "l")
+            return new Tuple<bool, string>(true, verb);
+        return new Tuple<bool, string>(false, null);
     }
 
-    public sealed override async Task<VerbResult> Process(Server server, PlayerConnection connection, CommandResult command, CancellationToken cancellationToken)
+    public async Task<VerbResult> Process(PlayerConnection connection, CommandResult command, CancellationToken cancellationToken)
     {
         if ((!command.hasDirectObject() && !command.hasIndirectObject())
             || (command.hasDirectObject() && string.Compare("here", command.getDirectObject()) == 0))
@@ -29,7 +33,7 @@ public class Look : Action
         if (locationLookup.isSuccess)
         {
             var location = locationLookup.value;
-            await connection.sendOutput($"{location.name}({location.id})");
+            await connection.sendOutput(location.UnparseObject());
             await connection.sendOutput(location.internalDescription);
 
             var otherHumans = new StringBuilder();

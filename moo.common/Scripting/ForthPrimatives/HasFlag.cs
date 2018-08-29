@@ -36,8 +36,8 @@ public static class HasFlag
         if (sTarget.UnwrapDbref().ToInt32() < 0)
             return ForthPrimativeResult.SUCCESS;
 
-        var flag = (string)sFlag.Value;
-        if (flag == null || string.IsNullOrWhiteSpace(flag))
+        var flagString = (string)sFlag.Value;
+        if (flagString == null || string.IsNullOrWhiteSpace(flagString))
         {
             parameters.Stack.Push(new ForthDatum(0));
             return ForthPrimativeResult.SUCCESS;
@@ -46,14 +46,18 @@ public static class HasFlag
         var target = sTarget.UnwrapDbref();
         var targetResult = await ThingRepository.GetAsync<Thing>(target, parameters.CancellationToken);
 
-         if (!targetResult.isSuccess)
+        if (!targetResult.isSuccess)
         {
             parameters.Stack.Push(new ForthDatum(0));
             return ForthPrimativeResult.SUCCESS;
         }
 
-        var negate = flag.StartsWith("!");
-        var hasFlag = targetResult.value.HasFlag(negate ? flag.Substring(1) : flag);
+        var negate = flagString.StartsWith("!");
+        var flagChar = negate ? flagString[1] : flagString[0];
+        if (!Enum.TryParse(typeof(Thing.Flag), flagChar.ToString(), true, out object flag))
+            return new ForthPrimativeResult(ForthErrorResult.SYNTAX_ERROR, $"FLAG? understands no flag named {flagChar}");
+
+        var hasFlag = targetResult.value.HasFlag((Thing.Flag)flag);
         parameters.Stack.Push(new ForthDatum(hasFlag ^ negate ? 1 : 0));
         return ForthPrimativeResult.SUCCESS;
     }

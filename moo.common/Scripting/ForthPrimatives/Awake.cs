@@ -23,7 +23,7 @@ public static class Awake
         if (n1.Type != DatumType.DbRef)
             return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "AWAKE? requires the top parameter on the stack to be a dbref");
 
-        var connectionCount = parameters.Server.GetConnectionCount(n1.UnwrapDbref());
+        var connectionCount = Server.GetInstance().GetConnectionCount(n1.UnwrapDbref());
 
         parameters.Stack.Push(new ForthDatum(connectionCount));
         return ForthPrimativeResult.SUCCESS;

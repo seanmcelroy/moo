@@ -1,0 +1,113 @@
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+
+public class Editor
+{
+    private bool inputMode;
+
+    private List<string> buffer = new List<string>();
+
+    private List<string> inputModeBuffer = new List<string>();
+
+    private int position;
+
+    public string ProgramText => buffer == null || buffer.Count == 0 ? null : buffer.Aggregate((c, n) => $"{c}\n{n}");
+
+
+    public async Task<EditorResult> HandleInput(string line)
+    {
+        if (line == null || line.Length == 0)
+            return EditorResult.NORMAL_CONTINUE;
+
+        if (inputMode && line.CompareTo(".") != 0)
+        {
+            inputModeBuffer.Add(line);
+            return EditorResult.NORMAL_CONTINUE;
+        }
+        else
+        {
+            var split = line.Split(' ');
+            if (split.Last().Length == 1)
+            {
+                switch (split.Last()[0])
+                {
+                    case 'c':
+                        {
+                            // Compile
+                            var compileResult = await Script.Compile(ProgramText);
+                            if (!compileResult.Item1)
+                                return new EditorResult(EditorErrorResult.COMPILE_ERROR, compileResult.Item2);
+ 
+                            return EditorResult.NORMAL_CONTINUE;
+                        }
+                    case 'd':
+                        {
+                            // Delete mode
+                            if (split.Length != 3)
+                                return new EditorResult(EditorErrorResult.SYNTAX_ERROR, "Not enough arguments for 'd'");
+
+                            var start = split.Reverse().Skip(2).FirstOrDefault();
+                            if (!int.TryParse(start, out int s))
+                                return new EditorResult(EditorErrorResult.SYNTAX_ERROR, "Arguments for 'd' must be integers");
+
+                            var end = split.Reverse().Skip(1).FirstOrDefault();
+                            if (!int.TryParse(end, out int e))
+                                return new EditorResult(EditorErrorResult.SYNTAX_ERROR, "Arguments for 'd' must be integers");
+
+                            var length = e - s + 1;
+
+                            s = System.Math.Max(s, 0);
+                            s = System.Math.Min(s, inputModeBuffer.Count);
+                            length = System.Math.Max(length, 0);
+                            length = System.Math.Min(length, inputModeBuffer.Count - s);
+
+                            if (length > 0)
+                                inputModeBuffer.RemoveRange(s - 1, length);
+
+                            return EditorResult.NORMAL_CONTINUE;
+                        }
+                    case 'i':
+                        {
+                            // Insert mode
+                            if (split.Length == 2)
+                            {
+                                var number = split.Reverse().Skip(1).FirstOrDefault();
+                                if (!int.TryParse(number, out int num))
+                                    return new EditorResult(EditorErrorResult.SYNTAX_ERROR, "Argument for 'i' must be an integer");
+
+                                position = num == 0 ? 0 : num - 1;
+                            }
+                            else if (split.Length == 1)
+                                position = 0;
+                            else
+                                return new EditorResult(EditorErrorResult.SYNTAX_ERROR, "Not enough arguments for 'i'");
+
+                            inputModeBuffer.Clear();
+                            inputMode = true;
+                            return EditorResult.NORMAL_CONTINUE;
+                        }
+                    case 'q':
+                        return EditorResult.NORMAL_EXIT;
+                    case '.':
+                        {
+                            // Terminate input mode
+                            if (inputMode)
+                            {
+                                inputMode = false;
+                                buffer.InsertRange(position, inputModeBuffer);
+                                inputModeBuffer.Clear();
+                                return EditorResult.NORMAL_CONTINUE;
+                            }
+                            break;
+                        }
+                }
+            }
+
+        }
+
+        return new EditorResult(EditorErrorResult.SYNTAX_ERROR, $"Cannot parse line: {line}");
+    }
+
+}

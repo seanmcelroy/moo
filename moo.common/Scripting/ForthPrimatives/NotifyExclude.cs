@@ -54,7 +54,7 @@ public static class NotifyExclude
         if (message == null || string.IsNullOrWhiteSpace(message))
             return ForthPrimativeResult.SUCCESS;
 
-        await parameters.NotifyRoom.Invoke(sTarget.UnwrapDbref(), message, excludeList);
+        await Server.GetInstance().NotifyRoomAsync(sTarget.UnwrapDbref(), message, excludeList);
 
         return ForthPrimativeResult.SUCCESS;
     }

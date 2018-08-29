@@ -25,7 +25,7 @@ public static class PMatch
 
         var name = (string)s.Value;
 
-        var matches = parameters.Server.GetConnectionPlayers()
+        var matches = Server.GetInstance().GetConnectionPlayers()
             .Where(x => string.Compare(x.Item2, name, StringComparison.InvariantCultureIgnoreCase) == 0)
             .Distinct()
             .ToArray();

@@ -226,7 +226,7 @@ public struct ForthWord
 
             if (process.State == ForthProcess.ProcessState.Preempting)
             {
-                await process.Server.PreemptProcess(process.ProcessId, cancellationToken);
+                await Server.GetInstance().PreemptProcess(process.ProcessId, cancellationToken);
                 process.State = ForthProcess.ProcessState.RunningPreempt;
             }
 
@@ -237,7 +237,7 @@ public struct ForthWord
             }
 
             // If I'm pre-empted, then spin until 
-            if (process.Server.PreemptProcessId != 0 && process.Server.PreemptProcessId != process.ProcessId)
+            if (Server.GetInstance().PreemptProcessId != 0 && Server.GetInstance().PreemptProcessId != process.ProcessId)
             {
                 process.State = ForthProcess.ProcessState.Preempted;
                 while (process.State == ForthProcess.ProcessState.Preempted)
@@ -647,8 +647,8 @@ public struct ForthWord
                 if (callTable.Keys.Contains(datumLiteral, StringComparer.InvariantCultureIgnoreCase))
                 {
                     var p = new ForthPrimativeParameters(process, stack, variables, connection, trigger, command,
-                        async (d, s) => await process.NotifyAsync(d, s),
-                        async (d, s, e) => await process.NotifyRoomAsync(d, s, e),
+                        async (d, s) => await Server.GetInstance().NotifyAsync(d, s),
+                        async (d, s, e) => await Server.GetInstance().NotifyRoomAsync(d, s, e),
                         lastListItem,
                         cancellationToken);
 
@@ -702,13 +702,13 @@ public struct ForthWord
     {
         // Debug, print stack
         if (stack.Count == 0)
-            await connection.sendOutput($"DEBUG ({lineCount}): () " + extra);
+            await connection.sendOutput($"DEBUG ({lineCount}): () {extra}");
         else
             await connection.sendOutput($"DEBUG ({lineCount}): (" +
             stack.Reverse().Select(s =>
             {
-                return (s.Type == DatumType.String) ? "\"" + s.Value.ToString() + "\"" : s.Value.ToString();
-            }).Aggregate((c, n) => c + " " + n) + ") " + (default(ForthDatum).Equals(currentDatum) ? "" : ((currentDatum.Type == DatumType.String) ? "\"" + currentDatum.Value.ToString() + "\"" : currentDatum.Value.ToString())) + " " + extra);
+                return (s.Type == DatumType.String) ? $"\"{s.Value.ToString()}\"" : s.Value.ToString();
+            }).Aggregate((c, n) => c + " " + n) + ") " + (default(ForthDatum).Equals(currentDatum) ? "" : ((currentDatum.Type == DatumType.String) ? $"\"{currentDatum.Value.ToString()}\"" : currentDatum.Value.ToString())) + " " + extra);
     }
 
     private async Task DumpVariablesToDebugAsync(ForthProcess process, PlayerConnection connection)

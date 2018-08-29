@@ -7,8 +7,6 @@ public struct ForthPrimativeParameters
 {
     private Dbref? lastListItem;
 
-    public Server Server => Process.Server;
-
     public readonly ForthProcess Process;
 
     public readonly Stack<ForthDatum> Stack;
@@ -20,10 +18,6 @@ public struct ForthPrimativeParameters
     public readonly Dbref Trigger;
 
     public readonly string Command;
-
-    public readonly Func<Dbref, string, Task> Notify;
-
-    public readonly Func<Dbref, string, List<Dbref>, Task> NotifyRoom;
 
     public readonly CancellationToken CancellationToken;
 
@@ -46,8 +40,6 @@ public struct ForthPrimativeParameters
         this.Connection = connection;
         this.Trigger = trigger;
         this.Command = command;
-        this.Notify = notify;
-        this.NotifyRoom = notifyRoom;
         this.lastListItem = lastListItem;
         this.CancellationToken = cancellationToken;
     }

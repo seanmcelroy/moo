@@ -68,7 +68,7 @@ public static class ForthPreprocessor
                              || controlCurrent.Element == ControlFlowElement.SkippedBranch
                              || controlCurrent.Element == ControlFlowElement.SkipToAfterNextUntilOrRepeat)
                             {
-                                if (verbosity >= 2 && verbosity <= 3)
+                                if (verbosity >= 2 && verbosity <= 3 && connection != null)
                                     await connection.sendOutput($"SKIPPED LINE: {line}");
                                 controlFlow.Push(new ControlFlowMarker(ControlFlowElement.SkippedBranch, x));
                                 continue;
@@ -99,7 +99,7 @@ public static class ForthPreprocessor
                         if (controlCurrent.Element == ControlFlowElement.SkippedBranch
                          || controlCurrent.Element == ControlFlowElement.SkipToAfterNextUntilOrRepeat)
                         {
-                            if (verbosity >= 2 && verbosity <= 3)
+                            if (verbosity >= 2 && verbosity <= 3 && connection != null)
                                 await connection.sendOutput($"SKIPPED LINE: {line}");
                             continue;
                         }
@@ -127,7 +127,7 @@ public static class ForthPreprocessor
                         if (controlCurrent.Element == ControlFlowElement.SkippedBranch
                          || controlCurrent.Element == ControlFlowElement.SkipToAfterNextUntilOrRepeat)
                         {
-                            if (verbosity >= 2 && verbosity <= 3)
+                            if (verbosity >= 2 && verbosity <= 3 && connection != null)
                                 await connection.sendOutput($"SKIPPED LINE: {line}");
                             // A skipped if will push a SkippedBranch, so we should pop it.
                             controlFlow.Pop();
@@ -150,7 +150,7 @@ public static class ForthPreprocessor
                      || controlCurrent.Element == ControlFlowElement.SkipToAfterNextUntilOrRepeat)
                     {
                         // Debug, print stack
-                        if (verbosity >= 2 && verbosity <= 3)
+                        if (verbosity >= 2 && verbosity <= 3 && connection != null)
                             await connection.sendOutput($"SKIPPED LINE: {line}");
                         continue;
                     }
@@ -209,7 +209,8 @@ public static class ForthPreprocessor
                     var echoMatch = Regex.Match(line, @"^(?:\$echo\s+\""(?<value>[^\""]*)\"")");
                     if (echoMatch.Success)
                     {
-                        await connection.sendOutput(echoMatch.Groups["value"].Value);
+                        if (connection != null)
+                            await connection.sendOutput(echoMatch.Groups["value"].Value);
                         continue;
                     }
                 }
@@ -224,7 +225,8 @@ public static class ForthPreprocessor
                     }
                 }
 
-                await connection.sendOutput($"UNHANDLED PREPROCESSOR LINE: {line}");
+                if (connection != null)
+                    await connection.sendOutput($"UNHANDLED PREPROCESSOR LINE: {line}");
             }
             else
             {
@@ -241,7 +243,7 @@ public static class ForthPreprocessor
 
                 // Strip comments
                 if (line2.IndexOf('(') > -1)
-                    line2 = Regex.Replace(line2, @"\([^\r\n]*$|\([^\)]*\)", "", RegexOptions.Compiled);
+                    line2 = Regex.Replace(line2, @"^\([^\)]*\)|\([^\r\n]*$|\([^\)]*\)", "", RegexOptions.Compiled);
 
                 foreach (var define in defines.Where(d => d.Value != null))
                     line2 = Regex.Replace(line2, @"(?<=\s|^)" + Regex.Escape(define.Key) + @"(?=\s|$)", define.Value, RegexOptions.IgnoreCase);
@@ -249,9 +251,9 @@ public static class ForthPreprocessor
                 foreach (var hold in holdingPen)
                     line2 = line2.Replace(hold.Key, hold.Value);
 
-                if (verbosity > 0 && verbosity <= 3 && line.CompareTo(line2) != 0)
+                if (verbosity > 0 && verbosity <= 3 && line.CompareTo(line2) != 0 && connection != null)
                     await connection.sendOutput($"XFORM \"{line}\" into \"{line2}\"");
-                else if (verbosity == 4)
+                else if (verbosity == 4 && connection != null)
                     await connection.sendOutput($"PRE: {line2}");
 
                 sb.AppendLine(line2);
