@@ -48,6 +48,7 @@ public static class ForthPreprocessor
         var verbosity = 0;
 
         var x = -1;
+        var inMultiLineComment = false;
         foreach (var line in program.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None))
         {
             x++;
@@ -56,7 +57,7 @@ public static class ForthPreprocessor
             {
                 // $ifdef
                 {
-                    var ifdefMatch = Regex.Match(line, @"^\s*\$if(?<negate>n)?def\s+(?<defName>[^\s\=]{1,20})(?:\s*$|\s*\=\s*(?<defValue>[^\r\n]+)$)");
+                    var ifdefMatch = Regex.Match(line, @"^\s*\$if(?<negate>n)?def\s+(?<defName>[^\s\=\<]{1,30})(?:\s*$|\s*(=|<)\s*(?<defValue>[^\r\n]{1,30})$)");
                     if (ifdefMatch.Success)
                     {
                         // I could be an 'if' inside a skipped branch.
@@ -230,9 +231,21 @@ public static class ForthPreprocessor
             }
             else
             {
-                // We want to ensure any replaces do NOT happen in quoted strings
                 var line2 = line;
 
+                // If we open a multi-line comment, then continue until we close it.
+                if (inMultiLineComment && line2.IndexOf(")") != -1)
+                {
+                    inMultiLineComment = false;
+                    line2 = line2.Substring(line2.IndexOf(")"));
+                }
+                else if (inMultiLineComment || line2.TrimStart().StartsWith("(") && line2.IndexOf(")") == -1)
+                {
+                    inMultiLineComment = true;
+                    continue;
+                }
+
+                // We want to ensure any replaces do NOT happen in quoted strings
                 var holdingPen = new Dictionary<string, string>();
                 foreach (System.Text.RegularExpressions.Match match in Regex.Matches(line, @"\""[^\r\n]*?(?<!\\)\""(?=\s)"))
                 {

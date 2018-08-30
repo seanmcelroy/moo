@@ -7,14 +7,14 @@ using static ForthDatum;
 using static ForthPrimativeResult;
 using static Property;
 
-public static class GetPropStr
+public static class GetProp
 {
     public static async Task<ForthPrimativeResult> ExecuteAsync(ForthPrimativeParameters parameters)
     {
         /*
-        GETPROPSTR ( d s -- s ) 
+        GETPROP (d s -- ?) 
 
-        s must be a string. Retrieves string associated with property s in object d. If the property is cleared, "" (null string) is returned.
+        Gets the value of a given property, and puts it on the stack. This can return a lock, a string, a dbref, or an integer, depending on the type of the property. Permissions are the same as those for GETPROPSTR. This primitive returns 0 if no such property exists, of if it is a valueless propdir.
         */
         if (parameters.Stack.Count < 2)
             return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, "GETPROPVAL requires two parameters");
@@ -32,13 +32,13 @@ public static class GetPropStr
             return new ForthPrimativeResult(ForthErrorResult.NO_SUCH_OBJECT, $"Unable to find object with dbref {sTarget.UnwrapDbref()}");
 
         var property = targetResult.value.GetPropertyPathValue((string)sPath.Value);
-        if (property.Equals(default(Property)) || property.Type != PropertyType.String)
+        if (property.Equals(default(Property)))
         {
-            parameters.Stack.Push(new ForthDatum(""));
+            parameters.Stack.Push(new ForthDatum(0));
             return ForthPrimativeResult.SUCCESS;
         }
 
-        parameters.Stack.Push(new ForthDatum((string)property.Value));
+        parameters.Stack.Push(new ForthDatum(property));
         return ForthPrimativeResult.SUCCESS;
     }
 }

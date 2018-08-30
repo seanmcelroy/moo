@@ -24,12 +24,11 @@ public class ActionBuiltIn : IRunnable
         if (parts.Length < 2 || parts.Length > 3)
             return new VerbResult(false, "@action name=source[=regname].\r\nCreates a new action and attaches it to the thing, room, or player specified. If a regname is specified, then the _reg/regname property on the player is set to the dbref of the new object. This lets players refer to the object as $regname (ie: $mybutton) in @locks, @sets, etc. You may only attach actions you control to things you control. Creating an action costs 1 penny. The action can then be linked with the command @LINK.");
 
-        var name = parts[0];
-        var sourcePhrase = parts[1];
-        var regname = parts.Length == 3 ? parts[2] : null;
+        var name = parts[0].Trim();
+        var sourcePhrase = parts[1].Trim();
+        var regname = parts.Length == 3 ? parts[2].Trim() : null;
 
-        var player = connection.GetPlayer();
-        var sourceDbref = await player.FindThingForThisPlayerAsync(sourcePhrase, cancellationToken);
+        var sourceDbref = await connection.FindThingForThisPlayerAsync(sourcePhrase, cancellationToken);
         if (sourceDbref.Equals(Dbref.NOT_FOUND))
             return new VerbResult(false, $"Can't find '{sourcePhrase}' here");
         if (sourceDbref.Equals(Dbref.AMBIGUOUS))
@@ -49,15 +48,15 @@ public class ActionBuiltIn : IRunnable
         if (source.Type == Dbref.DbrefObjectType.Program)
             return new VerbResult(false, $"An exit cannot be attached to a program ({source.id.ToString()})");
 
-        if (!await source.IsControlledByAsync(player, cancellationToken))
+        if (!await source.IsControlledByAsync(connection, cancellationToken))
             return new VerbResult(false, $"You don't control {source.id.ToString()}");
 
-        var exit = Exit.Make(name, player.id);
+        var exit = Exit.Make(name, connection.Dbref);
         var moveResult = await exit.MoveToAsync(source, cancellationToken);
         if (!moveResult.isSuccess)
             await connection.sendOutput($"You can't seem to do that on {sourcePhrase}.  {moveResult.reason}");
 
-        player.SetPropertyPathValue($"_reg/{regname}", exit.id);
+        connection.SetPropertyPathValue($"_reg/{regname}", exit.id);
 
         return new VerbResult(true, $"Exit {exit.id.ToString()} created");
     }

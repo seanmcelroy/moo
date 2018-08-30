@@ -71,6 +71,29 @@ public class Thing : IStorable<Thing>
         return await MoveToAsync(targetLookup.value, cancellationToken);
     }
 
+    public async Task<VerbResult> MoveToAsync(PlayerConnection target, CancellationToken cancellationToken)
+    {
+        if (id == target.Dbref)
+            return new VerbResult(false, "I am already in that.");
+
+        var currentLocationLookup = await ThingRepository.GetAsync<Container>(location, cancellationToken);
+        var resultTakeOut = currentLocationLookup.value.Remove(id);
+        if (currentLocationLookup.isSuccess)
+        {
+            currentLocationLookup.value.Remove(id);
+            var resultPutIn = target.GetPlayer().Add(id);
+            if (resultPutIn)
+            {
+                location = target.Dbref;
+                return new VerbResult(true, "Moved");
+            }
+            else
+                return resultPutIn;
+        }
+        else
+            return resultTakeOut;
+    }
+
     public async Task<VerbResult> MoveToAsync(Container target, CancellationToken cancellationToken)
     {
         if (target.Contains(id))
@@ -319,9 +342,11 @@ public class Thing : IStorable<Thing>
         }
     }
 
-    public Property? GetPropertyPathValue(string path)
+    public Property GetPropertyPathValue(string path)
     {
-        return this.properties?.GetPropertyPathValue(path);
+        if (this.properties == null)
+            return default(Property);
+        return this.properties.GetPropertyPathValue(path);
     }
 
     public bool HasFlag(Flag flag)
@@ -367,7 +392,7 @@ public class Thing : IStorable<Thing>
         return false;
     }
 
-    public async Task<bool> IsControlledByAsync(Player player, CancellationToken cancellationToken)
+    public async Task<bool> IsControlledByAsync(PlayerConnection connection, CancellationToken cancellationToken)
     {
         /*
         You control anything you own.
@@ -376,13 +401,13 @@ public class Thing : IStorable<Thing>
         Players control all exits which are linked to their areas, to better facilitate border control.
         If an object is set CHOWN_OK, anyone may @chown object=me and gain control of the object.
         */
-        if (this.owner.Equals(player.id))
+        if (this.owner.Equals(connection.Dbref))
             return true;
 
-        if (player.id.Equals(Dbref.GOD))
+        if (connection.Dbref.Equals(Dbref.GOD))
             return true;
 
-        if (player.HasFlag(Flag.WIZARD))
+        if (connection.HasFlag(Flag.WIZARD))
             return true;
 
         if (this.Type == Dbref.DbrefObjectType.Exit)
@@ -393,11 +418,19 @@ public class Thing : IStorable<Thing>
             var linkTargetTasks = this.links.Select(l => ThingRepository.GetAsync<Thing>(l, cancellationToken)).ToArray();
             await Task.WhenAll(linkTargetTasks);
             var linkTargets = linkTargetTasks.Where(l => l.IsCompleted).Select(l => l.Result);
-            if (linkTargets.Any(l => l.isSuccess && l.value.owner == player.id))
+            if (linkTargets.Any(l => l.isSuccess && l.value.owner == connection.Dbref))
                 return true;
         }
 
         return false;
+    }
+
+    public void ClearFlag(Flag flag)
+    {
+        if (!HasFlag(flag))
+            return;
+
+        this.flags = this.flags.Except(new[] { flag }).ToArray();
     }
 
     public void SetFlag(Flag flag)
@@ -415,12 +448,31 @@ public class Thing : IStorable<Thing>
         }
     }
 
+    public void ClearProperties()
+    {
+        this.properties = new PropertyDirectory();
+    }
+
+    public void ClearPropertyPath(string path)
+    {
+        if (this.properties != null)
+            this.properties.ClearPropertyPathValue(path);
+    }
+
     public void SetPropertyPathValue(string path, Dbref value)
     {
         if (this.properties == null)
             this.properties = new PropertyDirectory();
 
         this.properties.SetPropertyPathValue(path, new ForthVariable(value, 0));
+    }
+
+    public void SetPropertyPathValue(string path, PropertyType type, object value)
+    {
+        if (this.properties == null)
+            this.properties = new PropertyDirectory();
+
+        this.properties.SetPropertyPathValue(path, type, value);
     }
 
     public void SetPropertyPathValue(string path, ForthVariable value)

@@ -21,6 +21,34 @@ public struct ForthDatum
     public readonly int? LineNumber;
     public readonly int? ColumnNumber;
 
+    public ForthDatum(Property property, int? lineNumber = null, int? columnNumber = null)
+    {
+        this.Value = property.Value;
+        switch (property.Type)
+        {
+            case Property.PropertyType.DbRef:
+                this.Type = ForthDatum.DatumType.DbRef;
+                break;
+            case Property.PropertyType.Float:
+                this.Type = ForthDatum.DatumType.Float;
+                break;
+            case Property.PropertyType.Integer:
+                this.Type = ForthDatum.DatumType.Integer;
+                break;
+            case Property.PropertyType.String:
+                this.Type = ForthDatum.DatumType.String;
+                break;
+            case Property.PropertyType.Unknown:
+                this.Type = ForthDatum.DatumType.Unknown;
+                break;
+            default:
+                throw new System.ArgumentException($"Unhandled variable type: {property.Type}", nameof(property));
+        }
+
+        this.LineNumber = lineNumber;
+        this.ColumnNumber = columnNumber;
+    }
+
     public ForthDatum(ForthVariable variable, int? lineNumber = null, int? columnNumber = null)
     {
         this.Value = variable.Value;

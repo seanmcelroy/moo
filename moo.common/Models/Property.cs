@@ -151,4 +151,34 @@ public struct Property
     public static string Serialize(string value) => Thing.Serialize(value);
     public static string Serialize(float value) => Thing.Serialize(value);
     public static string Serialize(int value) => Thing.Serialize(value);
+
+    public static bool TryInferType(string value, out Tuple<PropertyType, object> result)
+    {
+        if (int.TryParse(value.Trim(), out int i))
+        {
+            result = new Tuple<PropertyType, object>(PropertyType.Integer, i);
+            return true;
+        }
+
+        if (float.TryParse(value.Trim(), out float f))
+        {
+            result = new Tuple<PropertyType, object>(PropertyType.Float, f);
+            return true;
+        }
+
+        if (Dbref.TryParse(value.Trim(), out Dbref d))
+        {
+            result = new Tuple<PropertyType, object>(PropertyType.DbRef, d);
+            return true;
+        }
+
+        if (value.StartsWith('\"') && value.EndsWith('\"'))
+        {
+            result = new Tuple<PropertyType, object>(PropertyType.String, value);
+            return true;
+        }
+
+        result = default(Tuple<PropertyType, object>);
+        return false;
+    }
 }

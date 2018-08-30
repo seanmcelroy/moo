@@ -32,13 +32,13 @@ public static class GetPropFVal
             return new ForthPrimativeResult(ForthErrorResult.NO_SUCH_OBJECT, $"Unable to find object with dbref {sTarget.UnwrapDbref()}");
 
         var property = targetResult.value.GetPropertyPathValue((string)sPath.Value);
-        if (property == null || property.Value.Type != PropertyType.Float)
+        if (property.Equals(default(Property)) || property.Type != PropertyType.Float)
         {
             parameters.Stack.Push(new ForthDatum(0f));
             return ForthPrimativeResult.SUCCESS;
         }
 
-        parameters.Stack.Push(new ForthDatum((float)property.Value.Value));
+        parameters.Stack.Push(new ForthDatum((float)property.Value));
         return ForthPrimativeResult.SUCCESS;
     }
 }

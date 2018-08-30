@@ -29,80 +29,82 @@ public class Editor
         else
         {
             var split = line.Split(' ');
-            if (split.Last().Length == 1)
+            var commandChar = line.Length == 1 || (split.Length > 1 && split.Last().Length == 1) ? split.Last()[0] : (char)0;
+
+            switch (commandChar)
             {
-                switch (split.Last()[0])
-                {
-                    case 'c':
+                case 'c':
+                    {
+                        // Compile
+                        var compileResult = await Script.Compile(ProgramText);
+                        if (!compileResult.Item1)
+                            return new EditorResult(EditorErrorResult.COMPILE_ERROR, compileResult.Item2);
+
+                        return EditorResult.NORMAL_CONTINUE;
+                    }
+                case 'd':
+                    {
+                        // Delete mode
+                        if (split.Length != 3)
+                            return new EditorResult(EditorErrorResult.SYNTAX_ERROR, "Not enough arguments for 'd'");
+
+                        var start = split.Reverse().Skip(2).FirstOrDefault();
+                        if (!int.TryParse(start, out int s))
+                            return new EditorResult(EditorErrorResult.SYNTAX_ERROR, "Arguments for 'd' must be integers");
+
+                        var end = split.Reverse().Skip(1).FirstOrDefault();
+                        if (!int.TryParse(end, out int e))
+                            return new EditorResult(EditorErrorResult.SYNTAX_ERROR, "Arguments for 'd' must be integers");
+
+                        var length = e - s + 1;
+
+                        s = System.Math.Max(s, 0);
+                        s = System.Math.Min(s, inputModeBuffer.Count);
+                        length = System.Math.Max(length, 0);
+                        length = System.Math.Min(length, inputModeBuffer.Count - s);
+
+                        if (length > 0)
+                            inputModeBuffer.RemoveRange(s - 1, length);
+
+                        return EditorResult.NORMAL_CONTINUE;
+                    }
+                case 'i':
+                    {
+                        // Insert mode
+                        if (split.Length == 2)
                         {
-                            // Compile
-                            var compileResult = await Script.Compile(ProgramText);
-                            if (!compileResult.Item1)
-                                return new EditorResult(EditorErrorResult.COMPILE_ERROR, compileResult.Item2);
- 
-                            return EditorResult.NORMAL_CONTINUE;
+                            var number = split.Reverse().Skip(1).FirstOrDefault();
+                            if (!int.TryParse(number, out int num))
+                                return new EditorResult(EditorErrorResult.SYNTAX_ERROR, "Argument for 'i' must be an integer");
+
+                            position = num == 0 ? 0 : num - 1;
                         }
-                    case 'd':
+                        else if (split.Length == 1)
+                            position = 0;
+                        else
+                            return new EditorResult(EditorErrorResult.SYNTAX_ERROR, "Not enough arguments for 'i'");
+
+                        inputModeBuffer.Clear();
+                        inputMode = true;
+                        return EditorResult.NORMAL_CONTINUE;
+                    }
+                case 'q':
+                    return EditorResult.NORMAL_EXIT;
+                case '.':
+                    {
+                        // Terminate input mode
+                        if (inputMode)
                         {
-                            // Delete mode
-                            if (split.Length != 3)
-                                return new EditorResult(EditorErrorResult.SYNTAX_ERROR, "Not enough arguments for 'd'");
-
-                            var start = split.Reverse().Skip(2).FirstOrDefault();
-                            if (!int.TryParse(start, out int s))
-                                return new EditorResult(EditorErrorResult.SYNTAX_ERROR, "Arguments for 'd' must be integers");
-
-                            var end = split.Reverse().Skip(1).FirstOrDefault();
-                            if (!int.TryParse(end, out int e))
-                                return new EditorResult(EditorErrorResult.SYNTAX_ERROR, "Arguments for 'd' must be integers");
-
-                            var length = e - s + 1;
-
-                            s = System.Math.Max(s, 0);
-                            s = System.Math.Min(s, inputModeBuffer.Count);
-                            length = System.Math.Max(length, 0);
-                            length = System.Math.Min(length, inputModeBuffer.Count - s);
-
-                            if (length > 0)
-                                inputModeBuffer.RemoveRange(s - 1, length);
-
-                            return EditorResult.NORMAL_CONTINUE;
-                        }
-                    case 'i':
-                        {
-                            // Insert mode
-                            if (split.Length == 2)
-                            {
-                                var number = split.Reverse().Skip(1).FirstOrDefault();
-                                if (!int.TryParse(number, out int num))
-                                    return new EditorResult(EditorErrorResult.SYNTAX_ERROR, "Argument for 'i' must be an integer");
-
-                                position = num == 0 ? 0 : num - 1;
-                            }
-                            else if (split.Length == 1)
-                                position = 0;
-                            else
-                                return new EditorResult(EditorErrorResult.SYNTAX_ERROR, "Not enough arguments for 'i'");
-
+                            inputMode = false;
+                            buffer.InsertRange(position, inputModeBuffer);
                             inputModeBuffer.Clear();
-                            inputMode = true;
                             return EditorResult.NORMAL_CONTINUE;
                         }
-                    case 'q':
-                        return EditorResult.NORMAL_EXIT;
-                    case '.':
-                        {
-                            // Terminate input mode
-                            if (inputMode)
-                            {
-                                inputMode = false;
-                                buffer.InsertRange(position, inputModeBuffer);
-                                inputModeBuffer.Clear();
-                                return EditorResult.NORMAL_CONTINUE;
-                            }
-                            break;
-                        }
-                }
+                        break;
+                    }
+                default:
+                    buffer.Add(line);
+                    return EditorResult.NORMAL_CONTINUE;
             }
 
         }

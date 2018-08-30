@@ -27,11 +27,11 @@ public abstract class Player : Container
         if (s.StartsWith("$"))
         {
             var prop = GetPropertyPathValue($"_reg/{s.Substring(1)}");
-            if (prop == null)
+            if (prop.Equals(default(Property)))
                 return Dbref.NOT_FOUND;
-            if (prop.Value.Type != Property.PropertyType.DbRef)
+            if (prop.Type != Property.PropertyType.DbRef)
                 return Dbref.AMBIGUOUS;
-            return (Dbref)prop.Value.value;
+            return (Dbref)prop.value;
         }
 
         if (Dbref.TryParse(s, out Dbref dbref))

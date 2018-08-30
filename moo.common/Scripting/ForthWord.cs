@@ -130,10 +130,12 @@ public struct ForthWord
         callTable.Add("unparseobj", (p) => UnparseObj.ExecuteAsync(p).Result);
 
         // PROPERTY MANIPULATION
-        callTable.Add("getpropval", (p) => GetPropVal.ExecuteAsync(p).Result);
+        callTable.Add("getprop", (p) => GetProp.ExecuteAsync(p).Result);
         callTable.Add("getpropstr", (p) => GetPropStr.ExecuteAsync(p).Result);
+        callTable.Add("getpropval", (p) => GetPropVal.ExecuteAsync(p).Result);
         callTable.Add("getpropfval", (p) => GetPropFVal.ExecuteAsync(p).Result);
         callTable.Add("addprop", (p) => AddProp.ExecuteAsync(p).Result);
+        callTable.Add("setprop", (p) => SetProp.ExecuteAsync(p).Result);
 
         // Database Related Operators
         callTable.Add("dbref", (p) => DbrefConvert.Execute(p));
@@ -284,9 +286,7 @@ public struct ForthWord
             // Do we have something unknown on the top of the stack?
             var topOfStack = stack.Count > 0 ? stack.Peek() : default(ForthDatum);
             if (stack.Count > 0 && topOfStack.Type == ForthDatum.DatumType.Unknown)
-            {
                 return new ForthWordResult(ForthErrorResult.SYNTAX_ERROR, $"Unable to handle datum on top of stack: {topOfStack}({topOfStack.LineNumber},{topOfStack.ColumnNumber})");
-            }
 
             // Execution Control
             if (datum.Type == ForthDatum.DatumType.Unknown)
@@ -311,11 +311,12 @@ public struct ForthWord
                     }
 
                     // Debug, print stack
-                    await DumpStackToDebugAsync(stack, connection, lineCount, datum);
+                    if (verbosity >= 2) await DumpStackToDebugAsync(stack, connection, lineCount, datum);
 
                     if (stack.Count == 0)
                     {
-                        await DumpVariablesToDebugAsync(process, connection);
+                        if (verbosity >= 2)
+                            await DumpVariablesToDebugAsync(process, connection);
                         return new ForthWordResult(ForthErrorResult.STACK_UNDERFLOW, "IF had no value on the stack to evaluate");
                     }
 
@@ -344,7 +345,8 @@ public struct ForthWord
                     }
 
                     // Debug, print stack
-                    await DumpStackToDebugAsync(stack, connection, lineCount, datum);
+                    if (verbosity >= 2)
+                        await DumpStackToDebugAsync(stack, connection, lineCount, datum);
 
                     if (controlFlow.Count == 0)
                         return new ForthWordResult(ForthErrorResult.STACK_UNDERFLOW, "ELSE encountered without preceding IF");
@@ -377,8 +379,7 @@ public struct ForthWord
                     }
 
                     // Debug, print stack
-                    await DumpStackToDebugAsync(stack, connection, lineCount, datum);
-
+                    if (verbosity >= 2) await DumpStackToDebugAsync(stack, connection, lineCount, datum);
 
                     if (controlFlow.Count == 0)
                         return new ForthWordResult(ForthErrorResult.STACK_UNDERFLOW, "THEN encountered without preceding IF");
@@ -405,7 +406,8 @@ public struct ForthWord
                     }
 
                     // Debug, print stack
-                    await DumpStackToDebugAsync(stack, connection, lineCount, datum);
+                    if (verbosity >= 2)
+                        await DumpStackToDebugAsync(stack, connection, lineCount, datum);
 
                     return new ForthWordResult($"Word {name} completed via exit");
                 }
@@ -429,7 +431,8 @@ public struct ForthWord
                     }
 
                     // Debug, print stack
-                    await DumpStackToDebugAsync(stack, connection, lineCount, datum);
+                    if (verbosity >= 2)
+                        await DumpStackToDebugAsync(stack, connection, lineCount, datum);
 
                     controlFlow.Push(new ControlFlowMarker(ControlFlowElement.BeginMarker, x));
                     continue;
@@ -453,7 +456,8 @@ public struct ForthWord
                         }
                     }
 
-                    await DumpStackToDebugAsync(stack, connection, lineCount, datum);
+                    if (verbosity >= 2)
+                        await DumpStackToDebugAsync(stack, connection, lineCount, datum);
 
                     if (stack.Count == 0)
                     {
@@ -495,7 +499,8 @@ public struct ForthWord
                 // REPEAT
                 if (string.Compare("repeat", datumLiteral, true) == 0)
                 {
-                    await DumpStackToDebugAsync(stack, connection, lineCount, datum);
+                    if (verbosity >= 2)
+                        await DumpStackToDebugAsync(stack, connection, lineCount, datum);
 
                     if (controlFlow.Count == 0)
                         return new ForthWordResult(ForthErrorResult.STACK_UNDERFLOW, "REPEAT but no previous BEGIN, FOR, or FOREACH on the stack");
@@ -568,7 +573,8 @@ public struct ForthWord
 
                     if (stack.Count == 0)
                     {
-                        await DumpStackToDebugAsync(stack, connection, lineCount, datum);
+                        if (verbosity >= 2)
+                            await DumpStackToDebugAsync(stack, connection, lineCount, datum);
                         return new ForthWordResult(ForthErrorResult.STACK_UNDERFLOW, "UNTIL had no value on the stack to evaluate");
                     }
 
@@ -593,7 +599,8 @@ public struct ForthWord
                     if (found)
                         continue;
 
-                    await DumpStackToDebugAsync(stack, connection, lineCount, datum);
+                    if (verbosity >= 2)
+                        await DumpStackToDebugAsync(stack, connection, lineCount, datum);
                     return new ForthWordResult(ForthErrorResult.STACK_UNDERFLOW, "UNTIL but no previous BEGIN or FOR");
                 }
             }
@@ -614,10 +621,11 @@ public struct ForthWord
             }
 
             // Debug, print stack
-            await DumpStackToDebugAsync(stack, connection, lineCount, datum);
+            if (verbosity >= 2)
+                await DumpStackToDebugAsync(stack, connection, lineCount, datum);
 
             // Function calls
-            if (datum.Type == ForthDatum.DatumType.Unknown &&
+            if ((datum.Type == ForthDatum.DatumType.Primitive || datum.Type == ForthDatum.DatumType.Unknown) &&
                 process.HasWord(datum.Value.ToString()))
             {
                 // Yield to other word.
@@ -724,7 +732,8 @@ public struct ForthWord
         }
 
         // Debug, print stack at end of program
-        await DumpStackToDebugAsync(stack, connection, lineCount);
+        if (verbosity >= 1)
+            await DumpStackToDebugAsync(stack, connection, lineCount);
 
         return new ForthWordResult($"Word {name} completed");
     }

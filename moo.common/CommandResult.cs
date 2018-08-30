@@ -52,18 +52,18 @@ public struct CommandResult
         return !string.IsNullOrWhiteSpace(match.Groups["doI"].Value) ? match.Groups["doI"].Value : match.Groups["doD"].Value;
     }
 
-    public async Task<Dbref> ResolveDirectObject(Player player, CancellationToken cancellationToken)
+    public async Task<Dbref> ResolveDirectObject(PlayerConnection connection, CancellationToken cancellationToken)
     {
         var dobj = getDirectObject();
 
         if (String.Compare("me", dobj, true) == 0)
-            return player.id;
+            return connection.Dbref;
         if (String.Compare("here", dobj, true) == 0)
-            return player.location;
+            return connection.Location;
         if (Dbref.TryParse(dobj, out Dbref dbref))
             return dbref;
 
-        var result = await player.FindThingForThisPlayerAsync(dobj, cancellationToken);
+        var result = await connection.FindThingForThisPlayerAsync(dobj, cancellationToken);
         return result;
     }
 

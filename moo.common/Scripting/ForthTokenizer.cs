@@ -41,7 +41,7 @@ public static class ForthTokenizer
         List<ForthDatum> currentWordData = null;
         var currentDatum = new StringBuilder();
         var currentNonDatum = new StringBuilder();
-        var verbosity = 1;
+        var verbosity = 5;
 
         foreach (var c in program)
         {

@@ -23,14 +23,14 @@ public class ProgramBuiltIn : IRunnable
     {
         connection.EnterEditMode(command.getDirectObject(), async t =>
         {
-            var script = Server.RegisterScript(command.getDirectObject(), connection.GetPlayer().id, t);
+            var script = Server.RegisterScript(command.getDirectObject(), connection.Dbref, t);
 
             // Move this to my inventory
-            await script.MoveToAsync(connection.GetPlayer(), cancellationToken);
+            await script.MoveToAsync(connection, cancellationToken);
 
             Console.WriteLine($"Created new program {script.UnparseObject()}");
         });
 
-        return Task.FromResult(new VerbResult(true, "Editor exited"));
+        return Task.FromResult(new VerbResult(true, "Editor initiated"));
     }
 }

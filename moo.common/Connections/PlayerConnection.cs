@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -27,9 +28,12 @@ public abstract class PlayerConnection
 
     public DateTime? LastInput => lastInput;
 
+    public bool Unattended => unattended;
+
     private Editor editor;
     private string editorTag;
     private Action<string> onEditorModeExit;
+    private bool unattended;
 
     protected PlayerConnection(HumanPlayer player)
     {
@@ -57,10 +61,22 @@ public abstract class PlayerConnection
         buffer.AppendLine(line);
     }
 
-    public void ReceiveInput(IEnumerable<string> lines)
+    public void ReceiveInputUnattended(IEnumerable<string> lines)
     {
+        unattended = true;
         lastInput = DateTime.Now;
         buffer.AppendLine(lines.Aggregate((c, n) => $"{c}\n{n}"));
+
+        while (buffer.Length > 0)
+        {
+            Thread.Yield();
+            Thread.Sleep(100);
+
+            if (buffer.Length == 1 && buffer.ToString()[0] == '\n')
+                buffer.Remove(0, 1);
+        }
+
+        unattended = false;
     }
 
     private CommandResult PopCommand()
@@ -87,6 +103,12 @@ public abstract class PlayerConnection
 
     public Player GetPlayer() => this.player;
 
+    public bool HasFlag(Thing.Flag flag) => this.player.HasFlag(flag);
+
+    public async Task<Dbref> FindThingForThisPlayerAsync(string s, CancellationToken cancellationToken) => await this.player.FindThingForThisPlayerAsync(s, cancellationToken);
+
+    public void SetPropertyPathValue(string path, Dbref value) => this.player.SetPropertyPathValue(path, value);
+
     public async Task RunNextCommand(IEnumerable<IRunnable> globalActions, CancellationToken cancellationToken)
     {
         var command = PopCommand();
@@ -109,12 +131,13 @@ public abstract class PlayerConnection
                 onEditorModeExit.Invoke(editor.ProgramText);
                 editor = null;
                 onEditorModeExit = null;
-
-                await sendOutput(command.raw);
             }
 
             return;
         }
+
+        if (Unattended)
+            await sendOutput($"AUTO> {command.raw}");
 
         // Exits in current location
         var locationLookup = await ThingRepository.GetAsync<Container>(this.Location, cancellationToken);

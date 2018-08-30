@@ -16,7 +16,7 @@ public class LoadBuiltIn : IRunnable
 
     public async Task<VerbResult> Process(PlayerConnection connection, CommandResult command, CancellationToken cancellationToken)
     {
-        var targetId = await command.ResolveDirectObject(connection.GetPlayer(), cancellationToken);
+        var targetId = await command.ResolveDirectObject(connection, cancellationToken);
         if (targetId == Dbref.NOT_FOUND)
         {
             await connection.sendOutput("I don't see that here.");

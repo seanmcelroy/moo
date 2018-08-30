@@ -22,36 +22,38 @@ namespace moo.console
             Console.Out.WriteLine("Loading built-in actions");
             foreach (var action in new IRunnable[] {
                 new ActionBuiltIn(),
+                new EditBuiltIn(),
                 new LinkBuiltIn(),
                 new LoadBuiltIn(),
                 new SaveBuiltIn(),
+                new SetBuiltIn(),
                 new ProgramBuiltIn() })
                 server.RegisterBuiltInAction(action);
+
+            Console.Out.WriteLine("Starting server");
+            server.Start(cts.Token);
 
             Console.Out.WriteLine("Loading script directory");
             ReadInScriptDirectory(consoleConnection, "scripts", "cmd-@register.muf", null);
             ReadInScriptDirectory(consoleConnection, "scripts", "std-defs.muf", null);
-            /*ReadInScriptDirectory(consoleConnection, "scripts", "lib-strings", null);
-            ReadInScriptDirectory(consoleConnection, "scripts", "lib-stackrng", null);
-            ReadInScriptDirectory(consoleConnection, "scripts", "lib-props", null);
-            ReadInScriptDirectory(consoleConnection, "scripts", "lib-lmgr", null);
-            ReadInScriptDirectory(consoleConnection, "scripts", "lib-edit", null);
-            ReadInScriptDirectory(consoleConnection, "scripts", "lib-gui", null);
-            ReadInScriptDirectory(consoleConnection, "scripts", "lib-editor", null);
-            ReadInScriptDirectory(consoleConnection, "scripts", "lib-match", null);
-            ReadInScriptDirectory(consoleConnection, "scripts", "lib-mesg", null);
-            ReadInScriptDirectory(consoleConnection, "scripts", "lib-mesgbox", null);
-            ReadInScriptDirectory(consoleConnection, "scripts", "lib-look", null);
-            ReadInScriptDirectory(consoleConnection, "scripts", "lib-reflist", null);
-            ReadInScriptDirectory(consoleConnection, "scripts", "lib-index", null);
-            ReadInScriptDirectory(consoleConnection, "scripts", "lib-case", null);
-            ReadInScriptDirectory(consoleConnection, "scripts", "lib-mpi", null);*/
+            ReadInScriptDirectory(consoleConnection, "scripts", "lib-strings.muf", null);
+            ReadInScriptDirectory(consoleConnection, "scripts", "lib-stackrng.muf", null);
+            ReadInScriptDirectory(consoleConnection, "scripts", "lib-props.muf", null);
+            ReadInScriptDirectory(consoleConnection, "scripts", "lib-lmgr.muf", null);
+            ReadInScriptDirectory(consoleConnection, "scripts", "lib-edit.muf", null);
+            ReadInScriptDirectory(consoleConnection, "scripts", "lib-gui.muf", null);
+            ReadInScriptDirectory(consoleConnection, "scripts", "lib-editor.muf", null);
+            ReadInScriptDirectory(consoleConnection, "scripts", "lib-match.muf", null);
+            ReadInScriptDirectory(consoleConnection, "scripts", "lib-mesg.muf", null);
+            ReadInScriptDirectory(consoleConnection, "scripts", "lib-mesgbox.muf", null);
+            ReadInScriptDirectory(consoleConnection, "scripts", "lib-look.muf", null);
+            ReadInScriptDirectory(consoleConnection, "scripts", "lib-reflist.muf", null);
+            ReadInScriptDirectory(consoleConnection, "scripts", "lib-index.muf", null);
+            ReadInScriptDirectory(consoleConnection, "scripts", "lib-case.muf", null);
+            ReadInScriptDirectory(consoleConnection, "scripts", "lib-mpi.muf", null);
 
             //ReadInScriptDirectory(consoleConnection, "scripts", "lib-*.muf", null);
             //ReadInScriptDirectory(consoleConnection, "scripts", "cmd-*.muf", "cmd-");
-
-            Console.Out.WriteLine("Starting server");
-            server.Start(cts.Token);
 
             while (!cts.IsCancellationRequested)
             {
@@ -123,8 +125,7 @@ namespace moo.console
         private static void ReadInScriptFile(string path, PlayerConnection connection)
         {
             var lines = System.IO.File.ReadAllLines(path);
-
-            connection.ReceiveInput(lines);
+            connection.ReceiveInputUnattended(lines);
         }
     }
 }

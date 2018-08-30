@@ -58,6 +58,11 @@ public class Script : Thing, IRunnable
         return new Tuple<bool, string>(true, "Program already compiled");
     }
 
+    public void Uncompile()
+    {
+        tokenized = default(ForthTokenizerResult);
+    }
+
     protected override Dictionary<string, object> GetSerializedElements()
     {
         var results = base.GetSerializedElements();

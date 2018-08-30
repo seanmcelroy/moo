@@ -28,8 +28,7 @@ public class LinkBuiltIn : IRunnable
         var object1name = parts[0];
         var object2phrase = parts[1];
 
-        var player = connection.GetPlayer();
-        var sourceDbref = await player.FindThingForThisPlayerAsync(object1name, cancellationToken);
+        var sourceDbref = await connection.FindThingForThisPlayerAsync(object1name, cancellationToken);
         if (sourceDbref.Equals(Dbref.NOT_FOUND))
             return new VerbResult(false, $"Can't find '{object1name}' here");
         if (sourceDbref.Equals(Dbref.AMBIGUOUS))
@@ -43,13 +42,13 @@ public class LinkBuiltIn : IRunnable
         }
 
         var source = sourceLookup.value;
-        if (!await source.IsControlledByAsync(player, cancellationToken))
+        if (!await source.IsControlledByAsync(connection, cancellationToken))
             return new VerbResult(false, $"You don't control {source.id.ToString()}");
 
         var linkTargets = new List<Dbref>();
         foreach (var targetName in object2phrase.Split(';', StringSplitOptions.RemoveEmptyEntries))
         {
-            var targetDbref = await player.FindThingForThisPlayerAsync(targetName, cancellationToken);
+            var targetDbref = await connection.FindThingForThisPlayerAsync(targetName, cancellationToken);
             if (targetDbref.Equals(Dbref.NOT_FOUND))
                 return new VerbResult(false, $"Can't find '{targetName}' here");
             if (targetDbref.Equals(Dbref.AMBIGUOUS))
@@ -63,7 +62,7 @@ public class LinkBuiltIn : IRunnable
             }
 
             var target = targetLookup.value;
-            var controlsTarget = await target.IsControlledByAsync(player, cancellationToken);
+            var controlsTarget = await target.IsControlledByAsync(connection, cancellationToken);
 
             if (target.Type == Dbref.DbrefObjectType.Room &&
                 !source.HasFlag(Thing.Flag.LINK_OK) &&

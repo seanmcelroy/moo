@@ -16,6 +16,29 @@ public struct ForthVariable
     public VariableType Type;
     public object Value;
 
+    public ForthVariable(ForthDatum value, bool isConstant = false)
+    {
+        this.IsConstant = isConstant;
+        switch (value.Type)
+        {
+            case ForthDatum.DatumType.DbRef:
+                this.Type = VariableType.DbRef;
+                break;
+            case ForthDatum.DatumType.Float:
+                this.Type = VariableType.Float;
+                break;
+            case ForthDatum.DatumType.Integer:
+                this.Type = VariableType.Integer;
+                break;
+            case ForthDatum.DatumType.String:
+                this.Type = VariableType.String;
+                break;
+            default:
+                throw new System.ArgumentException($"Unhandled variable type: {value.Type}", nameof(value));
+        }
+        this.Value = value.Value;
+    }
+
     public ForthVariable(object value, VariableType type, bool isConstant)
     {
         this.IsConstant = isConstant;

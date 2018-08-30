@@ -45,7 +45,7 @@ public class PropertyDirectory : Dictionary<string, Property>
         this.Add(name, new Property(name, value));
     }
 
-    public Property? GetPropertyPathValue(string path)
+    public Property GetPropertyPathValue(string path)
     {
         path = path.TrimStart('/').TrimEnd('/');
 
@@ -66,13 +66,13 @@ public class PropertyDirectory : Dictionary<string, Property>
                 else
                 {
                     // Exists and is NOT a directory.  This isn't what they asked for.
-                    return null;
+                    return default(Property);
                 }
             }
             else
             {
                 // Does not exist.
-                return null;
+                return default(Property);
             }
         }
         else
@@ -82,7 +82,7 @@ public class PropertyDirectory : Dictionary<string, Property>
         }
     }
 
-    public void SetPropertyPathValue(string path, ForthVariable value)
+    private PropertyDirectory FindPropertyPathForSet(string path)
     {
         path = path.TrimStart('/').TrimEnd('/');
 
@@ -98,8 +98,7 @@ public class PropertyDirectory : Dictionary<string, Property>
                 {
                     // Exists and is a directory
                     var firstSegmentPropertyDirectory = (PropertyDirectory)firstSegmentProperty.Value;
-                    firstSegmentPropertyDirectory.SetPropertyPathValue(path.Substring(firstSeparator + 1), value);
-                    return;
+                    return firstSegmentPropertyDirectory.FindPropertyPathForSet(path.Substring(firstSeparator + 1));
                 }
                 else
                 {
@@ -107,8 +106,7 @@ public class PropertyDirectory : Dictionary<string, Property>
                     this.Remove(firstSegmentName);
                     var firstSegmentPropertyDirectory = new PropertyDirectory();
                     this.Add(firstSegmentName, firstSegmentPropertyDirectory);
-                    firstSegmentPropertyDirectory.SetPropertyPathValue(path.Substring(firstSeparator + 1), value);
-                    return;
+                    return firstSegmentPropertyDirectory.FindPropertyPathForSet(path.Substring(firstSeparator + 1));
                 }
             }
             else
@@ -116,33 +114,82 @@ public class PropertyDirectory : Dictionary<string, Property>
                 // Does not exist.  Create.
                 var firstSegmentPropertyDirectory = new PropertyDirectory();
                 this.Add(firstSegmentName, firstSegmentPropertyDirectory);
-                firstSegmentPropertyDirectory.SetPropertyPathValue(path.Substring(firstSeparator + 1), value);
-                return;
+                return firstSegmentPropertyDirectory.FindPropertyPathForSet(path.Substring(firstSeparator + 1));
             }
         }
         else
         {
             // This property directory!
-            if (this.ContainsKey(path))
-                this.Remove(path);
+            return this;
+        }
+    }
 
-            switch (value.Type)
-            {
-                case VariableType.DbRef:
-                    this.Add(path, (Dbref)value.Value);
-                    break;
-                case VariableType.String:
-                    this.Add(path, (string)value.Value);
-                    break;
-                case VariableType.Integer:
-                    this.Add(path, (int)value.Value);
-                    break;
-                case VariableType.Float:
-                    this.Add(path, (float)value.Value);
-                    break;
-                default:
-                    throw new System.InvalidOperationException($"Unable to handle property type: {value.Type}");
-            }
+    public void ClearPropertyPathValue(string path)
+    {
+        var directory = this.FindPropertyPathForSet(path);
+        directory.Clear();
+    }
+
+    public void SetPropertyPathValue(string path, PropertyType type, object value)
+    {
+        var pathDirectory = path.Substring(0, path.LastIndexOf('/'));
+        var directory = this.FindPropertyPathForSet(path);
+
+        // This property directory!
+        path = path.TrimStart('/').TrimEnd('/');
+        var lastPathPartIndex = path.LastIndexOf('/');
+        var lastPathPart = path.Substring(lastPathPartIndex + 1);
+
+        if (directory.ContainsKey(lastPathPart))
+            directory.Remove(lastPathPart);
+
+        switch (type)
+        {
+            case PropertyType.DbRef:
+                directory.Add(lastPathPart, (Dbref)value);
+                break;
+            case PropertyType.String:
+                directory.Add(lastPathPart, (string)value);
+                break;
+            case PropertyType.Integer:
+                directory.Add(lastPathPart, (int)value);
+                break;
+            case PropertyType.Float:
+                directory.Add(lastPathPart, (float)value);
+                break;
+            default:
+                throw new System.InvalidOperationException($"Unable to handle property type: {type}");
+        }
+    }
+
+    public void SetPropertyPathValue(string path, ForthVariable value)
+    {
+        var directory = this.FindPropertyPathForSet(path);
+
+        // This property directory!
+        path = path.TrimStart('/').TrimEnd('/');
+        var lastPathPartIndex = path.LastIndexOf('/');
+        var lastPathPart = path.Substring(lastPathPartIndex + 1);
+
+        if (directory.ContainsKey(lastPathPart))
+            directory.Remove(lastPathPart);
+
+        switch (value.Type)
+        {
+            case VariableType.DbRef:
+                directory.Add(lastPathPart, (Dbref)value.Value);
+                break;
+            case VariableType.String:
+                directory.Add(lastPathPart, (string)value.Value);
+                break;
+            case VariableType.Integer:
+                directory.Add(lastPathPart, (int)value.Value);
+                break;
+            case VariableType.Float:
+                directory.Add(lastPathPart, (float)value.Value);
+                break;
+            default:
+                throw new System.InvalidOperationException($"Unable to handle property type: {value.Type}");
         }
     }
 }
