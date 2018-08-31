@@ -13,7 +13,8 @@ public struct ForthDatum
         Marker = 4,
         DbRef = 5,
         Float = 6,
-        Variable = 7
+        Variable = 7,
+        Lock = 8
     }
 
     public readonly object Value;
@@ -37,6 +38,9 @@ public struct ForthDatum
                 break;
             case Property.PropertyType.String:
                 this.Type = ForthDatum.DatumType.String;
+                break;
+                case Property.PropertyType.Lock:
+                this.Type = ForthDatum.DatumType.Lock;
                 break;
             case Property.PropertyType.Unknown:
                 this.Type = ForthDatum.DatumType.Unknown;

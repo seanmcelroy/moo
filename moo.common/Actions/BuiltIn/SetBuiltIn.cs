@@ -11,6 +11,7 @@ public class SetBuiltIn : IRunnable
         var verb = command.getVerb().ToLowerInvariant();
         if (verb == "@set" && command.hasDirectObject())
             return new Tuple<bool, string>(true, verb);
+
         return new Tuple<bool, string>(false, null);
     }
 

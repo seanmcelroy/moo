@@ -234,12 +234,12 @@ public static class ForthPreprocessor
                 var line2 = line;
 
                 // If we open a multi-line comment, then continue until we close it.
-                if (inMultiLineComment && line2.IndexOf(")") != -1)
+                if (inMultiLineComment && line2.IndexOf(')') != -1)
                 {
                     inMultiLineComment = false;
-                    line2 = line2.Substring(line2.IndexOf(")"));
+                    line2 = line2.Substring(line2.IndexOf(')'));
                 }
-                else if (inMultiLineComment || line2.TrimStart().StartsWith("(") && line2.IndexOf(")") == -1)
+                else if (inMultiLineComment || line2.TrimStart().StartsWith('(') && line2.IndexOf(')') == -1)
                 {
                     inMultiLineComment = true;
                     continue;
@@ -247,8 +247,9 @@ public static class ForthPreprocessor
 
                 // We want to ensure any replaces do NOT happen in quoted strings
                 var holdingPen = new Dictionary<string, string>();
-                foreach (System.Text.RegularExpressions.Match match in Regex.Matches(line, @"\""[^\r\n]*?(?<!\\)\""(?=\s)"))
+                while (Regex.IsMatch(line2, @"\""[^\r\n]*?(?<!\\)\""(?=\s)"))
                 {
+                    System.Text.RegularExpressions.Match match = Regex.Match(line2, @"\""[^\r\n]*?(?<!\\)\""(?=\s)");
                     var key = RandomString(match.Length);
                     holdingPen.Add(key, match.Value);
                     line2 = line2.Remove(match.Index, match.Length).Insert(match.Index, key);
@@ -256,7 +257,7 @@ public static class ForthPreprocessor
 
                 // Strip comments
                 if (line2.IndexOf('(') > -1)
-                    line2 = Regex.Replace(line2, @"^\([^\)]*\)|\([^\r\n]*$|\([^\)]*\)", "", RegexOptions.Compiled);
+                    line2 = Regex.Replace(line2, @"^\([^\)]*\)|\([^\r\n]*$|\([^\)]*\)", "");
 
                 foreach (var define in defines.Where(d => d.Value != null))
                     line2 = Regex.Replace(line2, @"(?<=\s|^)" + Regex.Escape(define.Key) + @"(?=\s|$)", define.Value, RegexOptions.IgnoreCase);

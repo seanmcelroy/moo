@@ -32,17 +32,18 @@ public class SqliteStorageProvider : IStorageProvider
 
     public async Task<StorageProviderRetrieveResult> LoadAsync(Dbref id, CancellationToken cancellationToken)
     {
-        StorageProviderRetrieveResult result = default(StorageProviderRetrieveResult);
+        var result = default(StorageProviderRetrieveResult);
 
-         using (var connection = new SqliteConnection("Data Source=./objects.db"))
+        using (var connection = new SqliteConnection("Data Source=./objects.db"))
         {
             await connection.OpenAsync();
 
             using (var command = new SqliteCommand("SELECT [type], [data] FROM [objects] WHERE [id]=@id;", connection))
             {
                 command.Parameters.AddWithValue("@id", (int)id);
-                SqliteDataReader reader = await  command.ExecuteReaderAsync(cancellationToken);
-                if (await reader.ReadAsync()) {
+                SqliteDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
+                if (await reader.ReadAsync())
+                {
                     result = new StorageProviderRetrieveResult(id, reader.GetString(0), reader.GetString(1));
                     reader.Close();
                 }

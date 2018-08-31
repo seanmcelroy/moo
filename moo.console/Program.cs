@@ -25,9 +25,11 @@ namespace moo.console
                 new EditBuiltIn(),
                 new LinkBuiltIn(),
                 new LoadBuiltIn(),
+                new NameBuiltIn(),
                 new SaveBuiltIn(),
                 new SetBuiltIn(),
-                new ProgramBuiltIn() })
+                new ProgramBuiltIn(),
+                new PropSetBuiltIn() })
                 server.RegisterBuiltInAction(action);
 
             Console.Out.WriteLine("Starting server");
@@ -51,6 +53,16 @@ namespace moo.console
             ReadInScriptDirectory(consoleConnection, "scripts", "lib-index.muf", null);
             ReadInScriptDirectory(consoleConnection, "scripts", "lib-case.muf", null);
             ReadInScriptDirectory(consoleConnection, "scripts", "lib-mpi.muf", null);
+
+            ReadInScriptDirectory(consoleConnection, "scripts", "lib-arrays.muf", null);
+            ReadInScriptDirectory(consoleConnection, "scripts", "lib-bolding.muf", null);
+            ReadInScriptDirectory(consoleConnection, "scripts", "lib-debug.muf", null);
+            ReadInScriptDirectory(consoleConnection, "scripts", "lib-mail-MOSS1.1.muf", null);
+            ReadInScriptDirectory(consoleConnection, "scripts", "lib-optionsgui.muf", null);
+            ReadInScriptDirectory(consoleConnection, "scripts", "lib-optionsinfo.muf", null);
+            ReadInScriptDirectory(consoleConnection, "scripts", "lib-optionsmenu.muf", null);
+            ReadInScriptDirectory(consoleConnection, "scripts", "lib-optionsmisc.muf", null);
+            ReadInScriptDirectory(consoleConnection, "scripts", "cmd-@archive.muf", null);
 
             //ReadInScriptDirectory(consoleConnection, "scripts", "lib-*.muf", null);
             //ReadInScriptDirectory(consoleConnection, "scripts", "cmd-*.muf", "cmd-");

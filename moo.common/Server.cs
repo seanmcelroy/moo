@@ -199,11 +199,11 @@ public class Server
 
         aether.SetPropertyPathValue("_sys/startuptime", new ForthVariable(now));
 
-        playerHandlerTask = new Task(() =>
+        playerHandlerTask = new Task(async () =>
         {
             do
             {
-                Parallel.ForEach(GetConnectedPlayers(), async (connection) => await connection.RunNextCommand(globalActions, cancellationToken));
+                await Task.WhenAll(GetConnectedPlayers().Select(async (connection) => await connection.RunNextCommand(globalActions, cancellationToken)));
             } while (!cancellationToken.IsCancellationRequested);
 
         }, cancellationToken);

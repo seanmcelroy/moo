@@ -30,6 +30,11 @@ public class PropertyDirectory : Dictionary<string, Property>
         this.Add(name, new Property(name, value));
     }
 
+    public void Add(string name, Lock value)
+    {
+        this.Add(name, new Property(name, value));
+    }
+
     public void Add(string name, Dbref value)
     {
         this.Add(name, new Property(name, value));
@@ -130,9 +135,58 @@ public class PropertyDirectory : Dictionary<string, Property>
         directory.Clear();
     }
 
+    public bool SetPropertyPathValue(string path, PropertyType type, string value)
+    {
+        // Coerce string value into designated type
+        switch (type)
+        {
+            case PropertyType.DbRef:
+                {
+                    if (Dbref.TryParse(value, out Dbref result))
+                    {
+                        SetPropertyPathValue(path, type, result);
+                        return true;
+                    }
+                    return false;
+                }
+            case PropertyType.Float:
+                {
+                    if (float.TryParse(value, out float result))
+                    {
+                        SetPropertyPathValue(path, type, result);
+                        return true;
+                    }
+                    return false;
+                }
+            case PropertyType.Integer:
+                {
+                    if (int.TryParse(value, out int result))
+                    {
+                        SetPropertyPathValue(path, type, result);
+                        return true;
+                    }
+                    return false;
+                }
+            case PropertyType.Lock:
+                {
+                    if (Lock.TryParse(value, out Lock result))
+                    {
+                        SetPropertyPathValue(path, type, result);
+                        return true;
+                    }
+                    return false;
+                }
+            case PropertyType.String:
+                SetPropertyPathValue(path, type, (object)value);
+                return true;
+            default:
+                throw new System.InvalidOperationException($"Unable to handle property type: {type}");
+        }
+    }
+
     public void SetPropertyPathValue(string path, PropertyType type, object value)
     {
-        var pathDirectory = path.Substring(0, path.LastIndexOf('/'));
+        var pathDirectory = path.LastIndexOf('/') == -1 ? path : path.Substring(0, path.LastIndexOf('/'));
         var directory = this.FindPropertyPathForSet(path);
 
         // This property directory!
@@ -156,6 +210,9 @@ public class PropertyDirectory : Dictionary<string, Property>
                 break;
             case PropertyType.Float:
                 directory.Add(lastPathPart, (float)value);
+                break;
+            case PropertyType.Lock:
+                directory.Add(lastPathPart, (Lock)value);
                 break;
             default:
                 throw new System.InvalidOperationException($"Unable to handle property type: {type}");

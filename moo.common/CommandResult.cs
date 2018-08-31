@@ -18,10 +18,7 @@ public struct CommandResult
         this.match = parts.Match(raw);
     }
 
-    public string getVerb()
-    {
-        return match.Groups["verb"].Value;
-    }
+    public string getVerb() => match.Groups["verb"].Value;
 
     public string getNonVerbPhrase()
     {
@@ -37,20 +34,11 @@ public struct CommandResult
         return (text.Substring(0, pos) + replace + text.Substring(pos + search.Length)).TrimStart();
     }
 
-    public bool hasIndirectObject()
-    {
-        return !string.IsNullOrWhiteSpace(match.Groups["io"].Value);
-    }
+    public bool hasIndirectObject() => !string.IsNullOrWhiteSpace(match.Groups["io"].Value);
 
-    public bool hasDirectObject()
-    {
-        return !string.IsNullOrWhiteSpace(match.Groups["doI"].Value) || !string.IsNullOrWhiteSpace(match.Groups["doD"].Value);
-    }
+    public bool hasDirectObject() => !string.IsNullOrWhiteSpace(match.Groups["doI"].Value) || !string.IsNullOrWhiteSpace(match.Groups["doD"].Value);
 
-    public string getDirectObject()
-    {
-        return !string.IsNullOrWhiteSpace(match.Groups["doI"].Value) ? match.Groups["doI"].Value : match.Groups["doD"].Value;
-    }
+    public string getDirectObject() => !string.IsNullOrWhiteSpace(match.Groups["doI"].Value) ? match.Groups["doI"].Value : match.Groups["doD"].Value;
 
     public async Task<Dbref> ResolveDirectObject(PlayerConnection connection, CancellationToken cancellationToken)
     {
@@ -67,7 +55,5 @@ public struct CommandResult
         return result;
     }
 
-    public override string ToString() {
-        return this.raw;
-    }
+    public override string ToString() => this.raw;
 }

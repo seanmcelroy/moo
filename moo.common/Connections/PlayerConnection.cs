@@ -15,6 +15,7 @@ public abstract class PlayerConnection
     private DateTime connectionTime;
     private DateTime? lastInput;
     private readonly StringBuilder buffer = new StringBuilder();
+    private readonly object bufferLock = new object();
 
     public Dbref Dbref => player.id;
 
@@ -81,17 +82,24 @@ public abstract class PlayerConnection
 
     private CommandResult PopCommand()
     {
-        if (buffer.Length < 2)
-            return default(CommandResult);
+        lock (bufferLock)
+        {
+            if (buffer.Length < 2)
+                return default(CommandResult);
 
-        var bufferString = buffer.ToString();
-        int firstBreak = bufferString.IndexOf("\n");
-        if (firstBreak == -1)
-            return default(CommandResult);
+            var bufferString = buffer.ToString();
+            int firstBreak = bufferString.IndexOf('\n');
+            if (firstBreak == -1)
+                return default(CommandResult);
 
-        var raw = bufferString.Substring(0, firstBreak);
-        buffer.Remove(0, raw.Length + "\n".Length);
-        return new CommandResult(raw);
+            var raw = bufferString.Substring(0, firstBreak);
+            buffer.Remove(0, raw.Length + "\n".Length);
+
+            if (raw.Length == 0)
+                return default(CommandResult);
+                
+            return new CommandResult(raw);
+        }
     }
 
     public void EnterEditMode(string tag, Action<string> onEditorModeExit)
@@ -113,7 +121,7 @@ public abstract class PlayerConnection
     {
         var command = PopCommand();
 
-        if (default(CommandResult).Equals(command))
+        if (default(CommandResult).Equals(command) || command.raw.Length == 0)
         {
             Thread.Sleep(500);
             return;

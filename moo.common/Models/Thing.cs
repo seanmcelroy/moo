@@ -177,6 +177,19 @@ public class Thing : IStorable<Thing>
             var substring = serialized.Substring(m.Length);
             yield return Tuple.Create<object, string>(m.Groups["value"].Value, substring);
         }
+        else if (serialized.StartsWith("<lock/>"))
+        {
+            var substring = serialized.Substring("<lock/>".Length);
+            yield return Tuple.Create<object, string>(Dbref.NOT_FOUND, substring);
+        }
+        else if (serialized.StartsWith("<lock>"))
+        {
+            var r = new Regex(@"<lock>(?<value>(?:.*?))<\/lock>(?:.*?)");
+            var m = r.Match(serialized);
+
+            var substring = serialized.Substring(m.Length);
+            yield return Tuple.Create<object, string>(new Lock(m.Groups["value"].Value), substring);
+        }
         else if (serialized.StartsWith("<dbref/>"))
         {
             var substring = serialized.Substring("<dbref/>".Length);
@@ -342,11 +355,24 @@ public class Thing : IStorable<Thing>
         }
     }
 
-    public Property GetPropertyPathValue(string path)
+    public async Task<Property> GetPropertyPathValue(string path, CancellationToken cancellationToken)
     {
         if (this.properties == null)
             return default(Property);
-        return this.properties.GetPropertyPathValue(path);
+
+        var result = this.properties.GetPropertyPathValue(path);
+
+        // Rooms inherit the properties of their parents
+        if (result.Equals(default(Property)) && this.id != Dbref.AETHER)
+        {
+            var parentLookup = await ThingRepository.GetAsync<Container>(this.location, cancellationToken);
+            if (!parentLookup.isSuccess)
+                return result;
+
+            return await parentLookup.value.GetPropertyPathValue(path, cancellationToken);
+        }
+
+        return result;
     }
 
     public bool HasFlag(Flag flag)
@@ -467,6 +493,14 @@ public class Thing : IStorable<Thing>
         this.properties.SetPropertyPathValue(path, new ForthVariable(value, 0));
     }
 
+    public void SetPropertyPathValue(string path, PropertyType type, string value)
+    {
+        if (this.properties == null)
+            this.properties = new PropertyDirectory();
+
+        this.properties.SetPropertyPathValue(path, type, value);
+    }
+
     public void SetPropertyPathValue(string path, PropertyType type, object value)
     {
         if (this.properties == null)
@@ -569,6 +603,10 @@ public class Thing : IStorable<Thing>
         return $"<dbref>{value}</dbref>";
     }
 
+    public static string Serialize(Lock value, byte dud)
+    {
+        return $"<lock>{value}</lock>";
+    }
 
     public static string Serialize(string value)
     {

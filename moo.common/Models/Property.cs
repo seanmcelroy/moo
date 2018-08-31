@@ -13,7 +13,8 @@ public struct Property
         Integer = 2,
         DbRef = 3,
         Float = 4,
-        Directory = 5
+        Directory = 5,
+        Lock = 6
     }
 
     [JsonProperty]
@@ -70,6 +71,19 @@ public struct Property
         this.Type = PropertyType.Integer;
     }
 
+    public Property(string name, Lock value)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new System.ArgumentNullException(nameof(name));
+        if (default(Lock).Equals(value))
+            throw new System.ArgumentNullException(nameof(value));
+
+        this.Name = name;
+        this.directory = null;
+        this.value = value;
+        this.Type = PropertyType.Lock;
+    }
+
     public Property(string name, Dbref value)
     {
         if (string.IsNullOrWhiteSpace(name))
@@ -82,6 +96,7 @@ public struct Property
         this.value = value;
         this.Type = PropertyType.DbRef;
     }
+
     public Property(string name, float value)
     {
         if (string.IsNullOrWhiteSpace(name))
@@ -118,6 +133,8 @@ public struct Property
                 return Serialize((int)Value);
             case PropertyType.DbRef:
                 return Serialize((Dbref)Value, 0);
+                case PropertyType.Lock:
+                return Serialize((Lock)Value, 0);
             case PropertyType.Float:
                 return Serialize((float)Value);
             case PropertyType.Directory:
@@ -148,6 +165,7 @@ public struct Property
     }
 
     public static string Serialize(Dbref value, byte dud) => Thing.Serialize(value, 0);
+    public static string Serialize(Lock value, byte dud) => Thing.Serialize(value, 0);
     public static string Serialize(string value) => Thing.Serialize(value);
     public static string Serialize(float value) => Thing.Serialize(value);
     public static string Serialize(int value) => Thing.Serialize(value);
