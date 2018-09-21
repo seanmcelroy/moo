@@ -21,11 +21,11 @@ public class ProgramBuiltIn : IRunnable
 
     public Task<VerbResult> Process(PlayerConnection connection, CommandResult command, CancellationToken cancellationToken)
     {
-        connection.EnterEditMode(command.getDirectObject(), async t =>
+        var script = Server.RegisterScript(command.getDirectObject(), connection.Dbref);
+        connection.EnterEditMode(script, command.getDirectObject(), async t =>
         {
-            var script = Server.RegisterScript(command.getDirectObject(), connection.Dbref, t);
-
             // Move this to my inventory
+            script.programText = t;
             await script.MoveToAsync(connection, cancellationToken);
 
             Console.WriteLine($"Created new program {script.UnparseObject()}");

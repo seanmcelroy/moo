@@ -31,7 +31,7 @@ public static class GetProp
         if (!targetResult.isSuccess)
             return new ForthPrimativeResult(ForthErrorResult.NO_SUCH_OBJECT, $"Unable to find object with dbref {sTarget.UnwrapDbref()}");
 
-        var property = await targetResult.value.GetPropertyPathValue((string)sPath.Value, parameters.CancellationToken);
+        var property = await targetResult.value.GetPropertyPathValueAsync((string)sPath.Value, parameters.CancellationToken);
         if (property.Equals(default(Property)))
         {
             parameters.Stack.Push(new ForthDatum(0));

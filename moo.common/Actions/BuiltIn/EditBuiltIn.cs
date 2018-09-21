@@ -41,11 +41,11 @@ public class EditBuiltIn : IRunnable
         if (!await program.IsControlledByAsync(connection, cancellationToken))
             return new VerbResult(false, $"You don't control {program.id.ToString()}");
 
-        connection.EnterEditMode(command.getDirectObject(), async t =>
+        connection.EnterEditMode(null, command.getDirectObject(), async t =>
         {
             program.programText += $"\n{t}";
             program.Uncompile();
-            await program.Compile();
+            await program.CompileAsync(connection, cancellationToken);
         });
 
         return new VerbResult(true, "Editor initiated");

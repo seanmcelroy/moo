@@ -69,17 +69,14 @@ public class Server
         globalActions.Add(action);
     }
 
-    public static Script RegisterScript(string name, Dbref owner, string programText)
+    public static Script RegisterScript(string name, Dbref owner)
     {
         if (name == null)
             throw new System.ArgumentNullException(nameof(name));
-        if (programText == null)
-            throw new System.ArgumentNullException(nameof(programText));
 
         var scriptObject = ThingRepository.Make<Script>();
         scriptObject.name = name;
         scriptObject.owner = owner;
-        scriptObject.programText = programText;
         var insertedScriptObject = ThingRepository.Insert(scriptObject);
         globalActions.Add(insertedScriptObject);
         return insertedScriptObject;

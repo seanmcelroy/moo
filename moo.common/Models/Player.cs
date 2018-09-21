@@ -26,7 +26,7 @@ public abstract class Player : Container
 
         if (s.StartsWith("$"))
         {
-            var prop = await GetPropertyPathValue($"_reg/{s.Substring(1)}", cancellationToken);
+            var prop = await GetPropertyPathValueAsync($"_reg/{s.Substring(1)}", cancellationToken);
             if (prop.Equals(default(Property)))
                 return Dbref.NOT_FOUND;
             if (prop.Type != Property.PropertyType.DbRef)

@@ -355,7 +355,7 @@ public class Thing : IStorable<Thing>
         }
     }
 
-    public async Task<Property> GetPropertyPathValue(string path, CancellationToken cancellationToken)
+    public async Task<Property> GetPropertyPathValueAsync(string path, CancellationToken cancellationToken)
     {
         if (this.properties == null)
             return default(Property);
@@ -369,7 +369,7 @@ public class Thing : IStorable<Thing>
             if (!parentLookup.isSuccess)
                 return result;
 
-            return await parentLookup.value.GetPropertyPathValue(path, cancellationToken);
+            return await parentLookup.value.GetPropertyPathValueAsync(path, cancellationToken);
         }
 
         return result;
@@ -491,6 +491,14 @@ public class Thing : IStorable<Thing>
             this.properties = new PropertyDirectory();
 
         this.properties.SetPropertyPathValue(path, new ForthVariable(value, 0));
+    }
+
+     public void SetPropertyPathValue(string path, float value)
+    {
+        if (this.properties == null)
+            this.properties = new PropertyDirectory();
+
+        this.properties.SetPropertyPathValue(path, PropertyType.Float, value);
     }
 
     public void SetPropertyPathValue(string path, PropertyType type, string value)

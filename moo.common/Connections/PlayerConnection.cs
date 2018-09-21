@@ -84,6 +84,9 @@ public abstract class PlayerConnection
     {
         lock (bufferLock)
         {
+            while (buffer.Length > 0 && buffer[0] == '\n')
+                buffer.Remove(0, 1);
+
             if (buffer.Length < 2)
                 return default(CommandResult);
 
@@ -97,15 +100,15 @@ public abstract class PlayerConnection
 
             if (raw.Length == 0)
                 return default(CommandResult);
-                
+
             return new CommandResult(raw);
         }
     }
 
-    public void EnterEditMode(string tag, Action<string> onEditorModeExit)
+    public void EnterEditMode(Script script, string tag, Action<string> onEditorModeExit)
     {
         this.onEditorModeExit = onEditorModeExit;
-        this.editor = new Editor();
+        this.editor = new Editor(this, script);
         this.editorTag = tag;
     }
 
@@ -129,7 +132,7 @@ public abstract class PlayerConnection
 
         if (editor != null)
         {
-            var editorResult = await editor.HandleInput(command.raw);
+            var editorResult = await editor.HandleInputAsync(command.raw, cancellationToken);
 
             if (!editorResult.IsSuccessful)
                 await sendOutput($"ERROR: {editorTag}: {editorResult.Reason}");

@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 
 public class Editor
 {
+    private readonly PlayerConnection connection;
+    private readonly Script script;
     private bool inputMode;
 
     private List<string> buffer = new List<string>();
@@ -15,13 +17,18 @@ public class Editor
 
     public string ProgramText => buffer == null || buffer.Count == 0 ? null : buffer.Aggregate((c, n) => $"{c}\n{n}");
 
+    public Editor(PlayerConnection connection, Script script)
+    {
+        this.connection = connection;
+        this.script = script;
+    }
 
-    public async Task<EditorResult> HandleInput(string line)
+    public async Task<EditorResult> HandleInputAsync(string line, CancellationToken cancellationToken)
     {
         if (line == null || line.Length == 0)
             return EditorResult.NORMAL_CONTINUE;
 
-        if (inputMode && line.CompareTo(".") != 0)
+        if (inputMode && string.Compare(".", line) != 0)
         {
             inputModeBuffer.Add(line);
             return EditorResult.NORMAL_CONTINUE;
@@ -36,7 +43,7 @@ public class Editor
                 case 'c':
                     {
                         // Compile
-                        var compileResult = await Script.Compile(ProgramText);
+                        var compileResult = await Script.CompileAsync(script, ProgramText, connection, cancellationToken);
                         if (!compileResult.Item1)
                             return new EditorResult(EditorErrorResult.COMPILE_ERROR, compileResult.Item2);
 

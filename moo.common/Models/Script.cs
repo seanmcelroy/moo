@@ -28,10 +28,10 @@ public class Script : Thing, IRunnable
         return new Tuple<bool, string>(false, null);
     }
 
-    public static async Task<Tuple<bool, string, ForthTokenizerResult>> Compile(string programText)
+    public static async Task<Tuple<bool, string, ForthTokenizerResult>> CompileAsync(Script script, string programText, PlayerConnection connection, CancellationToken cancellationToken)
     {
         // Set 1: Preprocessing directives
-        var preprocessed = await ForthPreprocessor.Preprocess(null, programText);
+        var preprocessed = await ForthPreprocessor.Preprocess(connection, script, programText, cancellationToken);
         if (!preprocessed.IsSuccessful)
             return new Tuple<bool, string, ForthTokenizerResult>(false, preprocessed.Reason, default(ForthTokenizerResult));
 
@@ -43,11 +43,11 @@ public class Script : Thing, IRunnable
         return new Tuple<bool, string, ForthTokenizerResult>(true, "Compiled", tokenized);
     }
 
-    public async Task<Tuple<bool, string>> Compile()
+    public async Task<Tuple<bool, string>> CompileAsync(PlayerConnection connection, CancellationToken cancellationToken)
     {
         if (default(ForthTokenizerResult).Equals(tokenized))
         {
-            var result = await Compile(programText);
+            var result = await CompileAsync(this, programText, connection, cancellationToken);
             if (!result.Item1)
                 return new Tuple<bool, string>(false, result.Item2);
 
@@ -80,7 +80,7 @@ public class Script : Thing, IRunnable
 
         process.State = ForthProcess.ProcessState.Parsing;
 
-        var compileResult = await Compile();
+        var compileResult = await CompileAsync(connection, cancellationToken);
 
         if (!compileResult.Item1)
         {
