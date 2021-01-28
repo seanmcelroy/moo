@@ -8,7 +8,6 @@ using static Dbref;
 
 public static class ThingRepository
 {
-
     public struct GetResult<T> where T : Thing
     {
         public T value;
@@ -36,6 +35,7 @@ public static class ThingRepository
     private static int nextThingId = -1;
     private static IStorageProvider storageProvider;
 
+    public static bool IsCached(Dbref dbref) => _cache.ContainsKey(dbref);
 
     public static T Insert<T>(T subject) where T : Thing
     {
@@ -123,7 +123,7 @@ public static class ThingRepository
                 }
             case DbrefObjectType.Room:
                 {
-                    var result = await GetAsync<Script>(id, cancellationToken);
+                    var result = await GetAsync<Room>(id, cancellationToken);
                     isSuccess = result.isSuccess;
                     thing = result.value;
                     reason = result.reason;
@@ -168,11 +168,11 @@ public static class ThingRepository
         if (storageProvider == null)
             return new GetResult<T>("No storage provider is loaded");
 
-        StorageProviderRetrieveResult providerResult = await storageProvider.LoadAsync(id, cancellationToken);
+        var providerResult = await storageProvider.LoadAsync(id, cancellationToken);
         if (!providerResult.isSuccess)
             return new GetResult<T>($"{id} not found in storage provider");
 
-        Type loadedType = Type.GetType(providerResult.type);
+        var loadedType = Type.GetType(providerResult.type);
 
         if (!typeof(T).IsAssignableFrom(loadedType))
             return new GetResult<T>($"{id} found in storage provider with type {providerResult.type}, but cannot be cast to requested type {typeof(T).Name}");

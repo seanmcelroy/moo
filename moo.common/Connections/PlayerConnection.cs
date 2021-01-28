@@ -36,6 +36,8 @@ public abstract class PlayerConnection
     private Action<string> onEditorModeExit;
     private bool unattended;
 
+    public bool IsIdle => editor == null && buffer.Length == 0 && !unattended;
+
     protected PlayerConnection(HumanPlayer player)
     {
         this.player = player;
@@ -85,7 +87,7 @@ public abstract class PlayerConnection
         lock (bufferLock)
         {
             while (buffer.Length > 0 && buffer[0] == '\n')
-                buffer.Remove(0, 1);
+                buffer.Remove(0,1);
 
             if (buffer.Length < 2)
                 return default(CommandResult);
@@ -100,7 +102,7 @@ public abstract class PlayerConnection
 
             if (raw.Length == 0)
                 return default(CommandResult);
-
+                
             return new CommandResult(raw);
         }
     }
@@ -126,7 +128,7 @@ public abstract class PlayerConnection
 
         if (default(CommandResult).Equals(command) || command.raw.Length == 0)
         {
-            Thread.Sleep(500);
+            Thread.Sleep(200);
             return;
         }
 

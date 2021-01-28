@@ -493,7 +493,7 @@ public class Thing : IStorable<Thing>
         this.properties.SetPropertyPathValue(path, new ForthVariable(value, 0));
     }
 
-     public void SetPropertyPathValue(string path, float value)
+    public void SetPropertyPathValue(string path, float value)
     {
         if (this.properties == null)
             this.properties = new PropertyDirectory();
@@ -525,10 +525,7 @@ public class Thing : IStorable<Thing>
         this.properties.SetPropertyPathValue(path, value);
     }
 
-    public string Serialize()
-    {
-        return Serialize(GetSerializedElements());
-    }
+    public string Serialize() => Serialize(GetSerializedElements());
 
     protected virtual Dictionary<string, object> GetSerializedElements()
     {

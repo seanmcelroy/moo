@@ -22,6 +22,7 @@ public static class ForthPreprocessor
     private static readonly Regex defineCompleteRegex = new Regex(@"^\s*\$define\s+(?<defName>[^\s]{1,50})(?:\s*\$enddef$|\s+(?<defValue>(?:.|\r|\n)+)\s*\$enddef$)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
     private static readonly Regex echoRegex = new Regex(@"^(?:\$echo\s+\""(?<value>[^\""]*)\"")", RegexOptions.Compiled | RegexOptions.IgnoreCase);
     private static readonly Regex ifdefRegex = new Regex(@"^\s*\$if(?<negate>n)?def\s+(?<defName>[^\s\=\<]{1,50})(?:\s*$|\s*(=|<)\s*(?<defValue>[^\r\n]{1,50})$)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+    private static readonly Regex elseRegex = new Regex(@"^(\s*\$else\s*)+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
     private static readonly Regex endifRegex = new Regex(@"^(\s*\$endif\s*)+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
     private static readonly Regex includeRegex = new Regex(@"^\s*(?:\$include\s+(?:\$(?<libname>.+)|(?<dbref>\#\d+))?)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
     private static readonly Regex libDefRegex = new Regex(@"(?:\$libdef\s+(?<function>[^\s\/]+))", RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -290,33 +291,39 @@ public static class ForthPreprocessor
                     }
 
                     // $else
-                    if (string.Compare("$else", token.Trim(), true) == 0)
                     {
-                        // I could be an 'else' inside a skipped branch.
-                        if (controlFlow.Count > 0)
+                        var match = elseRegex.Match(token);
+                        if (match.Success)
                         {
-                            var controlCurrent = controlFlow.Peek();
-                            if (controlCurrent.Element == ControlFlowElement.SkippedBranch
-                             || controlCurrent.Element == ControlFlowElement.SkipToAfterNextUntilOrRepeat)
+                            // I could be an 'else' inside a skipped branch.
+                            if (controlFlow.Count > 0)
                             {
-                                if (verbosity >= 2 && verbosity <= 3 && connection != null)
-                                    await connection.sendOutput($"SKIPPED LINE: {line}");
-                                tokenHandled = true;
-                                continue;
+                                var controlCurrent = controlFlow.Peek();
+                                if (controlCurrent.Element == ControlFlowElement.SkippedBranch
+                                 || controlCurrent.Element == ControlFlowElement.SkipToAfterNextUntilOrRepeat)
+                                {
+                                    if (verbosity >= 2 && verbosity <= 3 && connection != null)
+                                        await connection.sendOutput($"SKIPPED LINE: {line}");
+                                    tokenHandled = true;
+                                    continue;
+                                }
                             }
+
+                            if (controlFlow.Count == 0)
+                                return new ForthPreprocessingResult("$else encountered without preceding $ifdef/$ifndef");
+
+                            var currentControl = controlFlow.Pop();
+                            if (currentControl.Element == ControlFlowElement.InIfAndContinue)
+                                controlFlow.Push(new ControlFlowMarker(ControlFlowElement.InElseAndSkip, x));
+                            else
+                                controlFlow.Push(new ControlFlowMarker(ControlFlowElement.InElseAndContinue, x));
+
+                            tokenHandled = true;
+                            line = line.Remove(match.Captures[0].Index, match.Captures[0].Length).Trim();
+                            if (line.Length == 0)
+                                continue;
+                            goto again;
                         }
-
-                        if (controlFlow.Count == 0)
-                            return new ForthPreprocessingResult("$else encountered without preceding $ifdef/$ifndef");
-
-                        var currentControl = controlFlow.Pop();
-                        if (currentControl.Element == ControlFlowElement.InIfAndContinue)
-                            controlFlow.Push(new ControlFlowMarker(ControlFlowElement.InElseAndSkip, x));
-                        else
-                            controlFlow.Push(new ControlFlowMarker(ControlFlowElement.InElseAndContinue, x));
-
-                        tokenHandled = true;
-                        continue;
                     }
 
                     // $endif
@@ -537,11 +544,13 @@ public static class ForthPreprocessor
                 if (line2.IndexOf('(') > -1)
                     line2 = Regex.Replace(line2, @"^\([^\)]*\)|\([^\r\n]*$|\([^\)]*\)", "");
 
-                foreach (var define in defines.Where(d => d.Value != null))
-                    line2 = Regex.Replace(line2, @"(?<=\s|^)" + Regex.Escape(define.Key) + @"(?=\s|$)", define.Value, RegexOptions.IgnoreCase);
+                if (line2.Length > 0)
+                    foreach (var define in defines.Where(d => d.Value != null))
+                        line2 = Regex.Replace(line2, @"(?<=\s|^)" + Regex.Escape(define.Key) + @"(?=\s|$)", define.Value, RegexOptions.IgnoreCase);
 
-                foreach (var hold in holdingPen)
-                    line2 = line2.Replace(hold.Key, hold.Value);
+                if (line2.Length > 0)
+                    foreach (var hold in holdingPen)
+                        line2 = line2.Replace(hold.Key, hold.Value);
 
                 if (verbosity > 0 && verbosity <= 3 && line.CompareTo(line2) != 0 && connection != null)
                     await connection.sendOutput($"XFORM \"{line}\" into \"{line2}\"");
@@ -551,6 +560,9 @@ public static class ForthPreprocessor
                 sb.AppendLine(line2);
             }
         }
+
+        if (controlFlow.Count != 0)
+            await connection.sendOutput("UNCLOSED CONTROL FLOW!");
 
         return new ForthPreprocessingResult(sb.ToString(), publicFunctionNames, null);
     }

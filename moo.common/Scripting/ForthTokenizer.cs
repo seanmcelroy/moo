@@ -27,6 +27,9 @@ public static class ForthTokenizer
 
     public static async Task<ForthTokenizerResult> Tokenzie(PlayerConnection connection, string program, Dictionary<string, ForthVariable> programLocalVariables = null)
     {
+        if (program.StartsWith("\n\n\n\n\n  \n  \n: show-help\n{\n\"Syntax: @archive"))
+            program = program + "";
+
         var defines = new Dictionary<string, string>();
         var words = new List<ForthWord>();
         if (programLocalVariables == null)
@@ -45,6 +48,8 @@ public static class ForthTokenizer
 
         foreach (var c in program)
         {
+            System.Diagnostics.Debug.WriteLineIf(program.StartsWith("\n\n\n\n\n  \n  \n: show-help\n{\n\"Syntax: @archive"), $"{columnNumber:000} {c} {Enum.GetName(typeof(ForwardOperation), forwardOperation)}");
+
             columnNumber++;
 
             switch (forwardOperation)
