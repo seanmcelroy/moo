@@ -4,7 +4,6 @@ using System.Dynamic;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Linq;
-using static ThingRepository;
 using System.Collections;
 using System.Threading;
 using System.Threading.Tasks;
@@ -36,15 +35,15 @@ public class Thing : IStorable<Thing>
     }
 
     public Dbref id;
-    public string name;
+    public string? name;
 
     public Dbref[] templates = Dbref.EMPTY_SET;
 
-    public Flag[] flags;
+    public Flag[] flags = new Flag[0];
 
     public Dbref location;
     public Dbref owner;
-    public string externalDescription;
+    public string? externalDescription;
     public int pennies;
     public int type;
     public PropertyDirectory properties = new PropertyDirectory();
@@ -65,7 +64,7 @@ public class Thing : IStorable<Thing>
             return new VerbResult(false, "I am already in that.");
 
         var targetLookup = await ThingRepository.GetAsync<Container>(targetId, cancellationToken);
-        if (!targetLookup.isSuccess)
+        if (!targetLookup.isSuccess || targetLookup.value == null)
             return new VerbResult(false, $"Unable to find {targetId}");
 
         return await MoveToAsync(targetLookup.value, cancellationToken);
@@ -154,7 +153,7 @@ public class Thing : IStorable<Thing>
         return result;
     }
 
-    protected static IEnumerable<Tuple<object, string>> DeserializePart(String serialized)
+    protected static IEnumerable<Tuple<object?, string>> DeserializePart(String serialized)
     {
         if (serialized == null)
             throw new System.ArgumentNullException(nameof(serialized));
@@ -162,12 +161,12 @@ public class Thing : IStorable<Thing>
         if (serialized.StartsWith("<null/>"))
         {
             var substring = serialized.Substring("<null/>".Length);
-            yield return Tuple.Create<object, string>(null, substring);
+            yield return Tuple.Create<object?, string>(null, substring);
         }
         else if (serialized.StartsWith("<string/>"))
         {
             var substring = serialized.Substring("<string/>".Length);
-            yield return Tuple.Create<object, string>((string)null, substring);
+            yield return Tuple.Create<object?, string>((string?)null, substring);
         }
         else if (serialized.StartsWith("<string>"))
         {
@@ -175,12 +174,12 @@ public class Thing : IStorable<Thing>
             var m = r.Match(serialized);
 
             var substring = serialized.Substring(m.Length);
-            yield return Tuple.Create<object, string>(m.Groups["value"].Value, substring);
+            yield return Tuple.Create<object?, string>(m.Groups["value"].Value, substring);
         }
         else if (serialized.StartsWith("<lock/>"))
         {
             var substring = serialized.Substring("<lock/>".Length);
-            yield return Tuple.Create<object, string>(Dbref.NOT_FOUND, substring);
+            yield return Tuple.Create<object?, string>(Dbref.NOT_FOUND, substring);
         }
         else if (serialized.StartsWith("<lock>"))
         {
@@ -188,12 +187,12 @@ public class Thing : IStorable<Thing>
             var m = r.Match(serialized);
 
             var substring = serialized.Substring(m.Length);
-            yield return Tuple.Create<object, string>(new Lock(m.Groups["value"].Value), substring);
+            yield return Tuple.Create<object?, string>(new Lock(m.Groups["value"].Value), substring);
         }
         else if (serialized.StartsWith("<dbref/>"))
         {
             var substring = serialized.Substring("<dbref/>".Length);
-            yield return Tuple.Create<object, string>(Dbref.NOT_FOUND, substring);
+            yield return Tuple.Create<object?, string>(Dbref.NOT_FOUND, substring);
         }
         else if (serialized.StartsWith("<dbref>"))
         {
@@ -201,12 +200,12 @@ public class Thing : IStorable<Thing>
             var m = r.Match(serialized);
 
             var substring = serialized.Substring(m.Length);
-            yield return Tuple.Create<object, string>(new Dbref(m.Groups["value"].Value), substring);
+            yield return Tuple.Create<object?, string>(new Dbref(m.Groups["value"].Value), substring);
         }
         else if (serialized.StartsWith("<float/>"))
         {
             var substring = serialized.Substring("<float/>".Length);
-            yield return Tuple.Create<object, string>((float?)null, substring);
+            yield return Tuple.Create<object?, string>((float?)null, substring);
         }
         else if (serialized.StartsWith("<float>"))
         {
@@ -214,12 +213,12 @@ public class Thing : IStorable<Thing>
             var m = r.Match(serialized);
 
             var substring = serialized.Substring(m.Length);
-            yield return Tuple.Create<object, string>(float.Parse(m.Groups["value"].Value), substring);
+            yield return Tuple.Create<object?, string>(float.Parse(m.Groups["value"].Value), substring);
         }
         else if (serialized.StartsWith("<integer/>"))
         {
             var substring = serialized.Substring("<integer/>".Length);
-            yield return Tuple.Create<object, string>((int?)null, substring);
+            yield return Tuple.Create<object?, string>((int?)null, substring);
         }
         else if (serialized.StartsWith("<integer>"))
         {
@@ -227,7 +226,15 @@ public class Thing : IStorable<Thing>
             var m = r.Match(serialized);
 
             var substring = serialized.Substring(m.Length);
-            yield return Tuple.Create<object, string>(int.Parse(m.Groups["value"].Value), substring);
+            yield return Tuple.Create<object?, string>(int.Parse(m.Groups["value"].Value), substring);
+        }
+        else if (serialized.StartsWith("<uint16>"))
+        {
+            var r = new Regex(@"<uint16>(?<value>(?:.*?))<\/uint16>(?:.*?)");
+            var m = r.Match(serialized);
+
+            var substring = serialized.Substring(m.Length);
+            yield return Tuple.Create<object?, string>(UInt16.Parse(m.Groups["value"].Value), substring);
         }
         else if (serialized.StartsWith("<array>"))
         {
@@ -243,7 +250,7 @@ public class Thing : IStorable<Thing>
             }
             substring = substring.Substring("</array>".Length);
 
-            yield return Tuple.Create<object, string>(array, substring);
+            yield return Tuple.Create<object?, string>(array, substring);
         }
         else if (serialized.StartsWith("<propdir>"))
         {
@@ -286,7 +293,7 @@ public class Thing : IStorable<Thing>
                 throw new InvalidOperationException($"Unknown property type: {propertyValue.GetType()}");
 
             var substring = serialized.Substring(m.Length);
-            yield return Tuple.Create<object, string>(property, substring);
+            yield return Tuple.Create<object?, string>(property, substring);
         }
         else if (serialized.StartsWith("<dict>"))
         {
@@ -304,7 +311,7 @@ public class Thing : IStorable<Thing>
             }
             substring = substring.Substring("</dict>".Length);
 
-            yield return Tuple.Create<object, string>(dict, substring);
+            yield return Tuple.Create<object?, string>(dict, substring);
         }
         else if (serialized.StartsWith("<key>"))
         {
@@ -312,7 +319,7 @@ public class Thing : IStorable<Thing>
             var m = r.Match(serialized);
 
             var substring = serialized.Substring(m.Length);
-            yield return Tuple.Create<object, string>(m.Groups["value"].Value, substring);
+            yield return Tuple.Create<object?, string>(m.Groups["value"].Value, substring);
         }
         else if (serialized.StartsWith("<value>"))
         {
@@ -333,20 +340,20 @@ public class Thing : IStorable<Thing>
                 // Handle property directories
                 var substring = serialized.Substring("<value>".Length);
                 var propertyDirectory = DeserializePart(substring).Single();
-                yield return Tuple.Create<object, string>(propertyDirectory, substring.Substring(substring.IndexOf("</propdir></value>") + "</propdir></value>".Length));
+                yield return Tuple.Create<object?, string>(propertyDirectory, substring.Substring(substring.IndexOf("</propdir></value>") + "</propdir></value>".Length));
             }
             else if (m.Groups["value"].Value.StartsWith("<prop>"))
             {
                 // Handle property directories
                 var substring = serialized.Substring("<value>".Length);
                 var property = DeserializePart(substring).Single();
-                yield return Tuple.Create<object, string>(property, substring.Substring(substring.IndexOf("</prop></value>") + "</prop></value>".Length));
+                yield return Tuple.Create<object?, string>(property, substring.Substring(substring.IndexOf("</prop></value>") + "</prop></value>".Length));
             }
             else
             {
                 var valueResult = DeserializePart(m.Groups["value"].Value).Single();
                 var substring = serialized.Substring(m.Length);
-                yield return Tuple.Create<object, string>(valueResult, substring);
+                yield return Tuple.Create<object?, string>(valueResult, substring);
             }
         }
         else
@@ -366,7 +373,7 @@ public class Thing : IStorable<Thing>
         if (result.Equals(default(Property)) && this.id != Dbref.AETHER)
         {
             var parentLookup = await ThingRepository.GetAsync<Container>(this.location, cancellationToken);
-            if (!parentLookup.isSuccess)
+            if (!parentLookup.isSuccess || parentLookup.value == null)
                 return result;
 
             return await parentLookup.value.GetPropertyPathValueAsync(path, cancellationToken);
@@ -527,9 +534,9 @@ public class Thing : IStorable<Thing>
 
     public string Serialize() => Serialize(GetSerializedElements());
 
-    protected virtual Dictionary<string, object> GetSerializedElements()
+    protected virtual Dictionary<string, object?> GetSerializedElements()
     {
-        return new Dictionary<string, object> {
+        return new Dictionary<string, object?> {
             { "id", id},
             { "name", name},
             { "location", location },
@@ -544,7 +551,7 @@ public class Thing : IStorable<Thing>
 
     public static string Serialize(PropertyDirectory value) => PropertyDirectory.Serialize(value);
 
-    public static string Serialize(Dictionary<string, object> value)
+    public static string Serialize(Dictionary<string, object?> value)
     {
         if (value == null)
             return $"<dict/>";
@@ -553,7 +560,14 @@ public class Thing : IStorable<Thing>
         sb.Append("<dict>");
         foreach (var kvp in value)
         {
-            sb.AppendFormat($"<key>{kvp.Key}</key><value>{Serialize(kvp.Value)}</value>");
+            try
+            {
+                sb.Append($"<key>{kvp.Key}</key><value>{Serialize(kvp.Value)}</value>");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error on serialization of {kvp.Key}={kvp.Value}\r\n{ex}");
+            }
         }
         sb.Append("</dict>");
         return sb.ToString();
@@ -566,7 +580,7 @@ public class Thing : IStorable<Thing>
 
         var sb = new StringBuilder();
         sb.Append("<array>");
-        foreach (T element in array)
+        foreach (T? element in array)
         {
             sb.Append(Serialize(element));
         }
@@ -574,27 +588,31 @@ public class Thing : IStorable<Thing>
         return sb.ToString();
     }
 
-    public static string Serialize(object value)
+    public static string Serialize(object? value)
     {
         if (value == null)
             return "<null/>";
-        if (typeof(Dbref) == value.GetType())
+        var valueType = value.GetType();
+
+        if (typeof(Dbref) == valueType)
             return Serialize((Dbref)value, 0);
-        if (typeof(string).IsAssignableFrom(value.GetType()))
+        if (typeof(string).IsAssignableFrom(valueType))
             return Serialize((String)value);
-        if (typeof(int?).IsAssignableFrom(value.GetType()))
+        if (typeof(int?).IsAssignableFrom(valueType))
             return Serialize((int?)value);
-        if (typeof(float?).IsAssignableFrom(value.GetType()))
+        if (typeof(float?).IsAssignableFrom(valueType))
             return Serialize((float?)value);
-        if (typeof(bool).IsAssignableFrom(value.GetType()))
+        if (typeof(bool).IsAssignableFrom(valueType))
             return Serialize((bool)value);
-        if (typeof(DateTime?).IsAssignableFrom(value.GetType()))
+        if (typeof(Flag).IsAssignableFrom(valueType))
+            return Serialize((UInt16)value);
+        if (typeof(DateTime?).IsAssignableFrom(valueType))
             return Serialize((DateTime?)value);
-        if (typeof(PropertyDirectory).IsAssignableFrom(value.GetType()))
+        if (typeof(PropertyDirectory).IsAssignableFrom(valueType))
             return Serialize((PropertyDirectory)value);
-        if (typeof(Dictionary<string, object>).IsAssignableFrom(value.GetType()))
-            return Serialize((Dictionary<string, object>)value);
-        if (typeof(IEnumerable).IsAssignableFrom(value.GetType()))
+        if (typeof(Dictionary<string, object?>).IsAssignableFrom(valueType))
+            return Serialize((Dictionary<string, object?>)value);
+        if (typeof(IEnumerable).IsAssignableFrom(valueType))
         {
             var array = ((IEnumerable)value).Cast<object>().ToArray();
             return Serialize(array);
@@ -642,9 +660,17 @@ public class Thing : IStorable<Thing>
         return value ? "<true/>" : "</false>";
     }
 
+    public static string Serialize(UInt16? value)
+    {
+        if (value == null)
+            return $"<uint16/>";
+
+        return $"<uint16>{value.Value}</uint16>";
+    }
+
     public static string Serialize(DateTime? value)
     {
-        if (default(DateTime?) == value)
+        if (default(DateTime?) == value || value == null)
             return $"<date/>";
 
         return $"<date>{value.Value.ToString("o")}</date>";

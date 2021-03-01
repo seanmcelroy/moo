@@ -19,7 +19,7 @@ public abstract class PlayerConnection
 
     public Dbref Dbref => player.id;
 
-    public string Name => player.name;
+    public string? Name => player.name;
 
     public Dbref Location => player.location;
 
@@ -31,9 +31,9 @@ public abstract class PlayerConnection
 
     public bool Unattended => unattended;
 
-    private Editor editor;
-    private string editorTag;
-    private Action<string> onEditorModeExit;
+    private Editor? editor;
+    private string? editorTag;
+    private Action<string>? onEditorModeExit;
     private bool unattended;
 
     public bool IsIdle => editor == null && buffer.Length == 0 && !unattended;
@@ -77,6 +77,8 @@ public abstract class PlayerConnection
 
             if (buffer.Length == 1 && buffer.ToString()[0] == '\n')
                 buffer.Remove(0, 1);
+            else if (buffer.Length == 2 && buffer.ToString()[0] == '\r' && buffer.ToString()[1] == '\n')
+                buffer.Remove(0, 2);
         }
 
         unattended = false;
@@ -87,14 +89,14 @@ public abstract class PlayerConnection
         lock (bufferLock)
         {
             while (buffer.Length > 0 && buffer[0] == '\n')
-                buffer.Remove(0,1);
+                buffer.Remove(0, 1);
 
             if (buffer.Length < 2)
                 return default(CommandResult);
 
             var bufferString = buffer.ToString();
-            int firstBreak = bufferString.IndexOf('\n');
-            if (firstBreak == -1)
+            int firstBreak = bufferString.IndexOfAny(new[] { '\r', '\n' });
+            if (firstBreak < 1) // None, or zero.
                 return default(CommandResult);
 
             var raw = bufferString.Substring(0, firstBreak);
@@ -102,12 +104,12 @@ public abstract class PlayerConnection
 
             if (raw.Length == 0)
                 return default(CommandResult);
-                
+
             return new CommandResult(raw);
         }
     }
 
-    public void EnterEditMode(Script script, string tag, Action<string> onEditorModeExit)
+    public void EnterEditMode(Script? script, string tag, Action<string> onEditorModeExit)
     {
         this.onEditorModeExit = onEditorModeExit;
         this.editor = new Editor(this, script);
@@ -141,7 +143,8 @@ public abstract class PlayerConnection
 
             if (editorResult.ShouldExit)
             {
-                onEditorModeExit.Invoke(editor.ProgramText);
+                if (onEditorModeExit != null && editor.ProgramText != null)
+                    onEditorModeExit.Invoke(editor.ProgramText);
                 editor = null;
                 onEditorModeExit = null;
             }
@@ -152,16 +155,36 @@ public abstract class PlayerConnection
         if (Unattended)
             await sendOutput($"AUTO> {command.raw}");
 
+
+
+        // Global actions
+        VerbResult actionResult;
+        foreach (var action in globalActions)
+        {
+            if (action.CanProcess(this, command).Item1)
+            {
+                // TODO: Right now we block on programs
+                actionResult = await action.Process(this, command, cancellationToken);
+                if (!actionResult.isSuccess)
+                {
+                    await sendOutput($"ERROR: {actionResult.reason}");
+                    return;
+                }
+
+                return;
+            }
+        }
+
         // Exits in current location
         var locationLookup = await ThingRepository.GetAsync<Container>(this.Location, cancellationToken);
-        if (locationLookup.isSuccess)
+        if (locationLookup.isSuccess && locationLookup.value != null)
         {
             var location = locationLookup.value;
             var matched = await location.MatchAsync(command.getVerb(), cancellationToken);
             if (matched.ToInt32() >= 0)
             {
                 var matchedLookup = await ThingRepository.GetAsync(matched, cancellationToken);
-                if (!matchedLookup.isSuccess)
+                if (!matchedLookup.isSuccess || matchedLookup.value == null)
                 {
                     await sendOutput($"Cannot retrieve {matched}: {matchedLookup.reason}");
                     return;
@@ -183,24 +206,6 @@ public abstract class PlayerConnection
 
                 await sendOutput($"I don't know how to process {matchedObject.UnparseObject()}");
                 //                    ((Exit)matchedObject);
-                return;
-            }
-        }
-
-        // Global actions
-        VerbResult actionResult;
-        foreach (var action in globalActions)
-        {
-            if (action.CanProcess(this, command).Item1)
-            {
-                // TODO: Right now we block on programs
-                actionResult = await action.Process(this, command, cancellationToken);
-                if (!actionResult.isSuccess)
-                {
-                    await sendOutput($"ERROR: {actionResult.reason}");
-                    return;
-                }
-
                 return;
             }
         }

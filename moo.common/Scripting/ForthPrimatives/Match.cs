@@ -1,10 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using static ForthDatum;
-using static ForthPrimativeResult;
 
 public static class Match
 {
@@ -22,10 +17,11 @@ public static class Match
         if (n1.Type != DatumType.String)
             return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "MATCH requires the top parameter on the stack to be a string");
 
-        var s = (string)n1.Value;
+        var s = (string?)n1.Value;
 
-        if (string.Compare("me", s, true) == 0){
-            parameters.Stack.Push(new ForthDatum(parameters.Connection.Dbref, 0));
+        if (s != null && string.Compare("me", s, true) == 0)
+        {
+            parameters.Stack.Push(new ForthDatum(parameters.Connection?.Dbref ?? Dbref.NOT_FOUND, 0));
             return ForthPrimativeResult.SUCCESS;
         }
 
@@ -35,7 +31,7 @@ public static class Match
         // TODO: Should only match the exits in a room I can actually use.
 
         var locationMatch = default(Dbref);
-        if (locationResult.isSuccess)
+        if (locationResult.isSuccess && locationResult.value != null)
         {
             locationMatch = await locationResult.value.MatchAsync(s, parameters.CancellationToken);
         }

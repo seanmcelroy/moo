@@ -10,13 +10,13 @@ public static class ThingRepository
 {
     public struct GetResult<T> where T : Thing
     {
-        public T value;
+        public T? value;
 
         public bool isSuccess;
 
         public string reason;
 
-        public GetResult(T value, string reason)
+        public GetResult(T? value, string reason)
         {
             this.value = value;
             this.isSuccess = true;
@@ -33,11 +33,11 @@ public static class ThingRepository
 
     private static ConcurrentDictionary<Dbref, Thing> _cache = new ConcurrentDictionary<Dbref, Thing>();
     private static int nextThingId = -1;
-    private static IStorageProvider storageProvider;
+    private static IStorageProvider? storageProvider;
 
     public static bool IsCached(Dbref dbref) => _cache.ContainsKey(dbref);
 
-    public static T Insert<T>(T subject) where T : Thing
+    public static T? Insert<T>(T subject) where T : Thing
     {
         DbrefObjectType type;
         if (typeof(T) == typeof(Exit))
@@ -53,7 +53,7 @@ public static class ThingRepository
         else if (typeof(T) == typeof(Thing))
             type = DbrefObjectType.Thing;
         else
-            throw new InvalidOperationException($"Unkonwn type: {typeof(T).Name}");
+            throw new InvalidOperationException($"Unknown type: {typeof(T).Name}");
 
         subject.id = new Dbref(Interlocked.Increment(ref nextThingId), type);
         if (_cache.TryAdd(subject.id, subject))
@@ -62,14 +62,10 @@ public static class ThingRepository
         return null;
     }
 
-    public static T Make<T>() where T : Thing, new()
-    {
-        return Insert(new T());
-    }
+    public static T? Make<T>() where T : Thing, new() => Insert(new T());
 
-    public static T GetFromCacheOnly<T>(Dbref id) where T : Thing, new()
+    public static T? GetFromCacheOnly<T>(Dbref id) where T : Thing, new()
     {
-
         // Is it in cache?
         if (_cache.ContainsKey(id))
         {
@@ -89,7 +85,7 @@ public static class ThingRepository
     public static async Task<GetResult<Thing>> GetAsync(Dbref id, CancellationToken cancellationToken)
     {
         bool isSuccess;
-        Thing thing;
+        Thing? thing;
         string reason;
 
         switch (id.Type)
@@ -169,7 +165,7 @@ public static class ThingRepository
             return new GetResult<T>("No storage provider is loaded");
 
         var providerResult = await storageProvider.LoadAsync(id, cancellationToken);
-        if (!providerResult.isSuccess)
+        if (!providerResult.isSuccess || providerResult.type == null)
             return new GetResult<T>($"{id} not found in storage provider");
 
         var loadedType = Type.GetType(providerResult.type);
@@ -182,7 +178,7 @@ public static class ThingRepository
 
         if (_cache.ContainsKey(x.id))
         {
-            Thing oldThing;
+            Thing? oldThing;
             if (_cache.TryRemove(x.id, out oldThing))
                 _cache.TryAdd(x.id, x);
         }

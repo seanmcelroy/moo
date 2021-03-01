@@ -1,10 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using static ForthDatum;
-using static ForthPrimativeResult;
 using static Property;
 
 public static class GetPropStr
@@ -20,7 +15,7 @@ public static class GetPropStr
             return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, "GETPROPVAL requires two parameters");
 
         var sPath = parameters.Stack.Pop();
-        if (sPath.Type != DatumType.String)
+        if (sPath.Type != DatumType.String || sPath.Value == null)
             return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "GETPROPVAL requires the top parameter on the stack to be a string");
 
         var sTarget = parameters.Stack.Pop();
@@ -28,17 +23,17 @@ public static class GetPropStr
             return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "GETPROPVAL requires the second-to-top parameter on the stack to be a dbref");
 
         var targetResult = await ThingRepository.GetAsync<Thing>(sTarget.UnwrapDbref(), parameters.CancellationToken);
-        if (!targetResult.isSuccess)
+        if (!targetResult.isSuccess || targetResult.value == null)
             return new ForthPrimativeResult(ForthErrorResult.NO_SUCH_OBJECT, $"Unable to find object with dbref {sTarget.UnwrapDbref()}");
 
         var property = await targetResult.value.GetPropertyPathValueAsync((string)sPath.Value, parameters.CancellationToken);
-        if (property.Equals(default(Property)) || property.Type != PropertyType.String)
+        if (property.Equals(default(Property)) || property.Type != PropertyType.String || property.Value == null)
         {
-            parameters.Stack.Push(new ForthDatum(""));
+            parameters.Stack.Push(new ForthDatum(string.Empty, sTarget.FileLineNumber, null, sTarget.WordName, sTarget.WordLineNumber));
             return ForthPrimativeResult.SUCCESS;
         }
 
-        parameters.Stack.Push(new ForthDatum((string)property.Value));
+        parameters.Stack.Push(new ForthDatum((string)property.Value, sTarget.FileLineNumber, null, sTarget.WordName, sTarget.WordLineNumber));
         return ForthPrimativeResult.SUCCESS;
     }
 }

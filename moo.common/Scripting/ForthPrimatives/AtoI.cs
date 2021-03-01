@@ -1,11 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using static Dbref;
 using static ForthDatum;
-using static ForthPrimativeResult;
 
 public static class AtoI
 {
@@ -25,7 +18,9 @@ public static class AtoI
         else
         {
             int i;
-            if (int.TryParse((string)n1.Value, out i))
+            if (n1.Value == null)
+                parameters.Stack.Push(new ForthDatum(0));
+            else if (int.TryParse((string)n1.Value, out i))
                 parameters.Stack.Push(new ForthDatum(i));
             else
                 parameters.Stack.Push(new ForthDatum(0));

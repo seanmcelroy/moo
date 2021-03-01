@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 public class Editor
 {
     private readonly PlayerConnection connection;
-    private readonly Script script;
+    private readonly Script? script;
     private bool inputMode;
 
     private List<string> buffer = new List<string>();
@@ -15,9 +15,9 @@ public class Editor
 
     private int position;
 
-    public string ProgramText => buffer == null || buffer.Count == 0 ? null : buffer.Aggregate((c, n) => $"{c}\n{n}");
+    public string? ProgramText => buffer == null || buffer.Count == 0 ? null : buffer.Aggregate((c, n) => $"{c}\n{n}");
 
-    public Editor(PlayerConnection connection, Script script)
+    public Editor(PlayerConnection connection, Script? script)
     {
         this.connection = connection;
         this.script = script;

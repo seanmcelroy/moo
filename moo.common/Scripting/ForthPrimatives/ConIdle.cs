@@ -1,9 +1,5 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using static Dbref;
 using static ForthDatum;
-using static ForthPrimativeResult;
 
 public static class ConIdle
 {

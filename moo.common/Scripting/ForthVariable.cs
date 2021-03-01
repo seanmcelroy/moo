@@ -14,7 +14,7 @@ public struct ForthVariable
 
     public bool IsConstant;
     public VariableType Type;
-    public object Value;
+    public object? Value;
 
     public ForthVariable(ForthDatum value, bool isConstant = false)
     {

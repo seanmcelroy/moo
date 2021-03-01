@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 public class Script : Thing, IRunnable
 {
-    public string programText;
+    public string? programText;
 
     private ForthTokenizerResult tokenized;
 
@@ -15,17 +15,17 @@ public class Script : Thing, IRunnable
         this.type = (int)Dbref.DbrefObjectType.Program;
     }
 
-    public virtual Tuple<bool, string> CanProcess(PlayerConnection player, CommandResult command)
+    public virtual Tuple<bool, string?> CanProcess(PlayerConnection player, CommandResult command)
     {
         string verb = command.getVerb().ToLowerInvariant();
 
         foreach (var key in new[] { this.id.ToString(), name })
         {
             if (string.Compare(key, verb, true) == 0)
-                return new Tuple<bool, string>(true, verb);
+                return new Tuple<bool, string?>(true, verb);
         }
 
-        return new Tuple<bool, string>(false, null);
+        return new Tuple<bool, string?>(false, null);
     }
 
     public static async Task<Tuple<bool, string, ForthTokenizerResult>> CompileAsync(Script script, string programText, PlayerConnection connection, CancellationToken cancellationToken)
@@ -45,6 +45,9 @@ public class Script : Thing, IRunnable
 
     public async Task<Tuple<bool, string>> CompileAsync(PlayerConnection connection, CancellationToken cancellationToken)
     {
+        if (string.IsNullOrWhiteSpace(programText))
+            return new Tuple<bool, string>(true, "No program text provided");
+
         if (default(ForthTokenizerResult).Equals(tokenized))
         {
             var result = await CompileAsync(this, programText, connection, cancellationToken);
@@ -63,7 +66,7 @@ public class Script : Thing, IRunnable
         tokenized = default(ForthTokenizerResult);
     }
 
-    protected override Dictionary<string, object> GetSerializedElements()
+    protected override Dictionary<string, object?> GetSerializedElements()
     {
         var results = base.GetSerializedElements();
         results.Add("programText", programText);

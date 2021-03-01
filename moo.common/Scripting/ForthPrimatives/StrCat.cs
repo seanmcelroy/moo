@@ -1,8 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using static ForthDatum;
-using static ForthPrimativeResult;
 
 public static class StrCat
 {
@@ -16,15 +12,16 @@ public static class StrCat
         if (parameters.Stack.Count < 2)
             return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, "STRCAT requires two parameters");
 
-        var n2 = parameters.Stack.Pop();
+        var n2 = parameters.Stack.Peek();
         if (n2.Type != DatumType.String)
             return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "STRCAT requires the second-to-top parameter on the stack to be a string");
+        parameters.Stack.Pop();
 
         var n1 = parameters.Stack.Pop();
         if (n1.Type != DatumType.String)
             return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "STRCAT requires the top parameter on the stack to be a string");
 
-        parameters.Stack.Push(new ForthDatum((string)n1.Value + (string)n2.Value));
+        parameters.Stack.Push(new ForthDatum($"{n1.Value ?? string.Empty}{n2.Value ?? string.Empty}", n2.FileLineNumber, null, n2.WordName, n2.WordLineNumber));
         return ForthPrimativeResult.SUCCESS;
     }
 }

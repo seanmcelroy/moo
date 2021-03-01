@@ -1,7 +1,5 @@
 using System;
-using System.Collections.Generic;
 using static ForthDatum;
-using static ForthPrimativeResult;
 
 public static class Rotate
 {
@@ -25,26 +23,27 @@ public static class Rotate
         if (si.Type != DatumType.Integer)
             return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "ROTATE requires the top parameter on the stack to be an integer");
 
-        int i = si.UnwrapInt();
-        if (parameters.Stack.Count < i)
-            return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, $"ROTATE would have rotated {Math.Abs(i)} items on the stack, but only {parameters.Stack.Count} were present.");
+        var i = si.UnwrapInt();
+        var ai = Math.Abs(i);
+        if (parameters.Stack.Count < ai)
+            return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, $"ROTATE would have rotated {ai} items on the stack, but only {parameters.Stack.Count} were present.");
 
-        var data = new ForthDatum[Math.Abs(i)];
-        for (int n = Math.Abs(i) - 1; n >= 0; n--)
+        var data = new ForthDatum[ai];
+        for (int n = 0; n < ai; n++)
             data[n] = parameters.Stack.Pop();
 
-        if (i > 0) {
-            for (int n = 0; n < data.Length; n++)
-                parameters.Stack.Push(data[(n + 1) % (data.Length)]);
+        if (i > 0)
+        {
+            for (int n = ai - 2; n >= 0; n--)
+                parameters.Stack.Push(data[n]);
+            parameters.Stack.Push(data[ai - 1]);
         }
-        else {
-             for (int n = 0; n < data.Length; n++)
-                parameters.Stack.Push(data[(n == 0 ? data.Length : n) - 1]);
+        else
+        {
+            parameters.Stack.Push(data[0]);
+            for (int n = ai - 1; n > 0; n--)
+                parameters.Stack.Push(data[n]);
         }
-
-        //var shift = i < 0 ? -1 : 1;
-        //for (int n = 0; n < data.Length; n++)
-        //    stack.Push(data[Math.Abs((n + shift) % (data.Length))]);
 
         return ForthPrimativeResult.SUCCESS;
     }

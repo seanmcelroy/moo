@@ -4,9 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using static ForthDatum;
-using static ForthTokenizerResult;
 using static ForthVariable;
-using static ForthWordResult;
 
 public struct ForthWord
 {
@@ -96,7 +94,17 @@ public struct ForthWord
         callTable.Add("notify_exclude", (p) => NotifyExclude.ExecuteAsync(p).Result);
 
         // MATHEMATICAL OPERATORS
+        callTable.Add("abs", (p) => Abs.Execute(p));
         callTable.Add("int", (p) => MathInt.Execute(p));
+        callTable.Add("sign", (p) => Sign.Execute(p));
+        callTable.Add("getseed", (p) => RandomMethods.GetSeed(p));
+        callTable.Add("setseed", (p) => RandomMethods.SetSeed(p));
+        callTable.Add("srand", (p) => RandomMethods.SRand(p));
+        callTable.Add("random", (p) => RandomMethods.Random(p));
+        callTable.Add("bitor", (p) => MathBitOr.Execute(p));
+        callTable.Add("bitxor", (p) => MathBitXOr.Execute(p));
+        callTable.Add("bitand", (p) => MathBitXOr.Execute(p));
+        callTable.Add("bitshift", (p) => MathBitShift.Execute(p));
         callTable.Add("+", (p) => MathAdd.Execute(p));
         callTable.Add("-", (p) => MathSubtract.Execute(p));
         callTable.Add("*", (p) => MathMultiply.Execute(p));
@@ -117,6 +125,7 @@ public struct ForthWord
         callTable.Add("strcut", (p) => StrCut.Execute(p));
         callTable.Add("midstr", (p) => MidStr.Execute(p));
         callTable.Add("split", (p) => Split.Execute(p));
+        callTable.Add("rsplit", (p) => RSplit.Execute(p));
 
         callTable.Add("subst", (p) => Subst.Execute(p));
 
@@ -196,10 +205,7 @@ public struct ForthWord
         this.functionScopedVariables = new Dictionary<string, ForthVariable>();
     }
 
-    public static ICollection<string> GetPrimatives()
-    {
-        return callTable.Keys;
-    }
+    public static ICollection<string> GetPrimatives() => callTable.Keys;
 
     public async Task<ForthWordResult> RunAsync(
         ForthProcess process,
@@ -239,6 +245,9 @@ public struct ForthWord
                 Thread.Yield();
                 Thread.Sleep(1000);
             }
+
+            if (verbosity > 5)
+                Console.WriteLine($"DATUM: {datum.Value} \tSTACK: {stack.Reverse().Select(x => x.Value?.ToString() ?? string.Empty).Aggregate((c, n) => c + "," + n)}");
 
             // If I'm pre-empted, then spin until 
             if (Server.GetInstance().PreemptProcessId != 0 && Server.GetInstance().PreemptProcessId != process.ProcessId)
@@ -286,7 +295,7 @@ public struct ForthWord
             // Do we have something unknown on the top of the stack?
             var topOfStack = stack.Count > 0 ? stack.Peek() : default(ForthDatum);
             if (stack.Count > 0 && topOfStack.Type == ForthDatum.DatumType.Unknown)
-                return new ForthWordResult(ForthErrorResult.SYNTAX_ERROR, $"Unable to handle datum on top of stack: {topOfStack}({topOfStack.LineNumber},{topOfStack.ColumnNumber})");
+                return new ForthWordResult(ForthErrorResult.SYNTAX_ERROR, $"Unable to handle datum on top of stack: {topOfStack}({topOfStack.FileLineNumber},{topOfStack.ColumnNumber})");
 
             // Execution Control
             if (datum.Type == ForthDatum.DatumType.Unknown)
@@ -647,7 +656,7 @@ public struct ForthWord
                 || string.Compare("trigger", datumLiteral, true) == 0
                 || string.Compare("command", datumLiteral, true) == 0))
             {
-                stack.Push(new ForthDatum(datum.Value, DatumType.Variable));
+                stack.Push(new ForthDatum(datum.Value, DatumType.Variable, datum.FileLineNumber, datum.ColumnNumber, datum.WordName, datum.WordLineNumber));
                 continue;
             }
 
@@ -658,7 +667,7 @@ public struct ForthWord
                 if (v.IsConstant)
                     stack.Push(new ForthDatum(v.Value, v.Type == VariableType.String ? DatumType.String : (v.Type == VariableType.Float ? DatumType.Float : (v.Type == VariableType.Integer ? DatumType.Integer : (v.Type == VariableType.DbRef ? DatumType.DbRef : DatumType.Unknown)))));
                 else
-                    stack.Push(new ForthDatum(datum.Value, DatumType.Variable));
+                    stack.Push(new ForthDatum(datum.Value, DatumType.Variable, datum.FileLineNumber, datum.ColumnNumber, datum.WordName, datum.WordLineNumber));
                 continue;
             }
 
@@ -674,7 +683,7 @@ public struct ForthWord
                 case ForthDatum.DatumType.DbRef:
                     // Correct type for built-in's.
                     if (((Dbref)datum.Value).ToInt32() == 0)
-                        stack.Push(new ForthDatum(Dbref.AETHER, datum.LineNumber, datum.ColumnNumber));
+                        stack.Push(new ForthDatum(Dbref.AETHER, datum.FileLineNumber, datum.ColumnNumber, datum.WordName, datum.WordLineNumber));
                     else
                         stack.Push(datum);
                     continue;
@@ -735,6 +744,8 @@ public struct ForthWord
         if (verbosity >= 1)
             await DumpStackToDebugAsync(stack, connection, lineCount);
 
+        if (verbosity > 5)
+            Console.WriteLine($"Word {name} completed. \tSTACK: {stack.Reverse().Select(x => x.Value?.ToString() ?? string.Empty).Aggregate((c, n) => c + "," + n)}");
         return new ForthWordResult($"Word {name} completed");
     }
 

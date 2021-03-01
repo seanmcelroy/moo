@@ -6,12 +6,12 @@ using static ThingRepository;
 
 public class ActionBuiltIn : IRunnable
 {
-    public Tuple<bool, string> CanProcess(PlayerConnection connection, CommandResult command)
+    public Tuple<bool, string?> CanProcess(PlayerConnection connection, CommandResult command)
     {
         var verb = command.getVerb().ToLowerInvariant();
-        if (verb == "@action" && command.hasDirectObject())
-            return new Tuple<bool, string>(true, verb);
-        return new Tuple<bool, string>(false, null);
+        if (string.Compare(verb, "@action", StringComparison.OrdinalIgnoreCase) == 0 && command.hasDirectObject())
+            return new Tuple<bool, string?>(true, verb);
+        return new Tuple<bool, string?>(false, null);
     }
 
     public async Task<VerbResult> Process(PlayerConnection connection, CommandResult command, CancellationToken cancellationToken)
@@ -32,17 +32,16 @@ public class ActionBuiltIn : IRunnable
         if (sourceDbref.Equals(Dbref.NOT_FOUND))
             return new VerbResult(false, $"Can't find '{sourcePhrase}' here");
         if (sourceDbref.Equals(Dbref.AMBIGUOUS))
-            return new VerbResult(false, $"Which one?");
+            return new VerbResult(false, "Which one?");
 
         var sourceLookup = await ThingRepository.GetAsync<Container>(sourceDbref, cancellationToken);
-        if (!sourceLookup.isSuccess)
+        if (!sourceLookup.isSuccess || sourceLookup.value == null)
         {
             await connection.sendOutput($"You can't seem to find that.  {sourceLookup.reason}");
             return new VerbResult(false, "Target not found");
         }
 
         var source = sourceLookup.value;
-
         if (source.Type == Dbref.DbrefObjectType.Exit)
             return new VerbResult(false, $"An exit cannot be attached to another exit ({source.id.ToString()})");
         if (source.Type == Dbref.DbrefObjectType.Program)
@@ -56,7 +55,8 @@ public class ActionBuiltIn : IRunnable
         if (!moveResult.isSuccess)
             await connection.sendOutput($"You can't seem to do that on {sourcePhrase}.  {moveResult.reason}");
 
-        connection.SetPropertyPathValue($"_reg/{regname}", exit.id);
+        if (regname != null)
+            connection.SetPropertyPathValue($"_reg/{regname}", exit.id);
 
         return new VerbResult(true, $"Exit {exit.id.ToString()} created");
     }

@@ -1,11 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using static ForthDatum;
-using static ForthPrimativeResult;
-using static Property;
 
 public static class GetLink
 {
@@ -27,9 +21,9 @@ public static class GetLink
             return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "GETLINK requires the top parameter on the stack to be a dbref");
 
         var targetResult = await ThingRepository.GetAsync<Thing>(sTarget.UnwrapDbref(), parameters.CancellationToken);
-        if (!targetResult.isSuccess)
+        if (!targetResult.isSuccess || targetResult.value == null)
             return new ForthPrimativeResult(ForthErrorResult.NO_SUCH_OBJECT, $"Unable to find object with dbref {sTarget.UnwrapDbref()}");
-        
+
         parameters.Stack.Push(new ForthDatum(targetResult.value.Links[0], 0));
         return ForthPrimativeResult.SUCCESS;
     }

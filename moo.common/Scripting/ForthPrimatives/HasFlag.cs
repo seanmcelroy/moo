@@ -1,11 +1,6 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using static ForthDatum;
-using static ForthPrimativeResult;
-using static Property;
 
 public static class HasFlag
 {
@@ -36,7 +31,7 @@ public static class HasFlag
         if (sTarget.UnwrapDbref().ToInt32() < 0)
             return ForthPrimativeResult.SUCCESS;
 
-        var flagString = (string)sFlag.Value;
+        var flagString = (string?)sFlag.Value;
         if (flagString == null || string.IsNullOrWhiteSpace(flagString))
         {
             parameters.Stack.Push(new ForthDatum(0));
@@ -46,7 +41,7 @@ public static class HasFlag
         var target = sTarget.UnwrapDbref();
         var targetResult = await ThingRepository.GetAsync<Thing>(target, parameters.CancellationToken);
 
-        if (!targetResult.isSuccess)
+        if (!targetResult.isSuccess || targetResult.value == null)
         {
             parameters.Stack.Push(new ForthDatum(0));
             return ForthPrimativeResult.SUCCESS;
@@ -58,7 +53,7 @@ public static class HasFlag
         if (flagValue == default(Thing.Flag))
             return new ForthPrimativeResult(ForthErrorResult.SYNTAX_ERROR, $"FLAG? understands no flag named {flagChar}");
 
-        var hasFlag = targetResult.value.HasFlag(flagValue);
+        var hasFlag = targetResult.value?.HasFlag(flagValue) == true;
         parameters.Stack.Push(new ForthDatum(hasFlag ^ negate ? 1 : 0));
         return ForthPrimativeResult.SUCCESS;
     }

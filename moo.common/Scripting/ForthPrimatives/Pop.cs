@@ -1,9 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using static ForthDatum;
-using static ForthPrimativeResult;
-
 public static class Pop
 {
     public static ForthPrimativeResult Execute(ForthPrimativeParameters parameters)

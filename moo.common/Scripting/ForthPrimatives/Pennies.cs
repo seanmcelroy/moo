@@ -1,10 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using static Dbref;
 using static ForthDatum;
-using static ForthPrimativeResult;
 
 public static class Pennies
 {
@@ -25,7 +20,7 @@ public static class Pennies
         var target = d.UnwrapDbref();
         var targetResult = await ThingRepository.GetAsync<Thing>(target, parameters.CancellationToken);
 
-        if (!targetResult.isSuccess)
+        if (!targetResult.isSuccess || targetResult.value == null)
         {
             parameters.Stack.Push(new ForthDatum(0));
             return ForthPrimativeResult.SUCCESS;

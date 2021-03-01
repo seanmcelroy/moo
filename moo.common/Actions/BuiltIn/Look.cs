@@ -6,12 +6,12 @@ using static ThingRepository;
 
 public class Look : IRunnable
 {
-    public Tuple<bool, string> CanProcess(PlayerConnection connection, CommandResult command)
+    public Tuple<bool, string?> CanProcess(PlayerConnection connection, CommandResult command)
     {
         var verb = command.getVerb().ToLowerInvariant();
-        if (verb == "l")
-            return new Tuple<bool, string>(true, verb);
-        return new Tuple<bool, string>(false, null);
+        if (string.Compare(verb, "l", StringComparison.OrdinalIgnoreCase) == 0 && command.hasDirectObject())
+            return new Tuple<bool, string?>(true, verb);
+        return new Tuple<bool, string?>(false, null);
     }
 
     public async Task<VerbResult> Process(PlayerConnection connection, CommandResult command, CancellationToken cancellationToken)
@@ -30,11 +30,12 @@ public class Look : IRunnable
     private async Task lookAtRoom(PlayerConnection connection, Dbref locationId, CancellationToken cancellationToken)
     {
         var locationLookup = await ThingRepository.GetAsync<Container>(locationId, cancellationToken);
-        if (locationLookup.isSuccess)
+        if (locationLookup.isSuccess && locationLookup.value != null)
         {
             var location = locationLookup.value;
             await connection.sendOutput(location.UnparseObject());
-            await connection.sendOutput(location.internalDescription);
+            if (location.internalDescription != null)
+                await connection.sendOutput(location.internalDescription);
 
             var otherHumans = new StringBuilder();
             otherHumans.Append("You see ");
@@ -45,7 +46,7 @@ public class Look : IRunnable
                 count++;
             }
             if (count > 0)
-                await connection.sendOutput(otherHumans.AppendFormat(" here.").ToString());
+                await connection.sendOutput(otherHumans.Append(" here.").ToString());
         }
         else
         {

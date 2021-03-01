@@ -1,8 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using static ForthDatum;
-using static ForthPrimativeResult;
 
 public static class Time
 {
@@ -13,7 +9,7 @@ public static class Time
 
         Returns the time of day as integers on the stack, seconds, then minutes, then hours.
         */
-        var now = DateTime.UtcNow;
+        var now = DateTime.Now;
 
         parameters.Stack.Push(new ForthDatum(now.Second));
         parameters.Stack.Push(new ForthDatum(now.Minute));

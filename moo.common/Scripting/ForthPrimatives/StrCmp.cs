@@ -1,9 +1,6 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using static ForthDatum;
-using static ForthPrimativeResult;
 
 public static class StrCmp
 {
@@ -29,8 +26,8 @@ public static class StrCmp
         if (n1.Type != DatumType.String)
             return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "STRCMP requires the top parameter on the stack to be a string");
 
-        var s1 = (string)n1.Value;
-        var s2 = (string)n2.Value;
+        var s1 = (string?)n1.Value ?? string.Empty;
+        var s2 = (string?)n2.Value ?? string.Empty;
 
         for (var n = 0; n < Math.Max(s1.Length, s2.Length); n++)
         {

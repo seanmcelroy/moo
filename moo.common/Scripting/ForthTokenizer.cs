@@ -1,15 +1,10 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
 using static ForthDatum;
-using static ForthVariable;
 
 public static class ForthTokenizer
 {
@@ -25,11 +20,8 @@ public static class ForthTokenizer
     }
 
 
-    public static async Task<ForthTokenizerResult> Tokenzie(PlayerConnection connection, string program, Dictionary<string, ForthVariable> programLocalVariables = null)
+    public static async Task<ForthTokenizerResult> Tokenzie(PlayerConnection? connection, string program, Dictionary<string, ForthVariable> programLocalVariables = null)
     {
-        if (program.StartsWith("\n\n\n\n\n  \n  \n: show-help\n{\n\"Syntax: @archive"))
-            program = program + "";
-
         var defines = new Dictionary<string, string>();
         var words = new List<ForthWord>();
         if (programLocalVariables == null)
@@ -38,17 +30,20 @@ public static class ForthTokenizer
         var lineNumber = 1;
         var columnNumber = 0;
         var forwardOperation = ForwardOperation.None;
-        var linebreakCharacters = new char[] { '\r', '\n' };
+        var linebreakCharacters = new char[] { '\n' };
         var whitespaceCharacters = new char[] { ' ', '\t' };
-        var currentWordName = new StringBuilder();
-        List<ForthDatum> currentWordData = null;
+        var currentWordNameBuilder = new StringBuilder();
+        string? currentWordName = null;
+        int? currentWordLineNumber = null;
+        List<ForthDatum>? currentWordData = null;
         var currentDatum = new StringBuilder();
         var currentNonDatum = new StringBuilder();
         var verbosity = 5;
 
         foreach (var c in program)
         {
-            System.Diagnostics.Debug.WriteLineIf(program.StartsWith("\n\n\n\n\n  \n  \n: show-help\n{\n\"Syntax: @archive"), $"{columnNumber:000} {c} {Enum.GetName(typeof(ForwardOperation), forwardOperation)}");
+            if (c == '\r')
+                continue; // Ignore all DOS returns.
 
             columnNumber++;
 
@@ -57,34 +52,41 @@ public static class ForthTokenizer
                 case ForwardOperation.ReadingString:
                     if ((currentDatum.Length > 0 && currentDatum[currentDatum.Length - 1] == '\\' && c == '\"') || c != '\"')
                     {
+                        //if (program.Contains("@archive"))
+                        //    Console.Write(c);
                         currentDatum.Append(c);
                         continue;
                     }
                     else
                     {
-                        if (verbosity >= 2 && connection != null)
-                            await connection.sendOutput($"STRING({lineNumber},{columnNumber - currentDatum.ToString().Length - 1}): \"{currentDatum.ToString()}\"");
-                        currentWordData.Add(new ForthDatum(currentDatum.ToString(), DatumType.String, lineNumber, columnNumber - currentDatum.ToString().Length - 1));
+                        //if (verbosity >= 2 && program.Contains("@archive"))// && connection != null)
+                        //    Console.WriteLine($"STRING({lineNumber},{columnNumber - currentDatum.ToString().Length - 1}): \"{currentDatum.ToString()}\"");
+                        currentWordData.Add(new ForthDatum(currentDatum.ToString(), DatumType.String, lineNumber, columnNumber - currentDatum.ToString().Length - 1, currentWordName, currentWordLineNumber));
+                        //if (program.Contains("@archive"))
+                        //    Console.WriteLine($"Output String: {currentDatum.ToString()}");
                         currentDatum.Clear();
                         forwardOperation = ForwardOperation.None;
                         continue;
                     }
                 case ForwardOperation.ReadingWordName:
-                    if (whitespaceCharacters.Contains(c) && currentWordName.Length == 0)
+                    if (whitespaceCharacters.Contains(c) && currentWordNameBuilder.Length == 0)
                         continue;
                     else if (!whitespaceCharacters.Contains(c) && !linebreakCharacters.Contains(c))
                     {
-                        currentWordName.Append(c);
+                        currentWordNameBuilder.Append(c);
                         continue;
                     }
                     else
                     {
+                        currentWordName = currentWordNameBuilder.ToString();
+                        currentWordLineNumber = 0;
                         if (verbosity >= 1 && connection != null)
-                            await connection.sendOutput($"WORD({lineNumber},{columnNumber - currentWordName.ToString().Length}): {currentWordName.ToString()}");
+                            await connection.sendOutput($"WORD({lineNumber},{columnNumber - currentWordName.Length}): {currentWordName}");
                         forwardOperation = ForwardOperation.None;
                         if (linebreakCharacters.Contains(c))
                         {
                             lineNumber++;
+                            if (currentWordName != null) currentWordLineNumber++;
                             columnNumber = 0;
                         }
                         continue;
@@ -100,6 +102,7 @@ public static class ForthTokenizer
                         if (linebreakCharacters.Contains(c))
                         {
                             lineNumber++;
+                            if (currentWordName != null) currentWordLineNumber++;
                             columnNumber = 0;
                         }
                         continue;
@@ -108,6 +111,7 @@ public static class ForthTokenizer
                     if (linebreakCharacters.Contains(c))
                     {
                         lineNumber++;
+                        if (currentWordName != null) currentWordLineNumber++;
                         columnNumber = 0;
                         continue;
                     }
@@ -131,14 +135,15 @@ public static class ForthTokenizer
             if (linebreakCharacters.Contains(c))
             {
                 // Handle word datum
-                if (currentWordName.Length > 0 && currentDatum.Length > 0)
+                if (currentWordNameBuilder.Length > 0 && currentDatum.Length > 0 && currentWordData != null)
                 {
                     if (verbosity > 3 && connection != null)
                         await connection.sendOutput($"DATUM({lineNumber},{columnNumber - currentDatum.ToString().Length}): {currentDatum.ToString()}");
 
                     if (ForthWord.GetPrimatives().Contains(currentDatum.ToString()))
                     {
-                        if (currentDatum.ToString().Length == 1 && (new[] { '@', '!' }.Contains(currentDatum.ToString()[0])))
+                        if (currentDatum.ToString().Length == 1 &&
+                            (new[] { '@', '!' }.Contains(currentDatum.ToString()[0])))
                         {
                             var last = currentWordData.Last();
                             currentWordData.Remove(last);
@@ -146,12 +151,12 @@ public static class ForthTokenizer
                             currentWordData.Add(last);
                         }
 
-                        currentWordData.Add(new ForthDatum(currentDatum.ToString(), DatumType.Primitive, lineNumber, columnNumber - currentDatum.ToString().Length));
+                        currentWordData.Add(new ForthDatum(currentDatum.ToString(), DatumType.Primitive, lineNumber, columnNumber - currentDatum.ToString().Length, currentWordName, currentWordLineNumber));
                     }
                     else if (ForthDatum.TryInferType(currentDatum.ToString(), out Tuple<DatumType, object> result))
-                        currentWordData.Add(new ForthDatum(result.Item2, result.Item1, lineNumber, columnNumber - currentDatum.ToString().Length));
+                        currentWordData.Add(new ForthDatum(result.Item2, result.Item1, lineNumber, columnNumber - currentDatum.ToString().Length, currentWordName, currentWordLineNumber));
                     else
-                        currentWordData.Add(new ForthDatum(currentDatum.ToString(), DatumType.Unknown, lineNumber, columnNumber - currentDatum.ToString().Length));
+                        currentWordData.Add(new ForthDatum(currentDatum.ToString(), DatumType.Unknown, lineNumber, columnNumber - currentDatum.ToString().Length, currentWordName, currentWordLineNumber));
                     currentDatum.Clear();
                 }
                 else
@@ -176,19 +181,22 @@ public static class ForthTokenizer
                 forwardOperation = ForwardOperation.SkipUntilNonLineBreak;
 
                 lineNumber++;
+                if (currentWordName != null) currentWordLineNumber++;
                 columnNumber = 0;
                 continue;
             }
 
-            if (c == '\"' && currentWordName.Length > 0)
+            if (c == '\"' && currentWordNameBuilder.Length > 0)
             {
                 forwardOperation = ForwardOperation.ReadingString;
+                //if (program.Contains("@archive"))
+                //    Console.WriteLine($"Started reading string on line: {lineNumber}");
                 continue;
             }
 
             if (whitespaceCharacters.Contains(c))
             {
-                if (currentWordName.Length > 0 && currentDatum.Length > 0)
+                if (currentWordNameBuilder.Length > 0 && currentDatum.Length > 0)
                 {
                     if (verbosity > 3 && connection != null)
                         await connection.sendOutput($"DATUM({lineNumber},{columnNumber - currentDatum.ToString().Length}): {currentDatum.ToString()}");
@@ -202,12 +210,12 @@ public static class ForthTokenizer
                             last.Type = DatumType.Variable;
                             currentWordData.Add(last);
                         }
-                        currentWordData.Add(new ForthDatum(currentDatum.ToString(), DatumType.Primitive, lineNumber, columnNumber - currentDatum.ToString().Length));
+                        currentWordData.Add(new ForthDatum(currentDatum.ToString(), DatumType.Primitive, lineNumber, columnNumber - currentDatum.ToString().Length, currentWordName, currentWordLineNumber));
                     }
                     else if (ForthDatum.TryInferType(currentDatum.ToString(), out Tuple<DatumType, object> result))
-                        currentWordData.Add(new ForthDatum(result.Item2, result.Item1, lineNumber, columnNumber - currentDatum.ToString().Length));
+                        currentWordData.Add(new ForthDatum(result.Item2, result.Item1, lineNumber, columnNumber - currentDatum.ToString().Length, currentWordName, currentWordLineNumber));
                     else
-                        currentWordData.Add(new ForthDatum(currentDatum.ToString(), DatumType.Unknown, lineNumber, columnNumber - currentDatum.ToString().Length));
+                        currentWordData.Add(new ForthDatum(currentDatum.ToString(), DatumType.Unknown, lineNumber, columnNumber - currentDatum.ToString().Length, currentWordName, currentWordLineNumber));
                     currentDatum.Clear();
                     forwardOperation = ForwardOperation.SkipUntilNonWhitespace;
                 }
@@ -229,26 +237,29 @@ public static class ForthTokenizer
                 }
 
                 lineNumber++;
+                                if (currentWordName != null) currentWordLineNumber++;
                 columnNumber = 0;
                                             preparserLine = false;
                 continue;
             }*/
 
-            if (c == ':' && currentWordName.Length == 0)
+            if (c == ':' && currentWordNameBuilder.Length == 0)
             {
                 currentWordData = new List<ForthDatum>();
                 forwardOperation = ForwardOperation.ReadingWordName;
                 continue;
             }
 
-            if (c == ';' && currentWordName.Length > 0)
+            if (c == ';' && currentWordNameBuilder.Length > 0)
             {
-                words.Add(new ForthWord(currentWordName.ToString(), currentWordData));
-                currentWordName.Clear();
+                words.Add(new ForthWord(currentWordNameBuilder.ToString(), currentWordData));
+                currentWordName = null;
+                currentWordNameBuilder.Clear();
+                currentWordLineNumber = 0;
                 currentWordData = null;
             }
 
-            if (currentWordName.Length > 0)
+            if (currentWordNameBuilder.Length > 0)
                 currentDatum.Append(c);
             else if (!linebreakCharacters.Contains(c))
                 currentNonDatum.Append(c);
@@ -266,5 +277,4 @@ public static class ForthTokenizer
 
         return new ForthTokenizerResult(words, programLocalVariables);
     }
-
 }

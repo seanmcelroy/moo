@@ -16,12 +16,12 @@ public struct EditorResult
 
     private bool isSuccessful;
     private bool shouldExit;
-    private object result;
+    private object? result;
     private string reason;
 
     public bool IsSuccessful => isSuccessful;
     public bool ShouldExit => shouldExit;
-    public object Result => result;
+    public object? Result => result;
     public string Reason => reason;
 
     public EditorResult(bool shouldExit, string reason)
@@ -37,6 +37,6 @@ public struct EditorResult
         this.isSuccessful = false;
         this.shouldExit = true;
         this.result = errorCode;
-        this.reason = reason ?? System.Enum.GetName(typeof(EditorErrorResult), errorCode);
+        this.reason = reason ?? System.Enum.GetName(typeof(EditorErrorResult), errorCode) ?? errorCode.ToString();
     }
 }

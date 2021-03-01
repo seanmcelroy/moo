@@ -1,11 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using static ForthDatum;
-using static ForthPrimativeResult;
-using static Property;
 
 public static class IsPlayer
 {
@@ -30,7 +24,7 @@ public static class IsPlayer
         }
 
         var targetResult = await ThingRepository.GetAsync<Thing>(sTarget.UnwrapDbref(), parameters.CancellationToken);
-        if (!targetResult.isSuccess)
+        if (!targetResult.isSuccess || targetResult.value == null)
         {
             parameters.Stack.Push(new ForthDatum(0));
             return ForthPrimativeResult.SUCCESS;
@@ -40,7 +34,7 @@ public static class IsPlayer
             parameters.Stack.Push(new ForthDatum(0));
         else
             parameters.Stack.Push(new ForthDatum(1));
-        
+
         return ForthPrimativeResult.SUCCESS;
     }
 }

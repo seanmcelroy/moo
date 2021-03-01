@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using Newtonsoft.Json;
 
 //[JsonConverter(typeof(PropertySerializer))]
@@ -21,12 +20,12 @@ public struct Property
     public string Name;
 
     [JsonProperty]
-    public PropertyDirectory directory;
+    public PropertyDirectory? directory;
 
     [JsonProperty]
-    public object value;
+    public object? value;
 
-    public object Value
+    public object? Value
     {
         get
         {
@@ -133,7 +132,7 @@ public struct Property
                 return Serialize((int)Value);
             case PropertyType.DbRef:
                 return Serialize((Dbref)Value, 0);
-                case PropertyType.Lock:
+            case PropertyType.Lock:
                 return Serialize((Lock)Value, 0);
             case PropertyType.Float:
                 return Serialize((float)Value);

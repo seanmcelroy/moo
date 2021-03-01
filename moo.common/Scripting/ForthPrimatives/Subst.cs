@@ -1,9 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using static ForthDatum;
-using static ForthPrimativeResult;
 
 public static class Subst
 {
@@ -33,7 +28,9 @@ public static class Subst
         if (s1.Type != DatumType.String)
             return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "SUBST requires the third-to-top parameter on the stack to be a string");
 
-        var result = ((string)s1.Value).Replace((string)s3.Value, (string)s2.Value);
+        var result = (s3.Value == null)
+            ? (string?)s1.Value ?? string.Empty
+            : ((string?)s1.Value ?? string.Empty).Replace((string)s3.Value, (string?)s2.Value ?? string.Empty);
 
         parameters.Stack.Push(new ForthDatum(result));
         return ForthPrimativeResult.SUCCESS;

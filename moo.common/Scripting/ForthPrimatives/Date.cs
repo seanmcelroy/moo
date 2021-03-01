@@ -1,8 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using static ForthDatum;
-using static ForthPrimativeResult;
 
 public static class Date
 {
@@ -13,7 +9,7 @@ public static class Date
 
         Returns the monthday, month, and year. ie: if it were February 6, 1992, date would return 6 2 1992 as three integers on the stack.
         */
-        var now = DateTime.UtcNow;
+        var now = DateTime.Now;
 
         parameters.Stack.Push(new ForthDatum(now.Day));
         parameters.Stack.Push(new ForthDatum(now.Month));

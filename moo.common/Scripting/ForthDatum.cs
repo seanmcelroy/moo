@@ -17,12 +17,14 @@ public struct ForthDatum
         Lock = 8
     }
 
-    public readonly object Value;
+    public readonly object? Value;
     public DatumType Type;
-    public readonly int? LineNumber;
+    public readonly string? WordName;
+    public readonly int? WordLineNumber;
+    public readonly int? FileLineNumber;
     public readonly int? ColumnNumber;
 
-    public ForthDatum(Property property, int? lineNumber = null, int? columnNumber = null)
+    public ForthDatum(Property property, int? fileLineNumber = null, int? columnNumber = null, string? wordName = null, int? wordLineNumber = null)
     {
         this.Value = property.Value;
         switch (property.Type)
@@ -39,7 +41,7 @@ public struct ForthDatum
             case Property.PropertyType.String:
                 this.Type = ForthDatum.DatumType.String;
                 break;
-                case Property.PropertyType.Lock:
+            case Property.PropertyType.Lock:
                 this.Type = ForthDatum.DatumType.Lock;
                 break;
             case Property.PropertyType.Unknown:
@@ -49,11 +51,13 @@ public struct ForthDatum
                 throw new System.ArgumentException($"Unhandled variable type: {property.Type}", nameof(property));
         }
 
-        this.LineNumber = lineNumber;
+        this.FileLineNumber = fileLineNumber;
         this.ColumnNumber = columnNumber;
+        this.WordName = wordName;
+        this.WordLineNumber = wordLineNumber;
     }
 
-    public ForthDatum(ForthVariable variable, int? lineNumber = null, int? columnNumber = null)
+    public ForthDatum(ForthVariable variable, int? fileLineNumber = null, int? columnNumber = null, string? wordName = null, int? wordLineNumber = null)
     {
         this.Value = variable.Value;
         switch (variable.Type)
@@ -77,51 +81,63 @@ public struct ForthDatum
                 throw new System.ArgumentException($"Unhandled variable type: {variable.Type}", nameof(variable));
         }
 
-        this.LineNumber = lineNumber;
+        this.FileLineNumber = fileLineNumber;
         this.ColumnNumber = columnNumber;
+        this.WordName = wordName;
+        this.WordLineNumber = wordLineNumber;
     }
 
-    public ForthDatum(object value, DatumType type, int? lineNumber = null, int? columnNumber = null)
+    public ForthDatum(object value, DatumType type, int? fileLineNumber = null, int? columnNumber = null, string? wordName = null, int? wordLineNumber = null)
     {
         this.Value = value;
         this.Type = type;
-        this.LineNumber = lineNumber;
+        this.FileLineNumber = fileLineNumber;
         this.ColumnNumber = columnNumber;
+        this.WordName = wordName;
+        this.WordLineNumber = wordLineNumber;
     }
 
-    public ForthDatum(Dbref value, int? lineNumber = null, int? columnNumber = null)
+    public ForthDatum(Dbref value, int? fileLineNumber = null, int? columnNumber = null, string? wordName = null, int? wordLineNumber = null)
     {
         this.Value = value;
         this.Type = DatumType.DbRef;
-        this.LineNumber = lineNumber;
+        this.FileLineNumber = fileLineNumber;
         this.ColumnNumber = columnNumber;
+        this.WordName = wordName;
+        this.WordLineNumber = wordLineNumber;
     }
 
-    public ForthDatum(string value, int? lineNumber = null, int? columnNumber = null)
+    public ForthDatum(string value, int? fileLineNumber = null, int? columnNumber = null, string? wordName = null, int? wordLineNumber = null)
     {
         this.Value = value;
         this.Type = DatumType.String;
-        this.LineNumber = lineNumber;
+        this.FileLineNumber = fileLineNumber;
         this.ColumnNumber = columnNumber;
+        this.WordName = wordName;
+        this.WordLineNumber = wordLineNumber;
     }
 
-    public ForthDatum(int? value, int? lineNumber = null, int? columnNumber = null)
+    public ForthDatum(int? value, int? fileLineNumber = null, int? columnNumber = null, string? wordName = null, int? wordLineNumber = null)
     {
         this.Value = value;
         this.Type = DatumType.Integer;
-        this.LineNumber = lineNumber;
+        this.FileLineNumber = fileLineNumber;
         this.ColumnNumber = columnNumber;
+        this.WordName = wordName;
+        this.WordLineNumber = wordLineNumber;
     }
 
-    public ForthDatum(float? value, int? lineNumber = null, int? columnNumber = null)
+    public ForthDatum(float? value, int? fileLineNumber = null, int? columnNumber = null, string? wordName = null, int? wordLineNumber = null)
     {
         this.Value = value;
         this.Type = DatumType.Float;
-        this.LineNumber = lineNumber;
+        this.FileLineNumber = fileLineNumber;
         this.ColumnNumber = columnNumber;
+        this.WordName = wordName;
+        this.WordLineNumber = wordLineNumber;
     }
 
-    public static bool TryInferType(string value, out Tuple<DatumType, object> result)
+    public static bool TryInferType(string value, out Tuple<DatumType, object>? result)
     {
         if (int.TryParse(value.Trim(), out int i))
         {
@@ -158,11 +174,11 @@ public struct ForthDatum
             case DatumType.Integer:
                 return UnwrapInt() == 0;
             case DatumType.Float:
-                return (float)Value == 0;
+                return Value == null || (float)Value == 0;
             case DatumType.DbRef:
                 return UnwrapDbref().ToInt32() == -1;
             case DatumType.String:
-                return string.IsNullOrEmpty((string)Value);
+                return Value == null || string.IsNullOrEmpty((string)Value);
         }
 
         return false;
@@ -178,7 +194,7 @@ public struct ForthDatum
         switch (Type)
         {
             case DatumType.Float:
-                return new ForthDatum(Convert.ToInt32((float)Value), DatumType.Integer);
+                return new ForthDatum(Value == null ? (int?)null : (int?)Convert.ToInt32((float)Value), DatumType.Integer);
             case DatumType.Integer:
                 return this;
             case DatumType.DbRef:
@@ -197,6 +213,9 @@ public struct ForthDatum
     {
         if (Type != DatumType.DbRef)
             throw new InvalidCastException($"Cannot unwrap property as dbref, since it is of type: {Type}");
+
+        if (Value == null)
+            return Dbref.NOT_FOUND;
 
         if (Value.GetType() == typeof(Dbref))
         {
@@ -220,6 +239,9 @@ public struct ForthDatum
     {
         if (Type != DatumType.Integer)
             throw new InvalidCastException($"Cannot unwrap property as int, since it is of type: {Type}");
+
+        if (Value == null)
+            return 0;
 
         if (Value.GetType() == typeof(int))
         {

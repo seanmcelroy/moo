@@ -1,9 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using static ForthDatum;
-using static ForthPrimativeResult;
 
 public static class MidStr
 {
@@ -31,11 +26,11 @@ public static class MidStr
         if (s.Type != DatumType.String)
             return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "MIDSTR requires the third-to-top parameter on the stack to be a string");
 
-        var str = (string)s.Value;
+        var str = (string?)s.Value ?? string.Empty;
         var start = i1.UnwrapInt() - 1;
         var length = i2.UnwrapInt();
 
-        if (start < 0 || length <= 0 || start + length < str.Length - 1)
+        if (start < 0 || length <= 0 || start + length > str.Length - 1)
         {
             parameters.Stack.Push(new ForthDatum(""));
             return ForthPrimativeResult.SUCCESS;

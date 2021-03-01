@@ -1,18 +1,15 @@
 using System;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Reflection;
-using static ThingRepository;
 
 public class SaveBuiltIn : IRunnable
 {
-    public Tuple<bool, string> CanProcess(PlayerConnection connection, CommandResult command)
+    public Tuple<bool, string?> CanProcess(PlayerConnection connection, CommandResult command)
     {
         var verb = command.getVerb().ToLowerInvariant();
-        if (verb == "@save" && command.hasDirectObject())
-            return new Tuple<bool, string>(true, verb);
-        return new Tuple<bool, string>(false, null);
+        if (string.Compare(verb, "@save", StringComparison.OrdinalIgnoreCase) == 0 && command.hasDirectObject())
+            return new Tuple<bool, string?>(true, verb);
+        return new Tuple<bool, string?>(false, null);
     }
 
     public async Task<VerbResult> Process(PlayerConnection connection, CommandResult command, CancellationToken cancellationToken)
@@ -31,12 +28,12 @@ public class SaveBuiltIn : IRunnable
         }
 
         var lookup = await ThingRepository.GetAsync<Thing>(targetId, cancellationToken);
-        if (lookup.isSuccess)
+        if (lookup.isSuccess && lookup.value != null)
         {
             var target = lookup.value;
             var serialized = target.Serialize();
-            var rebuilt = (Thing)typeof(Thing).GetMethod("Deserialize").MakeGenericMethod(target.GetType()).Invoke(null, new object[] { serialized });
-            var reserialized = rebuilt.Serialize();
+            var rebuilt = (Thing)typeof(Thing).GetMethod("Deserialize")!.MakeGenericMethod(target.GetType()).Invoke(null, new object[] { serialized })!;
+            var reserialized = rebuilt!.Serialize();
 
             if (string.Compare(serialized, reserialized) != 0)
             {

@@ -1,8 +1,6 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using static ForthDatum;
-using static ForthPrimativeResult;
 
 public static class Pick
 {
@@ -24,7 +22,8 @@ public static class Pick
             return new ForthPrimativeResult(ForthErrorResult.INVALID_VALUE, "PICK requires the top parameter to be greater than or equal to 1");
 
         // Shortcut for DUP.
-        if (i == 1) {
+        if (i == 1)
+        {
             if (parameters.Stack.Count == 0)
                 return ForthPrimativeResult.SUCCESS;
 

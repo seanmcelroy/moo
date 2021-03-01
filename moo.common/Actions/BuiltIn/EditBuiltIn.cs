@@ -1,17 +1,15 @@
 using System;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using static ThingRepository;
 
 public class EditBuiltIn : IRunnable
 {
-    public Tuple<bool, string> CanProcess(PlayerConnection connection, CommandResult command)
+    public Tuple<bool, string?> CanProcess(PlayerConnection connection, CommandResult command)
     {
         var verb = command.getVerb().ToLowerInvariant();
-        if (verb == "@edit" && command.hasDirectObject())
-            return new Tuple<bool, string>(true, verb);
-        return new Tuple<bool, string>(false, null);
+        if (string.Compare(verb, "@edit", StringComparison.OrdinalIgnoreCase) == 0 && command.hasDirectObject())
+            return new Tuple<bool, string?>(true, verb);
+        return new Tuple<bool, string?>(false, null);
     }
 
     public async Task<VerbResult> Process(PlayerConnection connection, CommandResult command, CancellationToken cancellationToken)
@@ -24,7 +22,7 @@ public class EditBuiltIn : IRunnable
         if (sourceDbref.Equals(Dbref.NOT_FOUND))
             return new VerbResult(false, $"Can't find '{str}' here");
         if (sourceDbref.Equals(Dbref.AMBIGUOUS))
-            return new VerbResult(false, $"Which one?");
+            return new VerbResult(false, "Which one?");
 
         var sourceLookup = await ThingRepository.GetAsync<Script>(sourceDbref, cancellationToken);
         if (!sourceLookup.isSuccess)
@@ -34,6 +32,9 @@ public class EditBuiltIn : IRunnable
         }
 
         var program = sourceLookup.value;
+
+        if (program == null)
+            return new VerbResult(false, $"No such program found.");
 
         if (program.Type != Dbref.DbrefObjectType.Program)
             return new VerbResult(false, $"Only programs can be edited, but {program.UnparseObject()} is not one.");

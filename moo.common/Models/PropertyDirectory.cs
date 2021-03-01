@@ -14,15 +14,44 @@ public class PropertyDirectory : Dictionary<string, Property>
         sb.Append("<propdir>");
         foreach (var kvp in value)
         {
-            sb.AppendFormat($"<key>{kvp.Key}</key><value>{Property.Serialize(kvp.Value)}</value>");
+            sb.Append($"<key>{kvp.Key}</key><value>{Property.Serialize(kvp.Value)}</value>");
         }
         sb.Append("</propdir>");
         return sb.ToString();
     }
 
-    public void Add(string name, string value)
+    public Property Add(string name, string value)
     {
-        this.Add(name, new Property(name, value));
+        if (name.Contains('/'))
+        {
+            var parts = name.Split('/');
+            if (parts.Length > 1 && parts[0].Length > 0 && parts[1].Length > 1)
+            {
+                var propdirTitle = parts[0];
+                PropertyDirectory subdir;
+                if (this.ContainsKey(propdirTitle))
+                {
+                    subdir = (PropertyDirectory)this[propdirTitle].directory!;
+                    if (subdir == null)
+                        throw new System.InvalidOperationException();
+                }
+                else
+                {
+                    subdir = new PropertyDirectory();
+                    this.Add(propdirTitle, subdir);
+                }
+
+                var remainingTitle = name.Substring(propdirTitle.Length + 1);
+                return subdir.Add(remainingTitle, value);
+            }
+        }
+
+        var newProp = new Property(name, value);
+        if (this.ContainsKey(name))
+            this[name] = newProp;
+        else
+            this.Add(name, newProp);
+        return newProp;
     }
 
     public void Add(string name, int value)
@@ -35,9 +64,38 @@ public class PropertyDirectory : Dictionary<string, Property>
         this.Add(name, new Property(name, value));
     }
 
-    public void Add(string name, Dbref value)
+    public Property Add(string name, Dbref value)
     {
-        this.Add(name, new Property(name, value));
+        if (name.Contains('/'))
+        {
+            var parts = name.Split('/');
+            if (parts.Length > 1 && parts[0].Length > 0 && parts[1].Length > 1)
+            {
+                var propdirTitle = parts[0];
+                PropertyDirectory subdir;
+                if (this.ContainsKey(propdirTitle))
+                {
+                    subdir = (PropertyDirectory)this[propdirTitle].directory!;
+                    if (subdir == null)
+                        throw new System.InvalidOperationException();
+                }
+                else
+                {
+                    subdir = new PropertyDirectory();
+                    this.Add(propdirTitle, subdir);
+                }
+
+                var remainingTitle = name.Substring(propdirTitle.Length + 1);
+                return subdir.Add(remainingTitle, value);
+            }
+        }
+
+        var newProp = new Property(name, value);
+        if (this.ContainsKey(name))
+            this[name] = newProp;
+        else
+            this.Add(name, newProp);
+        return newProp;
     }
 
     public void Add(string name, float value)
@@ -65,8 +123,9 @@ public class PropertyDirectory : Dictionary<string, Property>
                 if (firstSegmentProperty.Type == PropertyType.Directory)
                 {
                     // Exists and is a directory
-                    var firstSegmentPropertyDirectory = (PropertyDirectory)firstSegmentProperty.Value;
-                    return firstSegmentPropertyDirectory.GetPropertyPathValue(path.Substring(firstSeparator + 1));
+                    var firstSegmentPropertyDirectory = (PropertyDirectory)firstSegmentProperty.Value!;
+                    var nextPathPortion = path.Substring(firstSeparator + 1);
+                    return firstSegmentPropertyDirectory.GetPropertyPathValue(nextPathPortion);
                 }
                 else
                 {
@@ -234,16 +293,19 @@ public class PropertyDirectory : Dictionary<string, Property>
         switch (value.Type)
         {
             case VariableType.DbRef:
-                directory.Add(lastPathPart, (Dbref)value.Value);
+                directory.Add(lastPathPart, value.Value == null ? Dbref.NOT_FOUND : (Dbref)value.Value);
                 break;
             case VariableType.String:
-                directory.Add(lastPathPart, (string)value.Value);
+                if (value.Value != null)
+                    directory.Add(lastPathPart, (string)value.Value);
                 break;
             case VariableType.Integer:
-                directory.Add(lastPathPart, (int)value.Value);
+                if (value.Value != null)
+                    directory.Add(lastPathPart, (int)value.Value);
                 break;
             case VariableType.Float:
-                directory.Add(lastPathPart, (float)value.Value);
+                if (value.Value != null)
+                    directory.Add(lastPathPart, (float)value.Value);
                 break;
             default:
                 throw new System.InvalidOperationException($"Unable to handle property type: {value.Type}");

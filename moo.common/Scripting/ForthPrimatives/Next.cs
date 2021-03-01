@@ -1,11 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using static Dbref;
 using static ForthDatum;
-using static ForthPrimativeResult;
 
 public static class Next
 {
@@ -33,13 +28,13 @@ public static class Next
         var target = n1.UnwrapDbref();
         var targetResult = await ThingRepository.GetAsync<Thing>(target, parameters.CancellationToken);
 
-        if (!targetResult.isSuccess)
+        if (!targetResult.isSuccess || targetResult.value == null)
         {
             parameters.Stack.Push(new ForthDatum(Dbref.NOT_FOUND, 0));
             return ForthPrimativeResult.SUCCESS;
         }
 
-        if (!typeof(Container).IsAssignableFrom(targetResult.value.GetType()))
+        if (targetResult.value == null || !typeof(Container).IsAssignableFrom(targetResult.value.GetType()))
         {
             parameters.Stack.Push(new ForthDatum(Dbref.NOT_FOUND, 0));
             return ForthPrimativeResult.SUCCESS;

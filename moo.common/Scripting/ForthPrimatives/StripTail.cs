@@ -1,8 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using static ForthDatum;
-using static ForthPrimativeResult;
 
 public static class StripTail
 {
@@ -20,7 +16,7 @@ public static class StripTail
         if (s.Type != DatumType.String)
             return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "TOLOWER requires the top parameter on the stack to be a string");
 
-        parameters.Stack.Push(new ForthDatum(((string)s.Value).TrimEnd()));
+        parameters.Stack.Push(new ForthDatum(((string?)s.Value ?? string.Empty).TrimEnd()));
         return ForthPrimativeResult.SUCCESS;
     }
 }

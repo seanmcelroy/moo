@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -7,7 +8,7 @@ public class SqliteStorageProvider : IStorageProvider
 {
     public void Initialize()
     {
-        using (var connection = new SqliteConnection("Data Source=./objects.db"))
+        using (var connection = new SqliteConnection("Data Source=./objects.sqlite"))
         {
             connection.Open();
 
@@ -34,7 +35,7 @@ public class SqliteStorageProvider : IStorageProvider
     {
         var result = default(StorageProviderRetrieveResult);
 
-        using (var connection = new SqliteConnection("Data Source=./objects.db"))
+        using (var connection = new SqliteConnection("Data Source=./objects.sqlite"))
         {
             await connection.OpenAsync();
 
@@ -57,22 +58,30 @@ public class SqliteStorageProvider : IStorageProvider
 
     public async Task<bool> SaveAsync(Dbref id, string type, string serialized, CancellationToken cancellationToken)
     {
-        using (var connection = new SqliteConnection("Data Source=./objects.db"))
+        try
         {
-            await connection.OpenAsync();
-
-            int updated = 0;
-            using (var command = new SqliteCommand("INSERT OR REPLACE INTO [objects] ([id], [type], [data]) VALUES (@id, @type, @data);", connection))
+            using (var connection = new SqliteConnection("Data Source=./objects.sqlite"))
             {
-                command.Parameters.AddWithValue("@id", (int)id);
-                command.Parameters.AddWithValue("@type", type);
-                command.Parameters.AddWithValue("@data", serialized);
-                updated = await command.ExecuteNonQueryAsync(cancellationToken);
+                await connection.OpenAsync();
+
+                int updated = 0;
+                using (var command = new SqliteCommand("INSERT OR REPLACE INTO [objects] ([id], [type], [data]) VALUES (@id, @type, @data);", connection))
+                {
+                    command.Parameters.AddWithValue("@id", (int)id);
+                    command.Parameters.AddWithValue("@type", type);
+                    command.Parameters.AddWithValue("@data", serialized);
+                    updated = await command.ExecuteNonQueryAsync(cancellationToken);
+                }
+
+                connection.Close();
+
+                return updated > 0;
             }
-
-            connection.Close();
-
-            return updated > 0;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"EXCEPTION ON SAVE:\r\n{ex}");
+            return false;
         }
     }
 }

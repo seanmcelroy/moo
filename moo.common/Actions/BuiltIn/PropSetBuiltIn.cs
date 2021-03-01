@@ -1,17 +1,15 @@
 using System;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using static ThingRepository;
 
 public class PropSetBuiltIn : IRunnable
 {
-    public Tuple<bool, string> CanProcess(PlayerConnection connection, CommandResult command)
+    public Tuple<bool, string?> CanProcess(PlayerConnection connection, CommandResult command)
     {
         var verb = command.getVerb().ToLowerInvariant();
-        if (verb == "@propset" && command.hasDirectObject())
-            return new Tuple<bool, string>(true, verb);
-        return new Tuple<bool, string>(false, null);
+        if (string.Compare(verb, "@propset", StringComparison.OrdinalIgnoreCase) == 0 && command.hasDirectObject())
+            return new Tuple<bool, string?>(true, verb);
+        return new Tuple<bool, string?>(false, null);
     }
 
     public async Task<VerbResult> Process(PlayerConnection connection, CommandResult command, CancellationToken cancellationToken)
@@ -31,10 +29,10 @@ public class PropSetBuiltIn : IRunnable
         if (targetDbref.Equals(Dbref.NOT_FOUND))
             return new VerbResult(false, $"Can't find '{name}' here");
         if (targetDbref.Equals(Dbref.AMBIGUOUS))
-            return new VerbResult(false, $"Which one?");
+            return new VerbResult(false, "Which one?");
 
         var targetLookup = await ThingRepository.GetAsync<Thing>(targetDbref, cancellationToken);
-        if (!targetLookup.isSuccess)
+        if (!targetLookup.isSuccess || targetLookup.value == null)
         {
             await connection.sendOutput($"You can't seem to find that.  {targetLookup.reason}");
             return new VerbResult(false, "Target not found");

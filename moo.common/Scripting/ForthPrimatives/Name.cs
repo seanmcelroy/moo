@@ -1,10 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using static ForthDatum;
-using static ForthPrimativeResult;
 
 public static class Name
 {
@@ -26,13 +21,13 @@ public static class Name
         var target = n1.UnwrapDbref();
         var targetResult = await ThingRepository.GetAsync<Thing>(target, parameters.CancellationToken);
 
-        if (!targetResult.isSuccess)
+        if (!targetResult.isSuccess || targetResult.value == null)
         {
             parameters.Stack.Push(new ForthDatum(""));
             return ForthPrimativeResult.SUCCESS;
         }
 
-            parameters.Stack.Push(new ForthDatum(targetResult.value.name));
+        parameters.Stack.Push(new ForthDatum(targetResult.value.name));
         return ForthPrimativeResult.SUCCESS;
     }
 }

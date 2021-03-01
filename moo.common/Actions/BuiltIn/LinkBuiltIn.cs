@@ -1,18 +1,16 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using static ThingRepository;
 
 public class LinkBuiltIn : IRunnable
 {
-    public Tuple<bool, string> CanProcess(PlayerConnection connection, CommandResult command)
+    public Tuple<bool, string?> CanProcess(PlayerConnection connection, CommandResult command)
     {
         var verb = command.getVerb().ToLowerInvariant();
-        if (verb == "@link" && command.hasDirectObject())
-            return new Tuple<bool, string>(true, verb);
-        return new Tuple<bool, string>(false, null);
+        if (string.Compare(verb, "@link", StringComparison.OrdinalIgnoreCase) == 0 && command.hasDirectObject())
+            return new Tuple<bool, string?>(true, verb);
+        return new Tuple<bool, string?>(false, null);
     }
 
     public async Task<VerbResult> Process(PlayerConnection connection, CommandResult command, CancellationToken cancellationToken)
@@ -26,16 +24,16 @@ public class LinkBuiltIn : IRunnable
             return new VerbResult(false, "@link object1=object2 [; object3; ... objectn ]..\r\nLinks object1 to object2, provided you control object1, and object2 is either controlled by you or linkable. Actions may be linked to more than one thing, specified in a list separated by semi-colons.");
 
         var object1name = parts[0];
-        var object2phrase = parts[1];
+        var object2phrase = parts[1].TrimEnd('\r', '\n', ' ', '\t');
 
         var sourceDbref = await connection.FindThingForThisPlayerAsync(object1name, cancellationToken);
         if (sourceDbref.Equals(Dbref.NOT_FOUND))
             return new VerbResult(false, $"Can't find '{object1name}' here");
         if (sourceDbref.Equals(Dbref.AMBIGUOUS))
-            return new VerbResult(false, $"Which one?");
+            return new VerbResult(false, "Which one?");
 
         var sourceLookup = await ThingRepository.GetAsync<Thing>(sourceDbref, cancellationToken);
-        if (!sourceLookup.isSuccess)
+        if (!sourceLookup.isSuccess || sourceLookup.value == null)
         {
             await connection.sendOutput($"You can't seem to find that.  {sourceLookup.reason}");
             return new VerbResult(false, "object1 not found");
@@ -52,10 +50,10 @@ public class LinkBuiltIn : IRunnable
             if (targetDbref.Equals(Dbref.NOT_FOUND))
                 return new VerbResult(false, $"Can't find '{targetName}' here");
             if (targetDbref.Equals(Dbref.AMBIGUOUS))
-                return new VerbResult(false, $"Which one?");
+                return new VerbResult(false, "Which one?");
 
             var targetLookup = await ThingRepository.GetAsync<Thing>(targetDbref, cancellationToken);
-            if (!targetLookup.isSuccess)
+            if (!targetLookup.isSuccess || targetLookup.value == null)
             {
                 await connection.sendOutput($"You can't seem to find that.  {targetLookup.reason}");
                 return new VerbResult(false, "object2 not found");

@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using static ForthDatum;
-using static ForthPrimativeResult;
 
 public static class Put
 {
@@ -33,7 +31,8 @@ public static class Put
         var ni = parameters.Stack.Pop();
 
         var temp = new Stack<ForthDatum>(i);
-        for (int n = 0; n < i; n++) {
+        for (int n = 0; n < i; n++)
+        {
             temp.Push(parameters.Stack.Pop());
         }
 
@@ -42,7 +41,7 @@ public static class Put
 
         while (temp.Count > 0)
             parameters.Stack.Push(temp.Pop());
-            
+
         return ForthPrimativeResult.SUCCESS;
     }
 }

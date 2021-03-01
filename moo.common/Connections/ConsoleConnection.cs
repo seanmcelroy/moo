@@ -1,6 +1,4 @@
-using System;
 using System.IO;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -14,6 +12,7 @@ public class ConsoleConnection : PlayerConnection
 
     public ConsoleConnection(HumanPlayer player, TextReader input, TextWriter output, CancellationToken cancellationToken) : base(player)
     {
+        this.input = input;
         this.output = output;
 
         consoleTask = Task.Factory.StartNew(async () =>
@@ -23,7 +22,7 @@ public class ConsoleConnection : PlayerConnection
                 {
                     var text = await input.ReadLineAsync();
                     ReceiveInput(text + "\r\n");
-                } while (true);
+                } while (!cancellationToken.IsCancellationRequested);
             }, cancellationToken);
     }
 

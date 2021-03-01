@@ -3,14 +3,13 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Linq;
-using static ThingRepository;
 using static Dbref;
 
 public class Container : Thing
 {
     private ConcurrentDictionary<Dbref, int> contents = new ConcurrentDictionary<Dbref, int>();
 
-    public string internalDescription;
+    public string? internalDescription;
 
     public VerbResult Add(Dbref id)
     {
@@ -52,8 +51,8 @@ public class Container : Thing
         var results = await Task.WhenAll(tasks);
 
         var result = results
-            .Where(t => t.isSuccess && (t.value.name.IndexOf(';') == -1 ? string.Compare(search, t.value.name) == 0 : t.value.name.Split(';').Any(sub => string.Compare(search, sub) == 0)))
-            .Select(t => t.value.id)
+            .Where(t => t.isSuccess && t.value?.name != null && (t.value.name.IndexOf(';') == -1 ? string.Compare(search, t.value.name) == 0 : t.value.name.Split(';').Any(sub => string.Compare(search, sub) == 0)))
+            .Select(t => t.value!.id)
             .DefaultIfEmpty(Dbref.NOT_FOUND)
             .Aggregate((c, n) => c | n);
 
@@ -67,7 +66,7 @@ public class Container : Thing
         var loopResult = Parallel.ForEach(contents.Keys, async peer =>
         {
             var thing = await ThingRepository.GetAsync<Thing>(peer, cancellationToken);
-            if (thing.isSuccess && typeof(HumanPlayer).IsAssignableFrom(thing.value.GetType()))
+            if (thing.isSuccess && thing.value != null && typeof(HumanPlayer).IsAssignableFrom(thing.value.GetType()))
                 results.Add((HumanPlayer)thing.value);
         });
 

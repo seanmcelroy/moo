@@ -34,10 +34,10 @@ public static class ForthPreprocessor
     private static readonly Regex versionRegex = new Regex(@"^\s*(?:\$version\s+(?<value>\d+(?:.\d*)?))$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
     private static readonly Regex quotedStringPreRegex = new Regex(@"\""[^\r\n]*?(?<!\\)\""(?=\s)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-    public static async Task<ForthPreprocessingResult> Preprocess(PlayerConnection connection, Script script, string program, CancellationToken cancellationToken)
+    public static async Task<ForthPreprocessingResult> Preprocess(PlayerConnection? connection, Script script, string program, CancellationToken cancellationToken)
     {
         var sb = new StringBuilder();
-        var defines = new Dictionary<string, string>() {
+        var defines = new Dictionary<string, string?>() {
             { "PR_MODE", "0" },
             { "FG_MODE", "1" },
             { "BG_MODE", "2" },
@@ -70,7 +70,7 @@ public static class ForthPreprocessor
             { "STRIP", "striplead striptail" }
         };
         var controlFlow = new Stack<ControlFlowMarker>();
-        var verbosity = 0;
+        var verbosity = script.name == "MOSS1.1.muf" ? 5 : 0;
 
         var publicFunctionNames = new List<String>(20);
 
@@ -253,7 +253,7 @@ public static class ForthPreprocessor
                         }
                     }
 
-                    // $ifdef
+                    // $ifdef / $ifndef
                     {
                         var ifdefMatch = ifdefRegex.Match(token);
                         if (ifdefMatch.Success)
@@ -398,7 +398,7 @@ public static class ForthPreprocessor
                             {
                                 // Find library
                                 var aetherLookup = await ThingRepository.GetAsync<Room>(Dbref.AETHER, cancellationToken);
-                                if (!aetherLookup.isSuccess)
+                                if (!aetherLookup.isSuccess || aetherLookup.value == null)
                                     return new ForthPreprocessingResult($"Unable to load {Dbref.AETHER}: {aetherLookup.reason}");
 
                                 var libname = includeMatch.Groups["libname"].Value;
@@ -407,7 +407,7 @@ public static class ForthPreprocessor
                                 if (prop.Equals(default(Property)))
                                     return new ForthPreprocessingResult($"Unable to load library {libname}");
 
-                                targetDbref = (Dbref)prop.Value;
+                                targetDbref = (Dbref?)prop.Value ?? Dbref.NOT_FOUND;
                             }
                             else
                             {
@@ -421,12 +421,12 @@ public static class ForthPreprocessor
                             }
 
                             var targetLookup = await ThingRepository.GetAsync(targetDbref, cancellationToken);
-                            if (!targetLookup.isSuccess)
+                            if (!targetLookup.isSuccess || targetLookup.value == null)
                                 return new ForthPreprocessingResult($"Unable to load library: {targetLookup.reason}");
 
                             var target = targetLookup.value;
                             var defsProperty = await target.GetPropertyPathValueAsync("_defs/", cancellationToken);
-                            var defsDirectory = (PropertyDirectory)defsProperty.Value;
+                            var defsDirectory = (PropertyDirectory?)defsProperty.Value;
 
                             if (defsDirectory == null)
                                 continue;
@@ -541,12 +541,12 @@ public static class ForthPreprocessor
                 }
 
                 // Strip comments
-                if (line2.IndexOf('(') > -1)
+                if (line2.IndexOf('(') > -1 && !line2.StartsWith('\"') && !line2.EndsWith('\"'))
                     line2 = Regex.Replace(line2, @"^\([^\)]*\)|\([^\r\n]*$|\([^\)]*\)", "");
 
                 if (line2.Length > 0)
                     foreach (var define in defines.Where(d => d.Value != null))
-                        line2 = Regex.Replace(line2, @"(?<=\s|^)" + Regex.Escape(define.Key) + @"(?=\s|$)", define.Value, RegexOptions.IgnoreCase);
+                        line2 = Regex.Replace(line2, @"(?<=\s|^)" + Regex.Escape(define.Key) + @"(?=\s|$)", define.Value ?? string.Empty, RegexOptions.IgnoreCase);
 
                 if (line2.Length > 0)
                     foreach (var hold in holdingPen)
@@ -554,15 +554,15 @@ public static class ForthPreprocessor
 
                 if (verbosity > 0 && verbosity <= 3 && line.CompareTo(line2) != 0 && connection != null)
                     await connection.sendOutput($"XFORM \"{line}\" into \"{line2}\"");
-                else if (verbosity == 4 && connection != null)
+                else if (verbosity >= 4 && connection != null)
                     await connection.sendOutput($"PRE: {line2}");
 
                 sb.AppendLine(line2);
             }
         }
 
-        if (controlFlow.Count != 0)
-            await connection.sendOutput("UNCLOSED CONTROL FLOW!");
+        if (controlFlow.Count != 0 && connection != null)
+            await connection.sendOutput($"UNCLOSED CONTROL FLOW! in {script.name}!");
 
         return new ForthPreprocessingResult(sb.ToString(), publicFunctionNames, null);
     }

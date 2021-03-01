@@ -1,11 +1,6 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using static ForthDatum;
-using static ForthPrimativeResult;
-using static Property;
 
 public static class NotifyExclude
 {
@@ -50,7 +45,7 @@ public static class NotifyExclude
         if (sTarget.UnwrapDbref().ToInt32() < 0)
             return ForthPrimativeResult.SUCCESS;
 
-        var message = (string)sMessage.Value;
+        var message = (string?)sMessage.Value;
         if (message == null || string.IsNullOrWhiteSpace(message))
             return ForthPrimativeResult.SUCCESS;
 

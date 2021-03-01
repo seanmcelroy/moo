@@ -1,11 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using static ForthDatum;
-using static ForthPrimativeResult;
-using static Property;
 
 public static class AddProp
 {
@@ -41,18 +35,18 @@ public static class AddProp
             return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "ADDPROP requires the fourth-to-top parameter on the stack to be a dbref");
 
         var targetResult = await ThingRepository.GetAsync<Thing>(d.UnwrapDbref(), parameters.CancellationToken);
-        if (!targetResult.isSuccess)
+        if (!targetResult.isSuccess || targetResult.value == null)
             return new ForthPrimativeResult(ForthErrorResult.NO_SUCH_OBJECT, $"Unable to find object with dbref {d.UnwrapDbref()}");
 
-        var path = ((string)s1.Value);
+        var path = ((string?)s1.Value) ?? string.Empty;
 
         //if (!targetResult.value.IsControlledBy(parameters.Connection.Dbref) && path.Contains('_'))
         //    return new ForthPrimativeResult(ForthErrorResult.INSUFFICIENT_PERMISSION, $"Permission not granted to write protected property {path} on {d.UnwrapDbref()}");
 
         if (s2.isTrue())
-             targetResult.value.SetPropertyPathValue(path, new ForthVariable((string)s2.Value));
+            targetResult.value.SetPropertyPathValue(path, new ForthVariable((string?)s2.Value ?? string.Empty));
         else
-             targetResult.value.SetPropertyPathValue(path, new ForthVariable(i.UnwrapInt()));
+            targetResult.value.SetPropertyPathValue(path, new ForthVariable(i.UnwrapInt()));
 
         return ForthPrimativeResult.SUCCESS;
     }

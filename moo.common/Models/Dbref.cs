@@ -143,7 +143,7 @@ public struct Dbref
     public static bool TryParse(string s, out Dbref result)
     {
         s = s.Trim();
-        if (Regex.IsMatch(s, @"#\d+[A-Z]?"))
+        if (Regex.IsMatch(s, @"^#\d+[A-Z]?$"))
         {
             DbrefObjectType type;
             switch (s[s.Length - 1])
@@ -165,8 +165,15 @@ public struct Dbref
                     break;
             }
 
-            result = new Dbref(int.Parse(s.Substring(1)), type);
-            return true;
+            int i;
+            if (int.TryParse(s.Substring(1), out i))
+            {
+                result = new Dbref(i, type);
+                return true;
+            }
+
+            result = Dbref.NOT_FOUND;
+            return false;
         }
 
         result = default(Dbref);
@@ -183,7 +190,7 @@ public struct Dbref
         return obj.id == this.id;
     }
 
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
         if (!(obj is Dbref))
             return false;

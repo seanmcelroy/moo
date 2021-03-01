@@ -1,9 +1,6 @@
 using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using static ForthDatum;
-using static ForthPrimativeResult;
 
 public static class TimeFormat
 {
@@ -90,7 +87,7 @@ public static class TimeFormat
 
         var offset = DateTimeOffset.FromUnixTimeSeconds(si.UnwrapInt());
         var dt = offset.DateTime;
-        var formatString = (string)sfmt.Value;
+        var formatString = (string?)sfmt.Value ?? string.Empty;
 
         // Normalize MUF format string
         formatString = formatString

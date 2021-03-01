@@ -4,13 +4,14 @@ public struct StorageProviderRetrieveResult
 
     public Dbref id;
 
-    public string serialized;
+    public string? serialized;
 
-    public string type;
+    public string? type;
 
-    public string reason;
+    public string? reason;
 
-    public StorageProviderRetrieveResult(Dbref id, string type, string serialized) {
+    public StorageProviderRetrieveResult(Dbref id, string type, string serialized)
+    {
         this.isSuccess = true;
         this.id = id;
         this.type = type;
@@ -18,7 +19,8 @@ public struct StorageProviderRetrieveResult
         this.reason = null;
     }
 
-    public StorageProviderRetrieveResult(string reason) {
+    public StorageProviderRetrieveResult(string reason)
+    {
         this.isSuccess = false;
         this.id = Dbref.NOT_FOUND;
         this.type = null;

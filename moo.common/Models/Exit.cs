@@ -23,10 +23,10 @@ public class Exit : Thing, IRunnable
         return exit;
     }
 
-    public virtual Tuple<bool, string> CanProcess(PlayerConnection player, CommandResult command)
+    public virtual Tuple<bool, string?> CanProcess(PlayerConnection player, CommandResult command)
     {
         // TODO: Test lock!
-        return new Tuple<bool, string>(true, null);
+        return new Tuple<bool, string?>(true, null);
     }
 
     public async Task<VerbResult> Process(PlayerConnection connection, CommandResult command, CancellationToken cancellationToken)
@@ -41,6 +41,9 @@ public class Exit : Thing, IRunnable
 
         // TODO: Handle multiple link locations
         var linkTo = linkToLookups[0].lookupResult.Result.value;
+        if (linkTo == null)
+            return new VerbResult(false, "Error looking up link.");
+
         switch (linkTo.Type)
         {
             case Dbref.DbrefObjectType.Room:
@@ -61,7 +64,7 @@ public class Exit : Thing, IRunnable
         }
     }
 
-    protected override Dictionary<string, object> GetSerializedElements()
+    protected override Dictionary<string, object?> GetSerializedElements()
     {
         var result = base.GetSerializedElements();
         result.Add("aliases", aliases.ToArray());

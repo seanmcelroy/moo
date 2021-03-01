@@ -6,31 +6,97 @@ namespace Tests
 {
     public class PickTest
     {
-        Stack<ForthDatum> stack = new Stack<ForthDatum>();
-
-        [SetUp]
-        public void Setup()
+        [Test]
+        public void Dup()
         {
+            var stack = new Stack<ForthDatum>();
+            stack.Push(new ForthDatum("x"));
+
+            var local = stack.ClonePreservingOrder();
+            local.Push(new ForthDatum(1));
+            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default(CancellationToken));
+            var result = Pick.Execute(parameters);
+
+            Assert.AreEqual(2, local.Count);
+
+            var x1 = local.Pop();
+            Assert.AreEqual(ForthDatum.DatumType.String, x1.Type);
+            Assert.AreEqual("x", x1.Value);
+
+            var x2 = local.Pop();
+            Assert.AreEqual(ForthDatum.DatumType.String, x2.Type);
+            Assert.AreEqual("x", x2.Value);
+            Assert.AreEqual(x1, x2);
+
+            Assert.Pass();
+        }
+
+        [Test]
+        public void Over()
+        {
+            var stack = new Stack<ForthDatum>();
+            stack.Push(new ForthDatum("x"));
+            stack.Push(new ForthDatum("y"));
+
+            var local = stack.ClonePreservingOrder();
+            local.Push(new ForthDatum(2));
+            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default(CancellationToken));
+            var result = Pick.Execute(parameters);
+
+            Assert.AreEqual(3, local.Count);
+
+            var x1 = local.Pop();
+            Assert.AreEqual(ForthDatum.DatumType.String, x1.Type);
+            Assert.AreEqual("x", x1.Value);
+
+            var y = local.Pop();
+            Assert.AreEqual(ForthDatum.DatumType.String, y.Type);
+            Assert.AreEqual("y", y.Value);
+
+            var x2 = local.Pop();
+            Assert.AreEqual(ForthDatum.DatumType.String, x2.Type);
+            Assert.AreEqual("x", x2.Value);
+            Assert.AreEqual(x1, x2);
+
+            Assert.Pass();
+        }
+
+        [Test]
+        public void Pick3()
+        {
+            var stack = new Stack<ForthDatum>();
             stack.Push(new ForthDatum("a"));
             stack.Push(new ForthDatum("b"));
             stack.Push(new ForthDatum("c"));
             stack.Push(new ForthDatum("d"));
-        }
+            stack.Push(new ForthDatum(3));
 
-        [Test]
-        public void ForwardShift()
-        {
-            var local = new Stack<ForthDatum>(stack);
-            local.Push(new ForthDatum(3));
+            var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default(CancellationToken));
             var result = Pick.Execute(parameters);
-            Assert.AreEqual(default(ForthPrimativeResult), result);
-
-            var b = local.Pop();
-            Assert.AreEqual(ForthDatum.DatumType.String, b.Type);
-            Assert.AreEqual("b", b.Value);
 
             Assert.AreEqual(5, local.Count);
+
+            var b1 = local.Pop();
+            Assert.AreEqual(ForthDatum.DatumType.String, b1.Type);
+            Assert.AreEqual("b", b1.Value);
+
+            var d = local.Pop();
+            Assert.AreEqual(ForthDatum.DatumType.String, d.Type);
+            Assert.AreEqual("d", d.Value);
+
+            var c = local.Pop();
+            Assert.AreEqual(ForthDatum.DatumType.String, c.Type);
+            Assert.AreEqual("c", c.Value);
+
+            var b2 = local.Pop();
+            Assert.AreEqual(ForthDatum.DatumType.String, b2.Type);
+            Assert.AreEqual("b", b2.Value);
+            Assert.AreEqual(b1, b2);
+
+            var a = local.Pop();
+            Assert.AreEqual(ForthDatum.DatumType.String, a.Type);
+            Assert.AreEqual("a", a.Value);
 
             Assert.Pass();
         }

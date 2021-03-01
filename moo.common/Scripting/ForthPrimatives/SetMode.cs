@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
 using static ForthDatum;
-using static ForthPrimativeResult;
 using static ForthProcess;
 
 public static class SetMode

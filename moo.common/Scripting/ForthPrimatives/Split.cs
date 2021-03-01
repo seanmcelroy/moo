@@ -1,9 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using static ForthDatum;
-using static ForthPrimativeResult;
 
 public static class Split
 {
@@ -18,11 +13,11 @@ public static class Split
             return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, "SPLIT requires two parameters");
 
         var s2 = parameters.Stack.Pop();
-        if (s2.Type != DatumType.String)
+        if (s2.Type != DatumType.String || s2.Value == null)
             return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "SPLIT requires the top parameter on the stack to be a string");
 
         var s1 = parameters.Stack.Pop();
-        if (s1.Type != DatumType.String)
+        if (s1.Type != DatumType.String || s1.Value == null)
             return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "SPLIT requires the second-to-top parameter on the stack to be a string");
 
         var str1 = (string)s1.Value;
@@ -37,7 +32,7 @@ public static class Split
             return ForthPrimativeResult.SUCCESS;
         }
 
-        var strA = str1.Substring(0, idx + 1);
+        var strA = str1.Substring(0, idx);
         var strB = str1.Substring(idx + 1);
 
         parameters.Stack.Push(new ForthDatum(strA));

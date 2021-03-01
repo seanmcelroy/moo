@@ -1,18 +1,17 @@
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 
 public struct ForthPreprocessingResult
 {
     private readonly bool isSuccessful;
-    private readonly string reason;
-    private readonly string processedProgram;
-    private readonly List<string> publicFunctionNames;
-    private readonly Dictionary<string, ForthVariable> programLocalVariables;
+    private readonly string? reason;
+    private readonly string? processedProgram;
+    private readonly List<string>? publicFunctionNames;
+    private readonly Dictionary<string, ForthVariable>? programLocalVariables;
 
     public bool IsSuccessful => isSuccessful;
-    public string Reason => reason;
-    public string ProcessedProgram => processedProgram;
-    public Dictionary<string, ForthVariable> ProgramLocalVariables => programLocalVariables;
+    public string? Reason => reason;
+    public string? ProcessedProgram => processedProgram;
+    public Dictionary<string, ForthVariable>? ProgramLocalVariables => programLocalVariables;
 
     public ForthPreprocessingResult(string failureReason)
     {
@@ -23,7 +22,7 @@ public struct ForthPreprocessingResult
         this.programLocalVariables = null;
     }
 
-    public ForthPreprocessingResult(string processedProgram, List<string> publicFunctionNames, Dictionary<string, ForthVariable> programLocalVariables)
+    public ForthPreprocessingResult(string processedProgram, List<string> publicFunctionNames, Dictionary<string, ForthVariable>? programLocalVariables)
     {
         this.isSuccessful = true;
         this.reason = null;

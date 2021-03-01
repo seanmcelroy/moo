@@ -1,9 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using static ForthDatum;
-using static ForthPrimativeResult;
 
 public static class Instr
 {
@@ -18,11 +13,11 @@ public static class Instr
             return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, "INSTR requires two parameters");
 
         var n2 = parameters.Stack.Pop();
-        if (n2.Type != DatumType.String)
+        if (n2.Type != DatumType.String || n2.Value == null)
             return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "INSTR requires the second-to-top parameter on the stack to be a string");
 
         var n1 = parameters.Stack.Pop();
-        if (n1.Type != DatumType.String)
+        if (n1.Type != DatumType.String || n1.Value == null)
             return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "INSTR requires the top parameter on the stack to be a string");
 
         var s1 = (string)n1.Value;

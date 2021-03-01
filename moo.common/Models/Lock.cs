@@ -31,7 +31,7 @@ public struct Lock
         return string.Equals(obj.raw, this.raw, StringComparison.Ordinal);
     }
 
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
         if (!(obj is Lock))
             return false;

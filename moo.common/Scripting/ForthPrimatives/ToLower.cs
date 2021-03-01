@@ -1,8 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using static ForthDatum;
-using static ForthPrimativeResult;
 
 public static class ToLower
 {
@@ -20,7 +16,7 @@ public static class ToLower
         if (s.Type != DatumType.String)
             return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "TOLOWER requires the top parameter on the stack to be a string");
 
-        parameters.Stack.Push(new ForthDatum(((string)s.Value).ToLowerInvariant()));
+        parameters.Stack.Push(new ForthDatum(((string?)s.Value ?? string.Empty).ToLowerInvariant()));
         return ForthPrimativeResult.SUCCESS;
     }
 }

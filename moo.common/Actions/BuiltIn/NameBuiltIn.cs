@@ -6,12 +6,12 @@ using static ThingRepository;
 
 public class NameBuiltIn : IRunnable
 {
-    public Tuple<bool, string> CanProcess(PlayerConnection connection, CommandResult command)
+    public Tuple<bool, string?> CanProcess(PlayerConnection connection, CommandResult command)
     {
         var verb = command.getVerb().ToLowerInvariant();
-        if (verb == "@name" && command.hasDirectObject())
-            return new Tuple<bool, string>(true, verb);
-        return new Tuple<bool, string>(false, null);
+        if (string.Compare(verb, "@name", StringComparison.OrdinalIgnoreCase) == 0 && command.hasDirectObject())
+            return new Tuple<bool, string?>(true, verb);
+        return new Tuple<bool, string?>(false, null);
     }
 
     public async Task<VerbResult> Process(PlayerConnection connection, CommandResult command, CancellationToken cancellationToken)
@@ -31,10 +31,10 @@ public class NameBuiltIn : IRunnable
         if (targetDbref.Equals(Dbref.NOT_FOUND))
             return new VerbResult(false, $"Can't find '{name}' here");
         if (targetDbref.Equals(Dbref.AMBIGUOUS))
-            return new VerbResult(false, $"Which one?");
+            return new VerbResult(false, "Which one?");
 
         var targetLookup = await ThingRepository.GetAsync<Thing>(targetDbref, cancellationToken);
-        if (!targetLookup.isSuccess)
+        if (!targetLookup.isSuccess || targetLookup.value == null)
         {
             await connection.sendOutput($"You can't seem to find that.  {targetLookup.reason}");
             return new VerbResult(false, "Target not found");
@@ -42,7 +42,7 @@ public class NameBuiltIn : IRunnable
 
         var target = targetLookup.value;
         var predicateParts = predicate.LastIndexOf(' ') == -1 ? new[] { predicate } : new string[] { predicate.Substring(0, predicate.LastIndexOf(' ')), predicate.Substring(predicate.LastIndexOf(' ') + 1) };
-        if (predicateParts.Length < 1 || predicateParts.Length >2)
+        if (predicateParts.Length < 1 || predicateParts.Length > 2)
             return new VerbResult(false, "@NAME <object>=<name> [<password>]\r\n\r\nSets the name field of <object> to <name>. A null <name> is illegal. You must supply <password> if renaming a player. Wizards can rename any player but still must include the password.");
 
         // TODO: Validate password

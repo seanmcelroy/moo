@@ -1,9 +1,7 @@
 ﻿using System;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using static Dbref;
 
 namespace moo.console
 {
@@ -19,13 +17,15 @@ namespace moo.console
             var consolePlayer = LoadSandbox(cts.Token);
             var consoleConnection = server.AttachConsolePlayer(consolePlayer, Console.In, Console.Out, cts.Token);
 
-            Console.Out.WriteLine("Loading built-in actions");
+            Console.Out.WriteLine("\r\nLoading built-in actions");
             foreach (var action in new IRunnable[] {
                 new ActionBuiltIn(),
+                new ChownBuiltIn(),
                 new EditBuiltIn(),
                 new LinkBuiltIn(),
                 new LoadBuiltIn(),
                 new NameBuiltIn(),
+                //new RegisterBuiltIn(),
                 new SaveBuiltIn(),
                 new SetBuiltIn(),
                 new ProgramBuiltIn(),
@@ -37,34 +37,38 @@ namespace moo.console
 
             Console.Out.WriteLine("Loading script directory");
             var scriptsToLoadInOrder = new string[] {
-                "scripts/cmd-@register.muf",
-                "scripts/std-defs.muf",
-                "scripts/lib-strings.muf",
-                "scripts/lib-stackrng.muf",
-                "scripts/lib-props.muf",
-                "scripts/lib-lmgr.muf",
-                "scripts/lib-edit.muf",
-                "scripts/lib-gui.muf",
-                "scripts/lib-editor.muf",
-                "scripts/lib-match.muf",
-                "scripts/lib-mesg.muf",
-                "scripts/lib-mesgbox.muf",
-                "scripts/lib-look.muf",
-                "scripts/lib-reflist.muf",
-                "scripts/lib-index.muf",
-                "scripts/lib-case.muf",
-                "scripts/lib-mpi.muf",
-                "scripts/lib-arrays.muf",
-                "scripts/lib-bolding.muf",
-                "scripts/lib-debug.muf",
-                "scripts/lib-mail-MOSS1.1.muf",
-                "scripts/lib-optionsinfo.muf",
-                "scripts/lib-optionsmisc.muf",
-                "scripts/lib-optionsmenu.muf",
-                "scripts/lib-optionsgui.muf",
-                "scripts/cmd-@archive.muf",
+                $"scripts{System.IO.Path.DirectorySeparatorChar}cmd-@register.muf",
+                $"scripts{System.IO.Path.DirectorySeparatorChar}std-defs.muf",
+                $"scripts{System.IO.Path.DirectorySeparatorChar}lib-strings.muf",
+                $"scripts{System.IO.Path.DirectorySeparatorChar}lib-stackrng.muf",
+                $"scripts{System.IO.Path.DirectorySeparatorChar}lib-props.muf",
+                $"scripts{System.IO.Path.DirectorySeparatorChar}lib-lmgr.muf",
+                $"scripts{System.IO.Path.DirectorySeparatorChar}lib-edit.muf",
+                $"scripts{System.IO.Path.DirectorySeparatorChar}lib-gui.muf",
+                $"scripts{System.IO.Path.DirectorySeparatorChar}lib-editor.muf",
+                $"scripts{System.IO.Path.DirectorySeparatorChar}lib-match.muf",
+                $"scripts{System.IO.Path.DirectorySeparatorChar}lib-mesg.muf",
+                $"scripts{System.IO.Path.DirectorySeparatorChar}lib-mesgbox.muf",
+                $"scripts{System.IO.Path.DirectorySeparatorChar}lib-look.muf",
+                $"scripts{System.IO.Path.DirectorySeparatorChar}lib-reflist.muf",
+                $"scripts{System.IO.Path.DirectorySeparatorChar}lib-index.muf",
+                $"scripts{System.IO.Path.DirectorySeparatorChar}lib-case.muf",
+                $"scripts{System.IO.Path.DirectorySeparatorChar}lib-mpi.muf",
+                $"scripts{System.IO.Path.DirectorySeparatorChar}lib-arrays.muf",
+                $"scripts{System.IO.Path.DirectorySeparatorChar}lib-bolding.muf",
+                $"scripts{System.IO.Path.DirectorySeparatorChar}lib-debug.muf",
+                $"scripts{System.IO.Path.DirectorySeparatorChar}lib-mail-MOSS1.1.muf",
+                $"scripts{System.IO.Path.DirectorySeparatorChar}lib-optionsinfo.muf",
+                $"scripts{System.IO.Path.DirectorySeparatorChar}lib-optionsmisc.muf",
+                $"scripts{System.IO.Path.DirectorySeparatorChar}lib-optionsmenu.muf",
+                $"scripts{System.IO.Path.DirectorySeparatorChar}lib-optionsgui.muf",
+                $"scripts{System.IO.Path.DirectorySeparatorChar}cmd-@archive.muf",
             };
-            var scriptsToLoad = scriptsToLoadInOrder.Union(System.IO.Directory.GetFiles("scripts", "*.muf").OrderBy(f => f).Except(scriptsToLoadInOrder));
+            var scriptsToLoad = scriptsToLoadInOrder
+                .Union(System.IO.Directory.GetFiles("scripts", "*.muf")
+                .OrderBy(f => f)
+                .Except(scriptsToLoadInOrder))
+                .Distinct();
 
             foreach (var scriptPath in scriptsToLoad)
             {
@@ -81,8 +85,8 @@ namespace moo.console
 
             while (!cts.IsCancellationRequested)
             {
-                /*/
-                var input = System.Console.ReadLine();
+
+                /*var input = System.Console.ReadLine();
                 if (string.Compare("QUIT", input) == 0)
                 {
                     cts.Cancel();
@@ -121,30 +125,30 @@ namespace moo.console
             return player;
         }
 
-        /* private static void LoadScriptDirectory(string scriptDirectoryPath, string scriptSearchPattern, string scriptFilePrefix = null)
-         {
-             foreach (var file in System.IO.Directory.GetFiles(scriptDirectoryPath, scriptSearchPattern))
-             {
-                 var commandName = file.Substring(scriptDirectoryPath.Length + 1);
-                 if (scriptFilePrefix != null)
-                     commandName = commandName.Replace(scriptFilePrefix, "");
-                 commandName = commandName.Replace(".muf", "");
-                 var script = Server.RegisterScript(commandName, LoadScriptFile(file));
-                 Console.Out.WriteLine($"Created new script {script.UnparseObject()}");
-             }
-         }
-         */
+        private static void LoadScriptDirectory(string scriptDirectoryPath, string scriptSearchPattern, string scriptFilePrefix = null)
+        {
+            foreach (var file in System.IO.Directory.GetFiles(scriptDirectoryPath, scriptSearchPattern))
+            {
+                var commandName = file.Substring(scriptDirectoryPath.Length + 1);
+                if (scriptFilePrefix != null)
+                    commandName = commandName.Replace(scriptFilePrefix, "");
+                commandName = commandName.Replace(".muf", "");
+                var script = Server.RegisterScript(commandName, LoadScriptFile(file));
+                Console.Out.WriteLine($"Created new script {script.UnparseObject()}");
+            }
+        }
+
 
         private static string LoadScriptFile(string path) => System.IO.File.ReadAllText(path);
 
-        /*private static void ReadInScriptDirectory(PlayerConnection connection, string scriptDirectoryPath, string scriptSearchPattern, string scriptFilePrefix = null)
+        private static async Task ReadInScriptDirectory(PlayerConnection connection, string scriptDirectoryPath, string scriptSearchPattern, string scriptFilePrefix = null)
         {
             foreach (var file in System.IO.Directory.GetFiles(scriptDirectoryPath, scriptSearchPattern).OrderBy(f => f))
             {
-                ReadInScriptFile(file, connection);
-                connection.sendOutput($"Read in script file {file}");
+                await ReadInScriptFile(file, connection);
+                await connection.sendOutput($"Read in script file {file}");
             }
-        }*/
+        }
 
         private static async Task ReadInScriptFile(string path, PlayerConnection connection)
         {

@@ -1,10 +1,6 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-using static Dbref;
 using static ForthDatum;
-using static ForthPrimativeResult;
 
 public static class PartPMatch
 {
@@ -26,10 +22,10 @@ public static class PartPMatch
         if (s.Type != DatumType.String)
             return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "PART_PMATCH requires the top parameter on the stack to be a string");
 
-        var prefix = (string)s.Value;
+        var prefix = s.Value == null ? (string?)s.Value : (string?)s.Value;
 
         var matches = Server.GetInstance().GetConnectionPlayers()
-            .Where(x => x.Item2.StartsWith(prefix, StringComparison.InvariantCultureIgnoreCase))
+            .Where(x => prefix == null || x.Item2.StartsWith(prefix, StringComparison.InvariantCultureIgnoreCase))
             .Distinct()
             .ToArray();
 

@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using static Dbref;
 
 public class Server
 {
@@ -191,7 +190,7 @@ public class Server
         storageProvider.Initialize();
         ThingRepository.setStorageProvider(storageProvider);
 
-        var aether = ThingRepository.GetFromCacheOnly<Room>(Dbref.AETHER);
+        var aether = ThingRepository.GetFromCacheOnly<Room>(Dbref.AETHER)!;
         var now = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
         aether.SetPropertyPathValue("_sys/startuptime", new ForthVariable(now));

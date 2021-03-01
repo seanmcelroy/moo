@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using System.Threading;
 
@@ -27,7 +25,7 @@ public abstract class Player : Container
         if (s.StartsWith("$"))
         {
             var prop = await GetPropertyPathValueAsync($"_reg/{s.Substring(1)}", cancellationToken);
-            if (prop.Equals(default(Property)))
+            if (prop.value == null || prop.Equals(default(Property)))
                 return Dbref.NOT_FOUND;
             if (prop.Type != Property.PropertyType.DbRef)
                 return Dbref.AMBIGUOUS;
@@ -36,12 +34,13 @@ public abstract class Player : Container
 
         if (Dbref.TryParse(s, out Dbref dbref))
             return dbref;
-        
+
         var inventoryMatches = await this.MatchAsync(s, cancellationToken);
         Dbref locationMatches = Dbref.NOT_FOUND;
 
         var locationLookup = await ThingRepository.GetAsync<Container>(this.location, cancellationToken);
-        if (locationLookup.isSuccess) {
+        if (locationLookup.isSuccess && locationLookup.value != null)
+        {
             var loc = locationLookup.value;
             locationMatches = await loc.MatchAsync(s, cancellationToken);
         }

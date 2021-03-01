@@ -6,17 +6,17 @@ using static ThingRepository;
 
 public class ProgramBuiltIn : IRunnable
 {
-    public Tuple<bool, string> CanProcess(PlayerConnection player, CommandResult command)
+    public Tuple<bool, string?> CanProcess(PlayerConnection player, CommandResult command)
     {
         string verb = command.getVerb().ToLowerInvariant();
 
         foreach (var key in new[] { "@prog", "@program" })
         {
             if (string.Compare(key, verb, true) == 0)
-                return new Tuple<bool, string>(true, verb);
+                return new Tuple<bool, string?>(true, verb);
         }
 
-        return new Tuple<bool, string>(false, null);
+        return new Tuple<bool, string?>(false, null);
     }
 
     public Task<VerbResult> Process(PlayerConnection connection, CommandResult command, CancellationToken cancellationToken)

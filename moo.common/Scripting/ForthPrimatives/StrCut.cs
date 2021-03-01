@@ -1,9 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using static ForthDatum;
-using static ForthPrimativeResult;
 
 public static class StrCut
 {
@@ -29,7 +24,7 @@ public static class StrCut
             return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "STRCUT requires the second-to-top parameter on the stack to be a string");
 
         var index = ni.UnwrapInt();
-        var source = (string)sSource.Value;
+        var source = (string?)sSource.Value ?? string.Empty;
 
         if (index == 0)
         {

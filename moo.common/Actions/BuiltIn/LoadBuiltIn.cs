@@ -1,17 +1,15 @@
 using System;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using static ThingRepository;
 
 public class LoadBuiltIn : IRunnable
 {
-    public Tuple<bool, string> CanProcess(PlayerConnection connection, CommandResult command)
+    public Tuple<bool, string?> CanProcess(PlayerConnection connection, CommandResult command)
     {
         var verb = command.getVerb().ToLowerInvariant();
-        if (verb == "@load" && command.hasDirectObject())
-            return new Tuple<bool, string>(true, verb);
-        return new Tuple<bool, string>(false, null);
+        if (string.Compare(verb, "@load", StringComparison.OrdinalIgnoreCase) == 0 && command.hasDirectObject())
+            return new Tuple<bool, string?>(true, verb);
+        return new Tuple<bool, string?>(false, null);
     }
 
     public async Task<VerbResult> Process(PlayerConnection connection, CommandResult command, CancellationToken cancellationToken)
@@ -30,7 +28,7 @@ public class LoadBuiltIn : IRunnable
         }
 
         var lookup = await ThingRepository.GetAsync<Thing>(targetId, cancellationToken);
-        if (lookup.isSuccess)
+        if (lookup.isSuccess && lookup.value != null)
         {
             var target = lookup.value;
             var loadResult = await ThingRepository.LoadFromDatabaseAsync<Thing>(targetId, cancellationToken);
