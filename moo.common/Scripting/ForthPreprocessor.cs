@@ -26,6 +26,7 @@ namespace moo.common.Scripting
         private static readonly Regex defineCompleteRegex = new(@"^\s*\$define\s+(?<defName>[^\s]{1,50})(?:\s*\$enddef$|\s+(?<defValue>(?:.|\r|\n)+)\s*\$enddef$)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static readonly Regex echoRegex = new(@"^(?:\$echo\s+\""(?<value>[^\""]*)\"")", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static readonly Regex ifdefRegex = new(@"^\s*\$if(?<negate>n)?def\s+(?<defName>[^\s\=\<]{1,50})(?:\s*$|\s*(=|<)\s*(?<defValue>[^\r\n]{1,50})$)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex iflibRegex = new(@"^\s*\$if(?<negate>n)?lib\s+(?:\$(?<libname>[^\s]+)|(?<dbref>\#\d+))(?:\s*$)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static readonly Regex elseRegex = new(@"^(\s*\$else\s*)+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static readonly Regex endifRegex = new(@"^(\s*\$endif\s*)+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static readonly Regex includeRegex = new(@"^\s*(?:\$include\s+(?:\$(?<libname>.+)|(?<dbref>\#\d+))?)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -281,9 +282,47 @@ namespace moo.common.Scripting
 
                                 var isTrue = ifdefMatch.Groups["defValue"].Success
                                 ? (defines.ContainsKey(ifdefMatch.Groups["defName"].Value.ToUpperInvariant()) && defines[ifdefMatch.Groups["defName"].Value.ToUpperInvariant()].Equals(ifdefMatch.Groups["defValue"].Value))
-                                : (defines.ContainsKey(ifdefMatch.Groups["defName"].Value.ToUpperInvariant()));
+                                : defines.ContainsKey(ifdefMatch.Groups["defName"].Value.ToUpperInvariant());
 
                                 var negate = ifdefMatch.Groups["negate"].Success;
+
+                                if (isTrue ^ negate)
+                                    controlFlow.Push(new ControlFlowMarker(ControlFlowElement.InIfAndContinue, x));
+                                else
+                                    controlFlow.Push(new ControlFlowMarker(ControlFlowElement.InIfAndSkip, x));
+                                tokenHandled = true;
+                                continue;
+                            }
+                        }
+
+                        // $iflib / $ifnlib
+                        {
+                            var iflibMatch = iflibRegex.Match(token);
+                            if (iflibMatch.Success)
+                            {
+                                // I could be an 'if' inside a skipped branch.
+                                if (controlFlow.Count > 0)
+                                {
+                                    var controlCurrent = controlFlow.Peek();
+                                    if (controlCurrent.Element == ControlFlowElement.InIfAndSkip
+                                     || controlCurrent.Element == ControlFlowElement.InElseAndSkip
+                                     || controlCurrent.Element == ControlFlowElement.SkippedBranch
+                                     || controlCurrent.Element == ControlFlowElement.SkipToAfterNextUntilOrRepeat)
+                                    {
+                                        if (verbosity >= 2 && verbosity <= 3 && connection != null)
+                                            await connection.sendOutput($"SKIPPED LINE: {line}");
+                                        controlFlow.Push(new ControlFlowMarker(ControlFlowElement.SkippedBranch, x));
+                                        tokenHandled = true;
+                                        continue;
+                                    }
+                                }
+
+                                var libname = iflibMatch.Groups["libname"].Success ? iflibMatch.Groups["libname"].Value : null;
+                                var libdbref = iflibMatch.Groups["dbref"].Success ? iflibMatch.Groups["dbref"].Value : null;
+                                var isTrue = (libname != null && (await ThingRepository.Instance.FindLibrary(libname, cancellationToken)) != Dbref.NOT_FOUND)
+                                 || (libdbref != null && (await ThingRepository.Instance.Exists(Dbref.Parse(libdbref), cancellationToken)));
+
+                                var negate = iflibMatch.Groups["negate"].Success;
 
                                 if (isTrue ^ negate)
                                     controlFlow.Push(new ControlFlowMarker(ControlFlowElement.InIfAndContinue, x));
@@ -401,17 +440,8 @@ namespace moo.common.Scripting
                                 if (includeMatch.Groups["libname"].Success)
                                 {
                                     // Find library
-                                    var aetherLookup = await ThingRepository.Instance.GetAsync<Room>(Dbref.AETHER, cancellationToken);
-                                    if (!aetherLookup.isSuccess || aetherLookup.value == null)
-                                        return new ForthPreprocessingResult($"Unable to load {Dbref.AETHER}: {aetherLookup.reason}");
-
                                     var libname = includeMatch.Groups["libname"].Value;
-
-                                    var prop = await aetherLookup.value.GetPropertyPathValueAsync($"_reg/{libname}", cancellationToken);
-                                    if (prop.Equals(default(Property)))
-                                        return new ForthPreprocessingResult($"Unable to load library {libname}");
-
-                                    targetDbref = (Dbref?)prop.Value ?? Dbref.NOT_FOUND;
+                                    targetDbref = await ThingRepository.Instance.FindLibrary(libname, cancellationToken);
                                 }
                                 else
                                 {

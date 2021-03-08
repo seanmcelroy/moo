@@ -52,6 +52,19 @@ namespace moo.common
             return newObj;
         }
 
+        public async Task<Dbref> FindLibrary(string libName, CancellationToken cancellationToken)
+        {
+            var aetherLookup = await GetAsync<Room>(Dbref.AETHER, cancellationToken);
+            if (!aetherLookup.isSuccess || aetherLookup.value == null)
+                return NOT_FOUND;
+
+            var prop = await aetherLookup.value.GetPropertyPathValueAsync($"_reg/{libName}", cancellationToken);
+            if (prop.Equals(default(Property)))
+                return NOT_FOUND;
+
+            return (Dbref?)prop.Value ?? NOT_FOUND;
+        }
+
         public T? GetFromCacheOnly<T>(Dbref id) where T : Thing, new()
         {
             // Is it in cache?
@@ -67,6 +80,12 @@ namespace moo.common
             }
 
             return null;
+        }
+
+        public async Task<bool> Exists(Dbref id, CancellationToken cancellationToken)
+        {
+            var thing = await GetAsync(id, cancellationToken);
+            return thing.isSuccess && thing.value != null && thing.value.id != NOT_FOUND;
         }
 
         public async Task<RepositoryGetResult<Thing>> GetAsync(Dbref id, CancellationToken cancellationToken)

@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
@@ -8,6 +9,7 @@ namespace moo.common.Models
 {
     //[JsonConverter(typeof(PropertySerializer))]
     [JsonObject(MemberSerialization.OptIn)]
+    [DebuggerDisplay("{Name}={(value == null ? 'directory' : value)} ({Type})")]
     public struct Property
     {
         public enum PropertyType

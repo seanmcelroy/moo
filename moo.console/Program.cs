@@ -31,7 +31,7 @@ namespace moo.console
                 new LinkBuiltIn(),
                 new LoadBuiltIn(),
                 new NameBuiltIn(),
-                //new RegisterBuiltIn(),
+                new RecycleBuiltIn(),
                 new SaveBuiltIn(),
                 new SetBuiltIn(),
                 new ProgramBuiltIn(),
@@ -143,7 +143,7 @@ namespace moo.console
                 if (scriptFilePrefix != null)
                     commandName = commandName.Replace(scriptFilePrefix, "");
                 commandName = commandName.Replace(".muf", "");
-                var script = Server.RegisterScript(commandName, LoadScriptFile(file));
+                var script = Server.RegisterScript(commandName, Dbref.GOD, LoadScriptFile(file));
                 Console.Out.WriteLine($"Created new script {script.UnparseObject()}");
             }
         }

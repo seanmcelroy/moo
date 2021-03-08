@@ -71,11 +71,12 @@ namespace moo.common
             globalActions.Add(action);
         }
 
-        public static Script RegisterScript(string name, Dbref owner)
+        public static Script RegisterScript(string name, Dbref owner, string? programText = null)
         {
             var scriptObject = ThingRepository.Instance.Make<Script>();
             scriptObject.name = name ?? throw new System.ArgumentNullException(nameof(name));
             scriptObject.owner = owner;
+            scriptObject.programText = programText;
             var insertedScriptObject = ThingRepository.Instance.Insert(scriptObject);
             globalActions.Add(insertedScriptObject);
             return insertedScriptObject;

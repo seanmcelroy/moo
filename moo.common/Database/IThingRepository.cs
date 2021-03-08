@@ -12,7 +12,11 @@ namespace moo.common.Database
 
         T Make<T>() where T : Thing, new();
 
+        Task<Dbref> FindLibrary(string libName, CancellationToken cancellationToken);
+
         T? GetFromCacheOnly<T>(Dbref id) where T : Thing, new();
+
+        Task<bool> Exists(Dbref id, CancellationToken cancellationToken);
 
         Task<RepositoryGetResult<Thing>> GetAsync(Dbref id, CancellationToken cancellationToken);
 

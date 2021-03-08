@@ -70,7 +70,8 @@ namespace moo.common.Models
 
         public Dbref Location
         {
-            get => location; set
+            get => location;
+            set
             {
                 location = value;
                 Dirty = true;
@@ -238,20 +239,20 @@ namespace moo.common.Models
 
             if (serialized.StartsWith("<null/>"))
             {
-                var substring = serialized.Substring("<null/>".Length);
+                var substring = serialized[7..]; // "<null/>".Length = 7
                 yield return Tuple.Create<object?, string>(null, substring);
             }
             else if (serialized.StartsWith("<string/>"))
             {
-                var substring = serialized.Substring("<string/>".Length);
+                var substring = serialized[8..]; // "<string/>".Length = 8
                 yield return Tuple.Create<object?, string>((string?)null, substring);
             }
             else if (serialized.StartsWith("<string>"))
             {
-                var r = new Regex(@"<string>(?<value>(?:.*?))<\/string>(?:.*?)");
+                var r = new Regex(@"<string>(?<value>(?:.*?))<\/string>(?:.*?)", RegexOptions.Compiled);
                 var m = r.Match(serialized);
 
-                var substring = serialized.Substring(m.Length);
+                var substring = serialized[m.Length..];
                 yield return Tuple.Create<object?, string>(m.Groups["value"].Value, substring);
             }
             else if (serialized.StartsWith("<lock/>"))
@@ -261,7 +262,7 @@ namespace moo.common.Models
             }
             else if (serialized.StartsWith("<lock>"))
             {
-                var r = new Regex(@"<lock>(?<value>(?:.*?))<\/lock>(?:.*?)");
+                var r = new Regex(@"<lock>(?<value>(?:.*?))<\/lock>(?:.*?)", RegexOptions.Compiled);
                 var m = r.Match(serialized);
 
                 var substring = serialized[m.Length..];
@@ -269,71 +270,71 @@ namespace moo.common.Models
             }
             else if (serialized.StartsWith("<dbref/>"))
             {
-                var substring = serialized.Substring("<dbref/>".Length);
+                var substring = serialized[8..]; // "<dbref/>".Length = 8
                 yield return Tuple.Create<object?, string>(Dbref.NOT_FOUND, substring);
             }
             else if (serialized.StartsWith("<dbref>"))
             {
-                var r = new Regex(@"<dbref>(?<value>(?:.*?))<\/dbref>(?:.*?)");
+                var r = new Regex(@"<dbref>(?<value>(?:.*?))<\/dbref>(?:.*?)", RegexOptions.Compiled);
                 var m = r.Match(serialized);
 
-                var substring = serialized.Substring(m.Length);
+                var substring = serialized[m.Length..];
                 yield return Tuple.Create<object?, string>(new Dbref(m.Groups["value"].Value), substring);
             }
             else if (serialized.StartsWith("<float/>"))
             {
-                var substring = serialized.Substring("<float/>".Length);
+                var substring = serialized[8..]; // "<float/>".Length = 8
                 yield return Tuple.Create<object?, string>((float?)null, substring);
             }
             else if (serialized.StartsWith("<float>"))
             {
-                var r = new Regex(@"<float>(?<value>(?:.*?))<\/float>(?:.*?)");
+                var r = new Regex(@"<float>(?<value>(?:.*?))<\/float>(?:.*?)", RegexOptions.Compiled);
                 var m = r.Match(serialized);
 
-                var substring = serialized.Substring(m.Length);
+                var substring = serialized[m.Length..];
                 yield return Tuple.Create<object?, string>(float.Parse(m.Groups["value"].Value), substring);
             }
             else if (serialized.StartsWith("<integer/>"))
             {
-                var substring = serialized.Substring("<integer/>".Length);
+                var substring = serialized[10..]; // "<integer/>".Length = 10
                 yield return Tuple.Create<object?, string>((int?)null, substring);
             }
             else if (serialized.StartsWith("<integer>"))
             {
-                var r = new Regex(@"<integer>(?<value>(?:.*?))<\/integer>(?:.*?)");
+                var r = new Regex(@"<integer>(?<value>(?:.*?))<\/integer>(?:.*?)", RegexOptions.Compiled);
                 var m = r.Match(serialized);
 
-                var substring = serialized.Substring(m.Length);
+                var substring = serialized[m.Length..];
                 yield return Tuple.Create<object?, string>(int.Parse(m.Groups["value"].Value), substring);
             }
             else if (serialized.StartsWith("<uint16>"))
             {
-                var r = new Regex(@"<uint16>(?<value>(?:.*?))<\/uint16>(?:.*?)");
+                var r = new Regex(@"<uint16>(?<value>(?:.*?))<\/uint16>(?:.*?)", RegexOptions.Compiled);
                 var m = r.Match(serialized);
 
-                var substring = serialized.Substring(m.Length);
+                var substring = serialized[m.Length..];
                 yield return Tuple.Create<object?, string>(UInt16.Parse(m.Groups["value"].Value), substring);
             }
             else if (serialized.StartsWith("<array>"))
             {
                 var array = new List<object>();
-                var substring = serialized.Substring("<array>".Length);
+                var substring = serialized[7..]; // "<array>".Length = 7
 
                 while (!substring.StartsWith("</array>"))
                 {
                     var valueResult = DeserializePart(substring).Single();
                     substring = valueResult.Item2;
-
-                    array.Add(valueResult.Item1);
+                    if (valueResult.Item1 != null)
+                        array.Add(valueResult.Item1);
                 }
-                substring = substring.Substring("</array>".Length);
+                substring = substring[8..]; // "</array>".Length = 8
 
                 yield return Tuple.Create<object?, string>(array, substring);
             }
             else if (serialized.StartsWith("<propdir>"))
             {
                 var propdir = new PropertyDirectory();
-                var substring = serialized.Substring("<propdir>".Length);
+                var substring = serialized[9..]; // "<propdir>".Length = 9
 
                 while (!substring.StartsWith("</propdir>"))
                 {
@@ -344,14 +345,13 @@ namespace moo.common.Models
 
                     propdir.Add((string)keyResult.Item1, (Property)((Tuple<object, string>)valueResult.Item1).Item1);
                 }
-                substring = substring.Substring("</propdir>".Length);
+                substring = substring[10..]; // "</propdir>".Length = 10
 
                 yield return Tuple.Create<object?, string>(propdir, substring);
             }
             else if (serialized.StartsWith("<prop>"))
             {
-                //var r = new Regex(@"<prop><name>(?<name>[^<]*)<\/name>(?<value>(?:.*?))<\/prop>(?:.*?)");
-                var r = new Regex(@"<prop><name>(?<name>[^<]*)<\/name>(?<value>(?:<(?<open>\w+)>.*?)<\/\k<open>>)<\/prop>(?:.*?)");
+                var r = new Regex(@"<prop><name>(?<name>[^<]*)<\/name>(?<value>(?:<(?<open>\w+)>.*?)<\/\k<open>>)<\/prop>(?:.*?)", RegexOptions.Compiled);
                 var m = r.Match(serialized);
 
                 var propertyName = m.Groups["name"].Value;
@@ -376,7 +376,7 @@ namespace moo.common.Models
             else if (serialized.StartsWith("<dict>"))
             {
                 var dict = new Dictionary<string, object>();
-                var substring = serialized.Substring("<dict>".Length);
+                var substring = serialized[6..]; // "<dict>".Length = 6
 
                 while (!substring.StartsWith("</dict>"))
                 {
@@ -387,13 +387,13 @@ namespace moo.common.Models
 
                     dict.Add((string)keyResult.Item1, valueResult.Item1);
                 }
-                substring = substring.Substring("</dict>".Length);
+                substring = substring[7..]; // "</dict>".Length = 7
 
                 yield return Tuple.Create<object?, string>(dict, substring);
             }
             else if (serialized.StartsWith("<key>"))
             {
-                var r = new Regex(@"<key>(?<value>(?:.*?))<\/key>(?:.*?)");
+                var r = new Regex(@"<key>(?<value>(?:.*?))<\/key>(?:.*?)", RegexOptions.Compiled);
                 var m = r.Match(serialized);
 
                 var substring = serialized[m.Length..];
@@ -401,13 +401,13 @@ namespace moo.common.Models
             }
             else if (serialized.StartsWith("<value>"))
             {
-                var r = new Regex(@"<value>(?<value>(?:.*?))<\/value>(?:.*?)");
+                var r = new Regex(@"<value>(?<value>(?:.*?))<\/value>(?:.*?)", RegexOptions.Compiled);
                 var m = r.Match(serialized);
 
                 if (m.Groups["value"].Value.StartsWith("<dict>"))
                 {
                     // Handle dictionaries of dictionaries
-                    var substring = serialized.Substring("<value>".Length);
+                    var substring = serialized[7..]; // "<value>".Length = 7
                     var innerDictionary = DeserializePart(substring).Single();
                     yield return Tuple.Create<object?, string>(innerDictionary, substring[(substring.IndexOf("</dict></value>") + "</dict></value>".Length)..]);
                 }
@@ -545,9 +545,7 @@ namespace moo.common.Models
 
         public string Serialize() => Serialize(GetSerializedElements());
 
-        protected virtual Dictionary<string, object?> GetSerializedElements()
-        {
-            return new Dictionary<string, object?> {
+        protected virtual Dictionary<string, object?> GetSerializedElements() => new Dictionary<string, object?> {
             { "id", id},
             { "name", name},
             { "location", Location },
@@ -556,10 +554,10 @@ namespace moo.common.Models
             { "templates", templates },
             { "flags", flags },
             { "externalDescription", externalDescription },
+            { "owner", Owner },
             { "pennies", pennies },
             { "properties", properties }
         };
-        }
 
         public static string Serialize(PropertyDirectory value) => PropertyDirectory.Serialize(value);
 

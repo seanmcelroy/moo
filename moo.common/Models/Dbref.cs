@@ -54,12 +54,13 @@ namespace moo.common.Models
             type = designator switch
             {
                 'E' => DbrefObjectType.Exit,
+                'G' => DbrefObjectType.Garbage,
                 'P' => DbrefObjectType.Player,
                 'F' => DbrefObjectType.Program,
                 'R' => DbrefObjectType.Room,
                 'T' => DbrefObjectType.Thing,
                 '0' or '1' or '2' or '3' or '4' or '5' or '6' or '7' or '8' or '9' => DbrefObjectType.Unknown,
-                _ => throw new System.ArgumentException($"Unknown designator for #{id}{designator}"),
+                _ => throw new System.ArgumentException($"Unknown designator for {id}{designator}"),
             };
             if (type == DbrefObjectType.Unknown)
             {
@@ -75,7 +76,7 @@ namespace moo.common.Models
         public static explicit operator int(Dbref dbref) => dbref.id;
 
         // Required for deserialization from JSON
-        public static implicit operator Dbref(string refId) => new(refId);
+        public static explicit operator Dbref(string refId) => new(refId);
 
         public static bool operator ==(Dbref item1, Dbref item2) => item1.id == item2.id;
 
@@ -150,6 +151,8 @@ namespace moo.common.Models
                 || (await where.IsLinkable(cancellationToken) && true); // TODO: test_lock(NOTHING, who, where, MESGPROP_LINKLOCK));
         }
 
+        public static Dbref Parse(string? s) => !TryParse(s, out Dbref result) ? NOT_FOUND : result;
+
         public static bool TryParse([NotNullWhen(true)] string? s, out Dbref result)
         {
             if (s == null)
@@ -164,6 +167,7 @@ namespace moo.common.Models
                 var type = (s[^1]) switch
                 {
                     'E' => DbrefObjectType.Exit,
+                    'G' => DbrefObjectType.Garbage,
                     'P' => DbrefObjectType.Player,
                     'F' => DbrefObjectType.Program,
                     'R' => DbrefObjectType.Room,
@@ -245,6 +249,10 @@ namespace moo.common.Models
 
         public int ToInt32() => this.id;
 
-        public override string ToString() => id < 0 ? $"#{id}" : $"#{id}{(char)type}";
+        public override string ToString()
+        {
+            var ct = (char)type;
+            return id < 0 || type == DbrefObjectType.Unknown || ct == '\0' ? $"#{id}" : $"#{id}{(char)type}";
+        }
     }
 }
