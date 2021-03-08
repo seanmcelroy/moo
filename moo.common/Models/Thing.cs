@@ -253,7 +253,7 @@ namespace moo.common.Models
                 var m = r.Match(serialized);
 
                 var substring = serialized[m.Length..];
-                yield return Tuple.Create<object?, string>(m.Groups["value"].Value, substring);
+                yield return Tuple.Create<object?, string>(m.Groups["value"].Value, System.Web.HttpUtility.HtmlDecode(substring));
             }
             else if (serialized.StartsWith("<lock/>"))
             {
@@ -342,7 +342,6 @@ namespace moo.common.Models
                     substring = keyResult.Item2;
                     var valueResult = DeserializePart(substring).Single();
                     substring = valueResult.Item2;
-
                     propdir.Add((string)keyResult.Item1, (Property)((Tuple<object, string>)valueResult.Item1).Item1);
                 }
                 substring = substring[10..]; // "</propdir>".Length = 10
@@ -399,38 +398,44 @@ namespace moo.common.Models
                 var substring = serialized[m.Length..];
                 yield return Tuple.Create<object?, string>(m.Groups["value"].Value, substring);
             }
+            else if (serialized.StartsWith("<value><dict>"))
+            {
+                var r = new Regex(@"<value>(?=<dict>)(?<value>(?:.*?))(?<=<\/dict>)<\/value>(?:.*?)", RegexOptions.Compiled);
+                var m = r.Match(serialized);
+
+                // Handle dictionaries of dictionaries
+                var substring = serialized[7..]; // "<value>".Length = 7
+                var innerDictionary = DeserializePart(substring).Single();
+                yield return Tuple.Create<object?, string>(innerDictionary, substring[(substring.LastIndexOf("</dict></value>") + "</dict></value>".Length)..]);
+            }
+            else if (serialized.StartsWith("<value><propdir>"))
+            {
+                var r = new Regex(@"<value>(?=<propdir>)(?<value>(?:.*?))(?<=<\/propdir>)<\/value>(?:.*?)", RegexOptions.Compiled);
+                var m = r.Match(serialized);
+
+                // Handle property directories
+                var substring = serialized[7..]; // "<value>".Length = 7
+                var propertyDirectory = DeserializePart(substring).Single();
+                yield return Tuple.Create<object?, string>(propertyDirectory, substring[(substring.IndexOf("</propdir></value>") + "</propdir></value>".Length)..]);
+            }
+            else if (serialized.StartsWith("<value><prop>"))
+            {
+                var r = new Regex(@"<value>(?=<prop>)(?<value>(?:.*?))(?<=<\/prop>)<\/value>(?:.*?)", RegexOptions.Compiled);
+                var m = r.Match(serialized);
+
+                // Handle property directories
+                var substring = serialized[7..]; // "<value>".Length = 7
+                var property = DeserializePart(substring).Single();
+                yield return Tuple.Create<object?, string>(property, substring.Substring(substring.LastIndexOf("</prop></value>") + "</prop></value>".Length));
+            }
             else if (serialized.StartsWith("<value>"))
             {
                 var r = new Regex(@"<value>(?<value>(?:.*?))<\/value>(?:.*?)", RegexOptions.Compiled);
                 var m = r.Match(serialized);
 
-                if (m.Groups["value"].Value.StartsWith("<dict>"))
-                {
-                    // Handle dictionaries of dictionaries
-                    var substring = serialized[7..]; // "<value>".Length = 7
-                    var innerDictionary = DeserializePart(substring).Single();
-                    yield return Tuple.Create<object?, string>(innerDictionary, substring[(substring.IndexOf("</dict></value>") + "</dict></value>".Length)..]);
-                }
-                else if (m.Groups["value"].Value.StartsWith("<propdir>"))
-                {
-                    // Handle property directories
-                    var substring = serialized.Substring("<value>".Length);
-                    var propertyDirectory = DeserializePart(substring).Single();
-                    yield return Tuple.Create<object?, string>(propertyDirectory, substring[(substring.IndexOf("</propdir></value>") + "</propdir></value>".Length)..]);
-                }
-                else if (m.Groups["value"].Value.StartsWith("<prop>"))
-                {
-                    // Handle property directories
-                    var substring = serialized.Substring(7); // "<value>".Length
-                    var property = DeserializePart(substring).Single();
-                    yield return Tuple.Create<object?, string>(property, substring.Substring(substring.IndexOf("</prop></value>") + "</prop></value>".Length));
-                }
-                else
-                {
-                    var valueResult = DeserializePart(m.Groups["value"].Value).Single();
-                    var substring = serialized[m.Length..];
-                    yield return Tuple.Create<object?, string>(valueResult, substring);
-                }
+                var valueResult = DeserializePart(m.Groups["value"].Value).Single();
+                var substring = serialized[m.Length..];
+                yield return Tuple.Create<object?, string>(valueResult, substring);
             }
             else
             {
@@ -545,9 +550,10 @@ namespace moo.common.Models
 
         public string Serialize() => Serialize(GetSerializedElements());
 
-        protected virtual Dictionary<string, object?> GetSerializedElements() => new Dictionary<string, object?> {
-            { "id", id},
-            { "name", name},
+        protected virtual Dictionary<string, object?> GetSerializedElements() => new()
+        {
+            { "id", id },
+            { "name", name },
             { "location", Location },
             { "contents", contents },
             { "link", linkTargets.Keys.ToArray() },
@@ -568,7 +574,7 @@ namespace moo.common.Models
 
             var sb = new StringBuilder();
             sb.Append("<dict>");
-            foreach (var kvp in value)
+            foreach (var kvp in value.OrderBy(v => string.Compare(v.Key, "properties") == 0 ? 1 : 2).ThenBy(v => v.Key))
             {
                 try
                 {
@@ -645,8 +651,7 @@ namespace moo.common.Models
         {
             if (value == null)
                 return $"<string/>";
-
-            return $"<string>{value}</string>";
+            return $"<string>{System.Web.HttpUtility.HtmlEncode(value)}</string>";
         }
 
         public static string Serialize(float? value)

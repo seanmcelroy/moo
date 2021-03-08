@@ -155,8 +155,8 @@ namespace moo.common.Connections
                 return;
             }
 
-            if (Unattended)
-                await sendOutput($"AUTO> {command.raw}");
+            //if (Unattended)
+            //    await sendOutput($"AUTO> {command.raw}");
 
             // Global actions
             VerbResult actionResult;

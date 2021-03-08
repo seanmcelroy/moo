@@ -15,7 +15,7 @@ namespace Tests
             testObj.name = "test name";
             testObj.owner = new Dbref(456, Dbref.DbrefObjectType.Player);
             testObj.pennies = 789;
-            testObj.SetPropertyPathValue("test/deep/string", Property.PropertyType.String, "string");
+            testObj.SetPropertyPathValue("test/deep/string", Property.PropertyType.String, "STRING TEST < WOO >");
             testObj.SetPropertyPathValue("test/deep/int", 321);
             testObj.SetPropertyPathValue("test/deep/dbref", new Dbref(2468, Dbref.DbrefObjectType.Garbage));
             testObj.SetPropertyPathValue("test/deep/float", 12.34F);
