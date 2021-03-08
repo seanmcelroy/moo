@@ -1,45 +1,45 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using moo.common.Connections;
+using moo.common.Database;
+using moo.common.Models;
 
-public class LoadBuiltIn : IRunnable
+namespace moo.common.Actions.BuiltIn
 {
-    public Tuple<bool, string?> CanProcess(PlayerConnection connection, CommandResult command)
+    public class LoadBuiltIn : IRunnable
     {
-        var verb = command.getVerb().ToLowerInvariant();
-        if (string.Compare(verb, "@load", StringComparison.OrdinalIgnoreCase) == 0 && command.hasDirectObject())
-            return new Tuple<bool, string?>(true, verb);
-        return new Tuple<bool, string?>(false, null);
-    }
-
-    public async Task<VerbResult> Process(PlayerConnection connection, CommandResult command, CancellationToken cancellationToken)
-    {
-        var targetId = await command.ResolveDirectObject(connection, cancellationToken);
-        if (targetId == Dbref.NOT_FOUND)
+        public Tuple<bool, string?> CanProcess(PlayerConnection connection, CommandResult command)
         {
-            await connection.sendOutput("I don't see that here.");
-            return new VerbResult(false, "Target not found");
+            var verb = command.getVerb().ToLowerInvariant();
+            if (string.Compare(verb, "@load", StringComparison.OrdinalIgnoreCase) == 0 && command.hasDirectObject())
+                return new Tuple<bool, string?>(true, verb);
+            return new Tuple<bool, string?>(false, null);
         }
 
-        if (targetId == Dbref.AMBIGUOUS)
+        public async Task<VerbResult> Process(PlayerConnection connection, CommandResult command, CancellationToken cancellationToken)
         {
-            await connection.sendOutput("I don't know which one you mean.");
-            return new VerbResult(false, "Multiple targets found");
-        }
+            var targetDbref = await Matcher
+               .InitObjectSearch(connection.GetPlayer(), command.getDirectObject(), Dbref.DbrefObjectType.Unknown, cancellationToken)
+               .MatchEverything()
+               .NoisyResult();
 
-        var lookup = await ThingRepository.GetAsync<Thing>(targetId, cancellationToken);
-        if (lookup.isSuccess && lookup.value != null)
-        {
-            var target = lookup.value;
-            var loadResult = await ThingRepository.LoadFromDatabaseAsync<Thing>(targetId, cancellationToken);
-            await connection.sendOutput($"Load from database: {loadResult.isSuccess}");
-        }
-        else
-        {
-            await connection.sendOutput("You can't seem to find that.");
-            return new VerbResult(false, "Target not found");
-        }
+            if (targetDbref == Dbref.NOT_FOUND)
+                return new VerbResult(false, "Target not found");
 
-        return new VerbResult(true, "");
+            var lookup = await ThingRepository.Instance.GetAsync<Thing>(targetDbref, cancellationToken);
+            if (lookup.isSuccess && lookup.value != null)
+            {
+                var loadResult = await ThingRepository.Instance.LoadFromDatabaseAsync<Thing>(targetDbref, cancellationToken);
+                await connection.sendOutput($"Load from database: {loadResult.isSuccess}");
+            }
+            else
+            {
+                await connection.sendOutput("You can't seem to find that.");
+                return new VerbResult(false, "Target not found");
+            }
+
+            return new VerbResult(true, "");
+        }
     }
 }

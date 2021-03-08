@@ -1,18 +1,21 @@
 using System;
 
-public static class GmtOffset
+namespace moo.common.Scripting.ForthPrimatives
 {
-    public static ForthPrimativeResult Execute(ForthPrimativeParameters parameters)
+    public static class GmtOffset
     {
-        /*
-        GMTOFFSET ( -- i) 
+        public static ForthPrimativeResult Execute(ForthPrimativeParameters parameters)
+        {
+            /*
+            GMTOFFSET ( -- i) 
 
-        Returns the machine's offset from Greenwich Mean Time in seconds.
-        */
-        var ts = DateTime.UtcNow - DateTime.UtcNow;
+            Returns the machine's offset from Greenwich Mean Time in seconds.
+            */
+            var ts = DateTime.UtcNow - DateTime.UtcNow;
 
-        parameters.Stack.Push(new ForthDatum(Convert.ToInt32(ts.TotalSeconds)));
+            parameters.Stack.Push(new ForthDatum(Convert.ToInt32(ts.TotalSeconds)));
 
-        return ForthPrimativeResult.SUCCESS;
+            return ForthPrimativeResult.SUCCESS;
+        }
     }
 }

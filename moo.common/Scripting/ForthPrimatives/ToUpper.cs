@@ -1,22 +1,25 @@
-using static ForthDatum;
+using static moo.common.Scripting.ForthDatum;
 
-public static class ToUpper
+namespace moo.common.Scripting.ForthPrimatives
 {
-    public static ForthPrimativeResult Execute(ForthPrimativeParameters parameters)
+    public static class ToUpper
     {
-        /*
-        TOUPPER (s -- s) 
+        public static ForthPrimativeResult Execute(ForthPrimativeParameters parameters)
+        {
+            /*
+            TOUPPER (s -- s) 
 
-        Takes a string and returns it with all the letters in uppercase.
-        */
-        if (parameters.Stack.Count < 1)
-            return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, "TOUPPER requires one parameter");
+            Takes a string and returns it with all the letters in uppercase.
+            */
+            if (parameters.Stack.Count < 1)
+                return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, "TOUPPER requires one parameter");
 
-        var s = parameters.Stack.Pop();
-        if (s.Type != DatumType.String)
-            return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "TOUPPER requires the top parameter on the stack to be a string");
+            var s = parameters.Stack.Pop();
+            if (s.Type != DatumType.String || s.Value == null)
+                return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "TOUPPER requires the top parameter on the stack to be a string");
 
-        parameters.Stack.Push(new ForthDatum(((string)s.Value).ToUpperInvariant()));
-        return ForthPrimativeResult.SUCCESS;
+            parameters.Stack.Push(new ForthDatum(((string)s.Value).ToUpperInvariant()));
+            return ForthPrimativeResult.SUCCESS;
+        }
     }
 }

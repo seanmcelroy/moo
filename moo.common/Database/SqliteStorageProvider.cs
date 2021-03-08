@@ -3,13 +3,15 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Sqlite;
+using moo.common.Models;
 
-public class SqliteStorageProvider : IStorageProvider
+namespace moo.common.Database
 {
-    public void Initialize()
+    public class SqliteStorageProvider : IStorageProvider
     {
-        using (var connection = new SqliteConnection("Data Source=./objects.sqlite"))
+        public void Initialize()
         {
+            using var connection = new SqliteConnection("Data Source=./objects.sqlite");
             connection.Open();
 
             using (var command = new SqliteCommand("CREATE TABLE IF NOT EXISTS changelog (version int)", connection))
@@ -24,45 +26,43 @@ public class SqliteStorageProvider : IStorageProvider
 
             connection.Close();
         }
-    }
 
-    public void Overwrite(Dictionary<int, string> serialized)
-    {
-        throw new System.NotImplementedException();
-    }
-
-    public async Task<StorageProviderRetrieveResult> LoadAsync(Dbref id, CancellationToken cancellationToken)
-    {
-        var result = default(StorageProviderRetrieveResult);
-
-        using (var connection = new SqliteConnection("Data Source=./objects.sqlite"))
+        public void Overwrite(Dictionary<int, string> serialized)
         {
-            await connection.OpenAsync();
-
-            using (var command = new SqliteCommand("SELECT [type], [data] FROM [objects] WHERE [id]=@id;", connection))
-            {
-                command.Parameters.AddWithValue("@id", (int)id);
-                SqliteDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
-                if (await reader.ReadAsync())
-                {
-                    result = new StorageProviderRetrieveResult(id, reader.GetString(0), reader.GetString(1));
-                    reader.Close();
-                }
-            }
-
-            connection.Close();
+            throw new System.NotImplementedException();
         }
 
-        return default(StorageProviderRetrieveResult).Equals(result) ? new StorageProviderRetrieveResult("Not found.") : result;
-    }
-
-    public async Task<bool> SaveAsync(Dbref id, string type, string serialized, CancellationToken cancellationToken)
-    {
-        try
+        public async Task<StorageProviderRetrieveResult> LoadAsync(Dbref id, CancellationToken cancellationToken)
         {
+            var result = default(StorageProviderRetrieveResult);
+
             using (var connection = new SqliteConnection("Data Source=./objects.sqlite"))
             {
-                await connection.OpenAsync();
+                await connection.OpenAsync(cancellationToken);
+
+                using (var command = new SqliteCommand("SELECT [type], [data] FROM [objects] WHERE [id]=@id;", connection))
+                {
+                    command.Parameters.AddWithValue("@id", (int)id);
+                    SqliteDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
+                    if (await reader.ReadAsync(cancellationToken))
+                    {
+                        result = new StorageProviderRetrieveResult(id, reader.GetString(0), reader.GetString(1));
+                        reader.Close();
+                    }
+                }
+
+                connection.Close();
+            }
+
+            return default(StorageProviderRetrieveResult).Equals(result) ? new StorageProviderRetrieveResult("Not found.") : result;
+        }
+
+        public async Task<bool> SaveAsync(Dbref id, string type, string serialized, CancellationToken cancellationToken)
+        {
+            try
+            {
+                using var connection = new SqliteConnection("Data Source=./objects.sqlite");
+                await connection.OpenAsync(cancellationToken);
 
                 int updated = 0;
                 using (var command = new SqliteCommand("INSERT OR REPLACE INTO [objects] ([id], [type], [data]) VALUES (@id, @type, @data);", connection))
@@ -77,11 +77,11 @@ public class SqliteStorageProvider : IStorageProvider
 
                 return updated > 0;
             }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"EXCEPTION ON SAVE:\r\n{ex}");
-            return false;
+            catch (Exception ex)
+            {
+                Console.WriteLine($"EXCEPTION ON SAVE:\r\n{ex}");
+                return false;
+            }
         }
     }
 }

@@ -1,12 +1,15 @@
-public enum ControlFlowElement
+namespace moo.common.Scripting
 {
-    InIfAndContinue,
-    InIfAndSkip,
-    InElseAndContinue,
-    InElseAndSkip,    
-    SkippedBranch,
-    BeginMarker,
-    ForMarker,
-    ForEachMarker,
-    SkipToAfterNextUntilOrRepeat
+    public enum ControlFlowElement
+    {
+        InIfAndContinue,
+        InIfAndSkip,
+        InElseAndContinue,
+        InElseAndSkip,
+        SkippedBranch,
+        BeginMarker,
+        ForMarker,
+        ForEachMarker,
+        SkipToAfterNextUntilOrRepeat
+    }
 }

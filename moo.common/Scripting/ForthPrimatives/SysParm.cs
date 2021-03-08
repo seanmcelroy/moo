@@ -1,200 +1,203 @@
-using static ForthDatum;
+using static moo.common.Scripting.ForthDatum;
 
-public static class SysParm
+namespace moo.common.Scripting.ForthPrimatives
 {
-    public static ForthPrimativeResult Execute(ForthPrimativeParameters parameters)
+    public static class SysParm
     {
-        /*
-        SYSPARM ( s -- s ) 
+        public static ForthPrimativeResult Execute(ForthPrimativeParameters parameters)
+        {
+            /*
+            SYSPARM ( s -- s ) 
 
-        Takes a tuneable system parameter and returns its value as a string.
-        
-        For an integer it returns it as a string, 
-            a time is returned as a string containing the number of seconds, 
-            a dbref is returned in standard dbref format, and boolean is returned as 'yes' or 'no' 
-        
-        Checking an invalid parameter or a parameter requiring higher permissions than the program has will return an empty string.
-        
-        Parameters available:
+            Takes a tuneable system parameter and returns its value as a string.
 
-        (str) dumpwarn_mesg - Message to warn of a coming DB dump
+            For an integer it returns it as a string, 
+                a time is returned as a string containing the number of seconds, 
+                a dbref is returned in standard dbref format, and boolean is returned as 'yes' or 'no' 
 
-        (str) deltawarn_mesg - Message to warn of a coming delta dump
+            Checking an invalid parameter or a parameter requiring higher permissions than the program has will return an empty string.
 
-        (str) dumpdeltas_mesg - Message telling of a delta dump
+            Parameters available:
 
-        (str) dumping_mesg - Message telling of a DB dump
+            (str) dumpwarn_mesg - Message to warn of a coming DB dump
 
-        (str) dumpdone_mesg - Message notifying a dump is done
+            (str) deltawarn_mesg - Message to warn of a coming delta dump
 
-        (str) penny - A single currency
+            (str) dumpdeltas_mesg - Message telling of a delta dump
 
-        (str) pennies - Plural currency
+            (str) dumping_mesg - Message telling of a DB dump
 
-        (str) cpenny - Capitolized currency
+            (str) dumpdone_mesg - Message notifying a dump is done
 
-        (str) cpennies - Capitolized plural currency
+            (str) penny - A single currency
 
-        (str) muckname - The name of the MUCK
+            (str) pennies - Plural currency
 
-        (str) rwho_passwd - Password for RWHO servers (Wizbit only)
+            (str) cpenny - Capitolized currency
 
-        (str) rwho_server - RWHO server to connect to (Wizbit only)
+            (str) cpennies - Capitolized plural currency
 
-        (str) huh_mesg - Message for invalid commands
+            (str) muckname - The name of the MUCK
 
-        (str) leave_mesg - Message given when QUIT is used
+            (str) rwho_passwd - Password for RWHO servers (Wizbit only)
 
-        (str) idle_boot_mesg - Message given to an idle booted user
+            (str) rwho_server - RWHO server to connect to (Wizbit only)
 
-        (str) register_mesg - Message for a failed 'create' at login
+            (str) huh_mesg - Message for invalid commands
 
-        (str) playermax_warnmesg - Message warning off too many connects
+            (str) leave_mesg - Message given when QUIT is used
 
-        (str) playermax_bootmesg - Error given when a player cannot connect
+            (str) idle_boot_mesg - Message given to an idle booted user
 
-        (time) rwho_interval - Interval between RWHO updates
+            (str) register_mesg - Message for a failed 'create' at login
 
-        (time) dump_interval - Interval between dumps
+            (str) playermax_warnmesg - Message warning off too many connects
 
-        (time) dump_warntime - Warning prior to a dump
+            (str) playermax_bootmesg - Error given when a player cannot connect
 
-        (time) monolithic_interval - Max time between full DB dumps
+            (time) rwho_interval - Interval between RWHO updates
 
-        (time) clean_interval - Interval between unused object purges
+            (time) dump_interval - Interval between dumps
 
-        (time) aging_time - When an object is considered old and unused
+            (time) dump_warntime - Warning prior to a dump
 
-        (time) maxidle - Maximum idle time allowed
+            (time) monolithic_interval - Max time between full DB dumps
 
-        (int) max_object_endowment - Max value of an object
+            (time) clean_interval - Interval between unused object purges
 
-        (int) object_cost - Cost to create an object
+            (time) aging_time - When an object is considered old and unused
 
-        (int) exit_cost - Cost to create an exit
+            (time) maxidle - Maximum idle time allowed
 
-        (int) link_cost - Cost to link an exit
+            (int) max_object_endowment - Max value of an object
 
-        (int) room_cost - Cost to dig a room
+            (int) object_cost - Cost to create an object
 
-        (int) lookup_cost - Cost to lookup a player name
+            (int) exit_cost - Cost to create an exit
 
-        (int) max_pennies - Max number of pennies a player can own
+            (int) link_cost - Cost to link an exit
 
-        (int) penny_rate - Rate for finding pennies
+            (int) room_cost - Cost to dig a room
 
-        (int) start_pennies - Starting wealth for new players
+            (int) lookup_cost - Cost to lookup a player name
 
-        (int) kill_base_cost - Number of pennies for a 100 percent chance
+            (int) max_pennies - Max number of pennies a player can own
 
-        (int) kill_min_cost - Minimum cost for doing a kill
+            (int) penny_rate - Rate for finding pennies
 
-        (int) kill_bonus - Bonus for a successful kill
+            (int) start_pennies - Starting wealth for new players
 
-        (int) command_burst_size - Maximum number of commands per burst
+            (int) kill_base_cost - Number of pennies for a 100 percent chance
 
-        (int) commands_per_time - Commands per time slice after burst
+            (int) kill_min_cost - Minimum cost for doing a kill
 
-        (int) command_time_msec - Time slice length in milliseconds
+            (int) kill_bonus - Bonus for a successful kill
 
-        (int) max_delta_objs - Max percent of changed objects for a delta
+            (int) command_burst_size - Maximum number of commands per burst
 
-        (int) max_loaded_objs - Max percent of the DB in memory at once
+            (int) commands_per_time - Commands per time slice after burst
 
-        (int) max_force_level - Maximum number of forces within one command
+            (int) command_time_msec - Time slice length in milliseconds
 
-        (int) max_process_limit - Total processes allowed
+            (int) max_delta_objs - Max percent of changed objects for a delta
 
-        (int) max_plyr_processes - Processes allowed for each player
+            (int) max_loaded_objs - Max percent of the DB in memory at once
 
-        (int) max_instr_count - Max preempt mode instructions
+            (int) max_force_level - Maximum number of forces within one command
 
-        (int) instr_slice - Max uninterrupted instructions per time slice
+            (int) max_process_limit - Total processes allowed
 
-        (int) mpi_max_commands - Max number of uninterruptable MPI commands
+            (int) max_plyr_processes - Processes allowed for each player
 
-        (int) pause_min - Pause between input and output servicing
+            (int) max_instr_count - Max preempt mode instructions
 
-        (int) free_frames_pool - Number of program frames pre-allocated
+            (int) instr_slice - Max uninterrupted instructions per time slice
 
-        (int) listen_mlev - Minimum MUCKER level for _listen programs
+            (int) mpi_max_commands - Max number of uninterruptable MPI commands
 
-        (int) playermax_limit - Manimum allowed connections
+            (int) pause_min - Pause between input and output servicing
 
-        (ref) player_start - The home for players without a home
+            (int) free_frames_pool - Number of program frames pre-allocated
 
-        (bool) use_hostnames - Do reverse domain name lookup
+            (int) listen_mlev - Minimum MUCKER level for _listen programs
 
-        (bool) log_commands - The server logs commands (Wizbit only)
+            (int) playermax_limit - Manimum allowed connections
 
-        (bool) log_failed_commands - The server logs failed commands (Wizbit only)
+            (ref) player_start - The home for players without a home
 
-        (bool) log_programs - The server logs programs (Wizbit only)
+            (bool) use_hostnames - Do reverse domain name lookup
 
-        (bool) dbdump_warning - Warn about coming DB dumps
+            (bool) log_commands - The server logs commands (Wizbit only)
 
-        (bool) deltadump_warning - Warn about coming delta dumps
+            (bool) log_failed_commands - The server logs failed commands (Wizbit only)
 
-        (bool) periodic_program_purge - Purge unused programs from memory
+            (bool) log_programs - The server logs programs (Wizbit only)
 
-        (bool) support_rwho - Use RWHO server
+            (bool) dbdump_warning - Warn about coming DB dumps
 
-        (bool) secure_who - WHO works only in command mode
+            (bool) deltadump_warning - Warn about coming delta dumps
 
-        (bool) who_doing - Server support for @doing
+            (bool) periodic_program_purge - Purge unused programs from memory
 
-        (bool) realms_control - Support for realm wizzes
+            (bool) support_rwho - Use RWHO server
 
-        (bool) allow_listeners - Allow listeners
+            (bool) secure_who - WHO works only in command mode
 
-        (bool) allow_listeners_obj - Objects can be listeners
+            (bool) who_doing - Server support for @doing
 
-        (bool) allow_listeners_env - Listeners can be up the environment
+            (bool) realms_control - Support for realm wizzes
 
-        (bool) allow_zombies - Zombie objects allowed
+            (bool) allow_listeners - Allow listeners
 
-        (bool) wiz_vehicles - Only wizzes can make vehicles
+            (bool) allow_listeners_obj - Objects can be listeners
 
-        (bool) force_mlev1_name_notify - M1 programs forced to show name on notify
+            (bool) allow_listeners_env - Listeners can be up the environment
 
-        (bool) restrict_kill - Can only kill KILL_OK players
+            (bool) allow_zombies - Zombie objects allowed
 
-        (bool) registration - Only wizzes can create players
+            (bool) wiz_vehicles - Only wizzes can make vehicles
 
-        (bool) teleport_to_player - Allow use of exits linked to players
+            (bool) force_mlev1_name_notify - M1 programs forced to show name on notify
 
-        (bool) secure_teleport - Check teleport permissions for personal exits
+            (bool) restrict_kill - Can only kill KILL_OK players
 
-        (bool) exit_darking - Players can set exits dark
+            (bool) registration - Only wizzes can create players
 
-        (bool) thing_darking - Players can set objects dark
+            (bool) teleport_to_player - Allow use of exits linked to players
 
-        (bool) dark_sleepers - Sleepers are effectively dark
+            (bool) secure_teleport - Check teleport permissions for personal exits
 
-        (bool) who_hides_dark - Dark players are hidden (Wizbit only)
+            (bool) exit_darking - Players can set exits dark
 
-        (bool) compatible_priorities - Backwards compatibility for exit priorities
+            (bool) thing_darking - Players can set objects dark
 
-        (bool) do_mpi_parsing - Parse MPI strings in messages
+            (bool) dark_sleepers - Sleepers are effectively dark
 
-        (bool) look_propqueues - Look triggers _lookq propqueue
+            (bool) who_hides_dark - Dark players are hidden (Wizbit only)
 
-        (bool) lock_envcheck - Locks will check the environment
+            (bool) compatible_priorities - Backwards compatibility for exit priorities
 
-        (bool) diskbase_propvals - Allow diskbasing of property values
+            (bool) do_mpi_parsing - Parse MPI strings in messages
 
-        (bool) idleboot - Enable or disable idlebooting
+            (bool) look_propqueues - Look triggers _lookq propqueue
 
-        (bool) playermax - Enable or disable connection limit
-        */
-        if (parameters.Stack.Count < 1)
-            return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, "SYSPARM requires one parameter");
+            (bool) lock_envcheck - Locks will check the environment
 
-        var s = parameters.Stack.Pop();
-        if (s.Type != DatumType.String)
-            return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "SYSPARM requires the top parameter on the stack to be a string");
+            (bool) diskbase_propvals - Allow diskbasing of property values
 
-        parameters.Stack.Push(new ForthDatum(""));
-        return ForthPrimativeResult.SUCCESS;
+            (bool) idleboot - Enable or disable idlebooting
+
+            (bool) playermax - Enable or disable connection limit
+            */
+            if (parameters.Stack.Count < 1)
+                return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, "SYSPARM requires one parameter");
+
+            var s = parameters.Stack.Pop();
+            if (s.Type != DatumType.String)
+                return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "SYSPARM requires the top parameter on the stack to be a string");
+
+            parameters.Stack.Push(new ForthDatum(""));
+            return ForthPrimativeResult.SUCCESS;
+        }
     }
 }

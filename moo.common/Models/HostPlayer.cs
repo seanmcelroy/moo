@@ -1,14 +1,17 @@
 using System;
 
-public class HostPlayer : Player
+namespace moo.common.Models
 {
-    public static HostPlayer make(string name, Container location)
+    public class HostPlayer : Player
     {
-        var host = ThingRepository.Make<HostPlayer>();
-        host.name = name;
-        host.location = location.id;
-        host.Home = location.id;
-        Console.WriteLine($"Created new host {host.UnparseObject()}");
-        return host;
+        public static HostPlayer make(string name, Thing location)
+        {
+            var host = ThingRepository.Instance.Make<HostPlayer>();
+            host.name = name;
+            host.Location = location.id;
+            host.Home = location.id;
+            Console.WriteLine($"Created new host {host.UnparseObject()}");
+            return host;
+        }
     }
 }

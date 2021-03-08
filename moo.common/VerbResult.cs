@@ -1,20 +1,23 @@
-public struct VerbResult
+namespace moo.common
 {
-    public bool isSuccess;
-
-    public string reason;
-
-    public VerbResult(bool isSuccess, string reason)
+    public struct VerbResult
     {
-        if (!isSuccess && reason == null)
-            throw new System.ArgumentNullException(nameof(reason), "Success was false, but reason was also null!");
+        public bool isSuccess;
 
-        this.isSuccess = isSuccess;
-        this.reason = reason;
-    }
+        public string reason;
 
-    public static implicit operator bool(VerbResult verbResult)
-    {
-        return verbResult.isSuccess;
+        public VerbResult(bool isSuccess, string reason)
+        {
+            if (!isSuccess && reason == null)
+                throw new System.ArgumentNullException(nameof(reason), "Success was false, but reason was also null!");
+
+            this.isSuccess = isSuccess;
+            this.reason = reason;
+        }
+
+        public static implicit operator bool(VerbResult verbResult)
+        {
+            return verbResult.isSuccess;
+        }
     }
 }

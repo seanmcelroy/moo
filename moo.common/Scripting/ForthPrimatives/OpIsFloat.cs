@@ -1,20 +1,23 @@
-using static ForthDatum;
+using static moo.common.Scripting.ForthDatum;
 
-public static class OpIsFloat
+namespace moo.common.Scripting.ForthPrimatives
 {
-    public static ForthPrimativeResult Execute(ForthPrimativeParameters parameters)
+    public static class OpIsFloat
     {
-        /*
-        FLOAT? ( ? -- i ) 
+        public static ForthPrimativeResult Execute(ForthPrimativeParameters parameters)
+        {
+            /*
+            FLOAT? ( ? -- i ) 
 
-        Returns true if the item on the stack is a floating point value.
-        */
-        if (parameters.Stack.Count < 1)
-            return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, "FLOAT? requires at least one parameter");
+            Returns true if the item on the stack is a floating point value.
+            */
+            if (parameters.Stack.Count < 1)
+                return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, "FLOAT? requires at least one parameter");
 
-        var n1 = parameters.Stack.Pop();
+            var n1 = parameters.Stack.Pop();
 
-        parameters.Stack.Push(new ForthDatum(n1.Type == DatumType.Float ? 1 : 0));
-        return ForthPrimativeResult.SUCCESS;
+            parameters.Stack.Push(new ForthDatum(n1.Type == DatumType.Float ? 1 : 0));
+            return ForthPrimativeResult.SUCCESS;
+        }
     }
 }

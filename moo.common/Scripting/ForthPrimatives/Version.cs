@@ -1,14 +1,19 @@
-public static class Version
+using static moo.common.Scripting.ForthDatum;
+
+namespace moo.common.Scripting.ForthPrimatives
 {
-    public static ForthPrimativeResult Execute(ForthPrimativeParameters parameters)
+    public static class Version
     {
-        /*
-        VERSION ( -- s) 
+        public static ForthPrimativeResult Execute(ForthPrimativeParameters parameters)
+        {
+            /*
+            VERSION ( -- s) 
 
-        Returns the version of this code in a string. "Muck2.2fb5.55", currently.
-        */
+            Returns the version of this code in a string. "Muck2.2fb5.55", currently.
+            */
 
-        parameters.Stack.Push(new ForthDatum("Moo0.1"));
-        return ForthPrimativeResult.SUCCESS;
+            parameters.Stack.Push(new ForthDatum("Moo0.1"));
+            return ForthPrimativeResult.SUCCESS;
+        }
     }
 }

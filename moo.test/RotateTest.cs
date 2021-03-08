@@ -1,5 +1,7 @@
 using System.Collections.Generic;
-using System.Threading;
+using moo.common.Models;
+using moo.common.Scripting;
+using moo.common.Scripting.ForthPrimatives;
 using NUnit.Framework;
 
 namespace Tests
@@ -24,8 +26,10 @@ namespace Tests
             stack.Push(new ForthDatum(4));
 
             var local = stack.ClonePreservingOrder();
-            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default(CancellationToken));
+            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
             var result = Rotate.Execute(parameters);
+            Assert.NotNull(result);
+            Assert.IsTrue(result.IsSuccessful);
 
             var a = local.Pop();
             Assert.AreEqual(ForthDatum.DatumType.String, a.Type);
@@ -66,8 +70,10 @@ namespace Tests
             stack.Push(new ForthDatum(-4));
 
             var local = stack.ClonePreservingOrder();
-            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default(CancellationToken));
+            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
             var result = Rotate.Execute(parameters);
+            Assert.NotNull(result);
+            Assert.IsTrue(result.IsSuccessful);
 
             var c = local.Pop();
             Assert.AreEqual(ForthDatum.DatumType.String, c.Type);
@@ -105,8 +111,10 @@ namespace Tests
 
             var local = stack.ClonePreservingOrder();
             local.Push(new ForthDatum(3));
-            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default(CancellationToken));
+            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
             var result = Rotate.Execute(parameters);
+            Assert.NotNull(result);
+            Assert.IsTrue(result.IsSuccessful);
 
             var x = local.Pop();
             Assert.AreEqual(ForthDatum.DatumType.String, x.Type);

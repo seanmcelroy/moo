@@ -1,104 +1,106 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using moo.common.Connections;
+using moo.common.Scripting;
 
-public class Script : Thing, IRunnable
+namespace moo.common.Models
 {
-    public string? programText;
-
-    private ForthTokenizerResult tokenized;
-
-    public Script()
+    public class Script : Thing, IRunnable
     {
-        this.type = (int)Dbref.DbrefObjectType.Program;
-    }
+        public string? programText;
 
-    public virtual Tuple<bool, string?> CanProcess(PlayerConnection player, CommandResult command)
-    {
-        string verb = command.getVerb().ToLowerInvariant();
+        private ForthTokenizerResult tokenized;
 
-        foreach (var key in new[] { this.id.ToString(), name })
+        public Script()
         {
-            if (string.Compare(key, verb, true) == 0)
-                return new Tuple<bool, string?>(true, verb);
+            this.type = (int)Dbref.DbrefObjectType.Program;
         }
 
-        return new Tuple<bool, string?>(false, null);
-    }
-
-    public static async Task<Tuple<bool, string, ForthTokenizerResult>> CompileAsync(Script script, string programText, PlayerConnection connection, CancellationToken cancellationToken)
-    {
-        // Set 1: Preprocessing directives
-        var preprocessed = await ForthPreprocessor.Preprocess(connection, script, programText, cancellationToken);
-        if (!preprocessed.IsSuccessful)
-            return new Tuple<bool, string, ForthTokenizerResult>(false, preprocessed.Reason, default(ForthTokenizerResult));
-
-        // Step 2: Tokenization
-        var tokenized = await ForthTokenizer.Tokenzie(null, preprocessed.ProcessedProgram, preprocessed.ProgramLocalVariables);
-        if (!tokenized.IsSuccessful)
-            return new Tuple<bool, string, ForthTokenizerResult>(false, tokenized.Reason, default(ForthTokenizerResult));
-
-        return new Tuple<bool, string, ForthTokenizerResult>(true, "Compiled", tokenized);
-    }
-
-    public async Task<Tuple<bool, string>> CompileAsync(PlayerConnection connection, CancellationToken cancellationToken)
-    {
-        if (string.IsNullOrWhiteSpace(programText))
-            return new Tuple<bool, string>(true, "No program text provided");
-
-        if (default(ForthTokenizerResult).Equals(tokenized))
+        public virtual Tuple<bool, string?> CanProcess(PlayerConnection player, CommandResult command)
         {
-            var result = await CompileAsync(this, programText, connection, cancellationToken);
-            if (!result.Item1)
-                return new Tuple<bool, string>(false, result.Item2);
+            string verb = command.getVerb().ToLowerInvariant();
 
-            tokenized = result.Item3;
-            return new Tuple<bool, string>(true, result.Item2);
+            foreach (var key in new[] { this.id.ToString(), name })
+            {
+                if (string.Compare(key, verb, true) == 0)
+                    return new Tuple<bool, string?>(true, verb);
+            }
+
+            return new Tuple<bool, string?>(false, null);
         }
 
-        return new Tuple<bool, string>(true, "Program already compiled");
-    }
-
-    public void Uncompile()
-    {
-        tokenized = default(ForthTokenizerResult);
-    }
-
-    protected override Dictionary<string, object?> GetSerializedElements()
-    {
-        var results = base.GetSerializedElements();
-        results.Add("programText", programText);
-        return results;
-    }
-
-    public async Task<VerbResult> Process(
-        PlayerConnection connection,
-        CommandResult command,
-        CancellationToken cancellationToken)
-    {
-        // TODO: Right now we block on programs
-        var process = new ForthProcess(id, connection);
-
-        process.State = ForthProcess.ProcessState.Parsing;
-
-        var compileResult = await CompileAsync(connection, cancellationToken);
-
-        if (!compileResult.Item1)
+        public static async Task<Tuple<bool, string, ForthTokenizerResult>> CompileAsync(Script script, string programText, PlayerConnection connection, CancellationToken cancellationToken)
         {
+            // Set 1: Preprocessing directives
+            var preprocessed = await ForthPreprocessor.Preprocess(connection, script, programText, cancellationToken);
+            if (!preprocessed.IsSuccessful)
+                return new Tuple<bool, string, ForthTokenizerResult>(false, preprocessed.Reason, default);
+
+            // Step 2: Tokenization
+            var tokenized = await ForthTokenizer.Tokenzie(null, preprocessed.ProcessedProgram, preprocessed.ProgramLocalVariables);
+            if (!tokenized.IsSuccessful)
+                return new Tuple<bool, string, ForthTokenizerResult>(false, tokenized.Reason, default);
+
+            return new Tuple<bool, string, ForthTokenizerResult>(true, "Compiled", tokenized);
+        }
+
+        public async Task<Tuple<bool, string>> CompileAsync(PlayerConnection connection, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrWhiteSpace(programText))
+                return new Tuple<bool, string>(true, "No program text provided");
+
+            if (default(ForthTokenizerResult).Equals(tokenized))
+            {
+                var result = await CompileAsync(this, programText, connection, cancellationToken);
+                if (!result.Item1)
+                    return new Tuple<bool, string>(false, result.Item2);
+
+                tokenized = result.Item3;
+                return new Tuple<bool, string>(true, result.Item2);
+            }
+
+            return new Tuple<bool, string>(true, "Program already compiled");
+        }
+
+        public void Uncompile() => tokenized = default;
+
+        protected override Dictionary<string, object?> GetSerializedElements()
+        {
+            var results = base.GetSerializedElements();
+            results.Add("programText", programText);
+            return results;
+        }
+
+        public async Task<VerbResult> Process(
+            PlayerConnection connection,
+            CommandResult command,
+            CancellationToken cancellationToken)
+        {
+            // TODO: Right now we block on programs
+            var process = new ForthProcess(id, connection)
+            {
+                State = ForthProcess.ProcessState.Parsing
+            };
+
+            var compileResult = await CompileAsync(connection, cancellationToken);
+
+            if (!compileResult.Item1)
+            {
+                process.State = ForthProcess.ProcessState.Complete;
+                return new VerbResult(false, compileResult.Item2);
+            }
+
+            if (tokenized.ProgramLocalVariables != null)
+                foreach (var v in tokenized.ProgramLocalVariables)
+                    process.SetProgramLocalVariable(v.Key, v.Value);
+
+            var result = await Server.ExecuteAsync(process, tokenized.Words, connection.Dbref, command.getVerb(), new[] { command.getNonVerbPhrase() }, cancellationToken);
+            var scriptResult = new VerbResult(result.IsSuccessful, result.Reason?.ToString());
+
             process.State = ForthProcess.ProcessState.Complete;
-            return new VerbResult(false, compileResult.Item2);
+            return scriptResult;
         }
-
-        if (tokenized.ProgramLocalVariables != null)
-            foreach (var v in tokenized.ProgramLocalVariables)
-                process.SetProgramLocalVariable(v.Key, v.Value);
-
-        var result = await Server.GetInstance().ExecuteAsync(process, tokenized.Words, connection.Dbref, command.getVerb(), new[] { command.getNonVerbPhrase() }, cancellationToken);
-        var scriptResult = new VerbResult(result.IsSuccessful, result.Reason?.ToString());
-
-        process.State = ForthProcess.ProcessState.Complete;
-        return scriptResult;
     }
 }

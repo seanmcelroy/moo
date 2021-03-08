@@ -1,5 +1,8 @@
 using System.Collections.Generic;
 using System.Threading;
+using moo.common.Models;
+using moo.common.Scripting;
+using moo.common.Scripting.ForthPrimatives;
 using NUnit.Framework;
 
 namespace Tests
@@ -14,8 +17,10 @@ namespace Tests
 
             var local = stack.ClonePreservingOrder();
             local.Push(new ForthDatum(1));
-            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default(CancellationToken));
+            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
             var result = Pick.Execute(parameters);
+            Assert.NotNull(result);
+            Assert.IsTrue(result.IsSuccessful);
 
             Assert.AreEqual(2, local.Count);
 
@@ -40,8 +45,10 @@ namespace Tests
 
             var local = stack.ClonePreservingOrder();
             local.Push(new ForthDatum(2));
-            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default(CancellationToken));
+            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
             var result = Pick.Execute(parameters);
+            Assert.NotNull(result);
+            Assert.IsTrue(result.IsSuccessful);
 
             Assert.AreEqual(3, local.Count);
 
@@ -72,8 +79,10 @@ namespace Tests
             stack.Push(new ForthDatum(3));
 
             var local = stack.ClonePreservingOrder();
-            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default(CancellationToken));
+            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
             var result = Pick.Execute(parameters);
+            Assert.NotNull(result);
+            Assert.IsTrue(result.IsSuccessful);
 
             Assert.AreEqual(5, local.Count);
 

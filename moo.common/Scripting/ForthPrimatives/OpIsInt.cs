@@ -1,20 +1,23 @@
-using static ForthDatum;
+using static moo.common.Scripting.ForthDatum;
 
-public static class OpIsInt
+namespace moo.common.Scripting.ForthPrimatives
 {
-    public static ForthPrimativeResult Execute(ForthPrimativeParameters parameters)
+    public static class OpIsInt
     {
-        /*
-        INT? ( x -- i ) 
+        public static ForthPrimativeResult Execute(ForthPrimativeParameters parameters)
+        {
+            /*
+            INT? ( x -- i ) 
 
-        Returns true if x is a int.
-        */
-        if (parameters.Stack.Count < 1)
-            return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, "INT? requires at least one parameter");
+            Returns true if x is a int.
+            */
+            if (parameters.Stack.Count < 1)
+                return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, "INT? requires at least one parameter");
 
-        var n1 = parameters.Stack.Pop();
+            var n1 = parameters.Stack.Pop();
 
-        parameters.Stack.Push(new ForthDatum(n1.Type == DatumType.Integer ? 1 : 0));
-        return ForthPrimativeResult.SUCCESS;
+            parameters.Stack.Push(new ForthDatum(n1.Type == DatumType.Integer ? 1 : 0));
+            return ForthPrimativeResult.SUCCESS;
+        }
     }
 }

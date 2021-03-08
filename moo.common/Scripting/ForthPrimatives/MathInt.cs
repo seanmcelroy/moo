@@ -1,39 +1,42 @@
-using static ForthDatum;
+using static moo.common.Scripting.ForthDatum;
 
-public static class MathInt
+namespace moo.common.Scripting.ForthPrimatives
 {
-    public static ForthPrimativeResult Execute(ForthPrimativeParameters parameters)
+    public static class MathInt
     {
-        /*
-        INT ( x -- i ) 
-        Converts variable, float, or dbref x to integer i.
-        */
-        if (parameters.Stack.Count < 1)
-            return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, "INT requires one parameter");
-
-        ForthDatum datum;
-
-        var reference = parameters.Stack.Pop();
-        if (reference.Type == DatumType.Unknown)
+        public static ForthPrimativeResult Execute(ForthPrimativeParameters parameters)
         {
-            // Resolve variable 
-            var variableName = reference.Value.ToString().ToLowerInvariant();
-            var variable = At.ResolveVariableByName(parameters.Variables, parameters.Connection.Dbref, parameters.Connection.Location, parameters.Trigger, parameters.Command, variableName);
+            /*
+            INT ( x -- i ) 
+            Converts variable, float, or dbref x to integer i.
+            */
+            if (parameters.Stack.Count < 1)
+                return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, "INT requires one parameter");
 
-            if (default(ForthVariable).Equals(variable) && !parameters.Variables.ContainsKey(variableName))
-                return new ForthPrimativeResult(ForthErrorResult.VARIABLE_NOT_FOUND, $"No variable named {variableName} was found");
+            ForthDatum datum;
 
-            if (default(ForthVariable).Equals(variable))
-                return new ForthPrimativeResult(ForthErrorResult.UNKNOWN_TYPE, $"Unable to determine data type for: {variable.Value}");
+            var reference = parameters.Stack.Pop();
+            if (reference.Type == DatumType.Unknown)
+            {
+                // Resolve variable 
+                var variableName = reference.Value.ToString().ToLowerInvariant();
+                var variable = At.ResolveVariableByName(parameters.Variables, parameters.Connection.Dbref, parameters.Connection.Location, parameters.Trigger, parameters.Command, variableName);
 
-            datum = new ForthDatum(variable);
+                if (default(ForthVariable).Equals(variable) && !parameters.Variables.ContainsKey(variableName))
+                    return new ForthPrimativeResult(ForthErrorResult.VARIABLE_NOT_FOUND, $"No variable named {variableName} was found");
+
+                if (default(ForthVariable).Equals(variable))
+                    return new ForthPrimativeResult(ForthErrorResult.UNKNOWN_TYPE, $"Unable to determine data type for: {variable.Value}");
+
+                datum = new ForthDatum(variable);
+            }
+            else
+            {
+                datum = reference;
+            }
+
+            parameters.Stack.Push(datum.ToInteger());
+            return ForthPrimativeResult.SUCCESS;
         }
-        else
-        {
-            datum = reference;
-        }
-
-        parameters.Stack.Push(datum.ToInteger());
-        return ForthPrimativeResult.SUCCESS;
     }
 }

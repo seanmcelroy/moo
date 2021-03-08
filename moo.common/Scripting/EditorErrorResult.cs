@@ -1,6 +1,9 @@
-public enum EditorErrorResult : byte
+namespace moo.common.Scripting
 {
-    SYNTAX_ERROR,
-    PREPROCESSOR_ERROR,
-    COMPILE_ERROR
+    public enum EditorErrorResult : byte
+    {
+        SYNTAX_ERROR,
+        PREPROCESSOR_ERROR,
+        COMPILE_ERROR
+    }
 }

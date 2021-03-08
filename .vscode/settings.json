@@ -1,3 +1,5 @@
 {
-    "dotnet-test-explorer.enableTelemetry": false
+    "dotnet-test-explorer.enableTelemetry": false,
+    "omnisharp.enableRoslynAnalyzers": true,
+    "omnisharp.organizeImportsOnFormat": true
 }

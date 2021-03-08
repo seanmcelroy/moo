@@ -1,4 +1,6 @@
-public enum ForthErrorResult : byte
+namespace moo.common.Scripting.ForthPrimatives
+{
+    public enum ForthErrorResult : byte
     {
         INTERRUPTED,
         STACK_UNDERFLOW,
@@ -14,3 +16,4 @@ public enum ForthErrorResult : byte
         NO_SUCH_OBJECT,
         INSUFFICIENT_PERMISSION
     }
+}

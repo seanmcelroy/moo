@@ -1,11 +1,14 @@
-public struct ControlFlowMarker
+namespace moo.common.Scripting
 {
-    public readonly ControlFlowElement Element;
-    public readonly int Index;
-
-    public ControlFlowMarker(ControlFlowElement element, int index)
+    public struct ControlFlowMarker
     {
-        this.Element = element;
-        this.Index = index;
+        public readonly ControlFlowElement Element;
+        public readonly int Index;
+
+        public ControlFlowMarker(ControlFlowElement element, int index)
+        {
+            this.Element = element;
+            this.Index = index;
+        }
     }
 }

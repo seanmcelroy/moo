@@ -1,20 +1,23 @@
 using System;
 
-public static class Time
+namespace moo.common.Scripting.ForthPrimatives
 {
-    public static ForthPrimativeResult Execute(ForthPrimativeParameters parameters)
+    public static class Time
     {
-        /*
-        TIME ( -- s m h ) 
+        public static ForthPrimativeResult Execute(ForthPrimativeParameters parameters)
+        {
+            /*
+            TIME ( -- s m h ) 
 
-        Returns the time of day as integers on the stack, seconds, then minutes, then hours.
-        */
-        var now = DateTime.Now;
+            Returns the time of day as integers on the stack, seconds, then minutes, then hours.
+            */
+            var now = DateTime.Now;
 
-        parameters.Stack.Push(new ForthDatum(now.Second));
-        parameters.Stack.Push(new ForthDatum(now.Minute));
-        parameters.Stack.Push(new ForthDatum(now.Hour));
+            parameters.Stack.Push(new ForthDatum(now.Second));
+            parameters.Stack.Push(new ForthDatum(now.Minute));
+            parameters.Stack.Push(new ForthDatum(now.Hour));
 
-        return ForthPrimativeResult.SUCCESS;
+            return ForthPrimativeResult.SUCCESS;
+        }
     }
 }

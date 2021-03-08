@@ -1,5 +1,7 @@
 using System.Collections.Generic;
-using System.Threading;
+using moo.common.Models;
+using moo.common.Scripting;
+using moo.common.Scripting.ForthPrimatives;
 using NUnit.Framework;
 
 namespace Tests
@@ -18,8 +20,10 @@ namespace Tests
             stack.Push(new ForthDatum(" abcd "));
 
             var local = stack.ClonePreservingOrder();
-            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default(CancellationToken));
+            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
             var result = StripLead.Execute(parameters);
+            Assert.NotNull(result);
+            Assert.IsTrue(result.IsSuccessful);
 
             Assert.AreEqual(1, local.Count);
             var res = local.Pop();
@@ -41,8 +45,10 @@ namespace Tests
             stack.Push(new ForthDatum(" abcd "));
 
             var local = stack.ClonePreservingOrder();
-            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default(CancellationToken));
+            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
             var result = StripTail.Execute(parameters);
+            Assert.NotNull(result);
+            Assert.IsTrue(result.IsSuccessful);
 
             Assert.AreEqual(1, local.Count);
             var res = local.Pop();
@@ -64,8 +70,10 @@ namespace Tests
             stack.Push(new ForthDatum("abcdefg"));
             stack.Push(new ForthDatum("x"));
             var local = stack.ClonePreservingOrder();
-            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default(CancellationToken));
+            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
             var result = Split.Execute(parameters);
+            Assert.NotNull(result);
+            Assert.IsTrue(result.IsSuccessful);
 
             Assert.AreEqual(2, local.Count);
             var s2 = local.Pop();
@@ -92,8 +100,10 @@ namespace Tests
             stack.Push(new ForthDatum("abcdefg"));
             stack.Push(new ForthDatum("d"));
             var local = stack.ClonePreservingOrder();
-            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default(CancellationToken));
+            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
             var result = Split.Execute(parameters);
+            Assert.NotNull(result);
+            Assert.IsTrue(result.IsSuccessful);
 
             Assert.AreEqual(2, local.Count);
             var s2 = local.Pop();
@@ -120,8 +130,10 @@ namespace Tests
             stack.Push(new ForthDatum("abcdefgdhij"));
             stack.Push(new ForthDatum("d"));
             var local = stack.ClonePreservingOrder();
-            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default(CancellationToken));
+            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
             var result = Split.Execute(parameters);
+            Assert.NotNull(result);
+            Assert.IsTrue(result.IsSuccessful);
 
             Assert.AreEqual(2, local.Count);
             var s2 = local.Pop();
@@ -149,8 +161,10 @@ namespace Tests
             stack.Push(new ForthDatum("abcdefg"));
             stack.Push(new ForthDatum("x"));
             var local = stack.ClonePreservingOrder();
-            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default(CancellationToken));
+            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
             var result = RSplit.Execute(parameters);
+            Assert.NotNull(result);
+            Assert.IsTrue(result.IsSuccessful);
 
             Assert.AreEqual(2, local.Count);
             var s2 = local.Pop();
@@ -177,8 +191,10 @@ namespace Tests
             stack.Push(new ForthDatum("abcdefg"));
             stack.Push(new ForthDatum("d"));
             var local = stack.ClonePreservingOrder();
-            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default(CancellationToken));
+            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
             var result = RSplit.Execute(parameters);
+            Assert.NotNull(result);
+            Assert.IsTrue(result.IsSuccessful);
 
             Assert.AreEqual(2, local.Count);
             var s2 = local.Pop();
@@ -205,8 +221,10 @@ namespace Tests
             stack.Push(new ForthDatum("abcdefgdhij"));
             stack.Push(new ForthDatum("d"));
             var local = stack.ClonePreservingOrder();
-            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default(CancellationToken));
+            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
             var result = RSplit.Execute(parameters);
+            Assert.NotNull(result);
+            Assert.IsTrue(result.IsSuccessful);
 
             Assert.AreEqual(2, local.Count);
             var s2 = local.Pop();
@@ -235,8 +253,10 @@ namespace Tests
             stack.Push(new ForthDatum("Foobar"));
             stack.Push(new ForthDatum(3));
             var local = stack.ClonePreservingOrder();
-            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default(CancellationToken));
+            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
             var result = StrCut.Execute(parameters);
+            Assert.NotNull(result);
+            Assert.IsTrue(result.IsSuccessful);
 
             Assert.AreEqual(2, local.Count);
             var s2 = local.Pop();
@@ -265,8 +285,10 @@ namespace Tests
             stack.Push(new ForthDatum("Foobar"));
             stack.Push(new ForthDatum(0));
             var local = stack.ClonePreservingOrder();
-            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default(CancellationToken));
+            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
             var result = StrCut.Execute(parameters);
+            Assert.NotNull(result);
+            Assert.IsTrue(result.IsSuccessful);
 
             Assert.AreEqual(2, local.Count);
             var s2 = local.Pop();
@@ -295,8 +317,10 @@ namespace Tests
             stack.Push(new ForthDatum("Foobar"));
             stack.Push(new ForthDatum(int.MaxValue));
             var local = stack.ClonePreservingOrder();
-            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default(CancellationToken));
+            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
             var result = StrCut.Execute(parameters);
+            Assert.NotNull(result);
+            Assert.IsTrue(result.IsSuccessful);
 
             Assert.AreEqual(2, local.Count);
             var s2 = local.Pop();
@@ -325,8 +349,10 @@ namespace Tests
             stack.Push(new ForthDatum(2));
             stack.Push(new ForthDatum(3));
             var local = stack.ClonePreservingOrder();
-            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default(CancellationToken));
+            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
             var result = MidStr.Execute(parameters);
+            Assert.NotNull(result);
+            Assert.IsTrue(result.IsSuccessful);
 
             Assert.AreEqual(1, local.Count);
             var s1 = local.Pop();

@@ -1,29 +1,32 @@
 
 using System;
-using System.Linq;
+using moo.common.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-public class PropertySerializer : JsonConverter
+namespace moo.common.Database
 {
-    public override bool CanConvert(Type objectType) => typeof(Property).IsAssignableFrom(objectType);
-
-    public override object ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
+    public class PropertySerializer : JsonConverter
     {
-        // Load JObject from stream
-        var jObject = JObject.Load(reader);
+        public override bool CanConvert(Type objectType) => typeof(Property).IsAssignableFrom(objectType);
 
-        // Create target object based on JObject
-        var target = new Property();
+        public override object ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
+        {
+            // Load JObject from stream
+            var jObject = JObject.Load(reader);
 
-        // Populate the object properties
-        serializer.Populate(jObject.CreateReader(), target);
+            // Create target object based on JObject
+            var target = new Property();
 
-        return target;
+            // Populate the object properties
+            serializer.Populate(jObject.CreateReader(), target);
+
+            return target;
+        }
+
+        public override bool CanRead => true;
+        public override bool CanWrite => false;
+
+        public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer) => serializer.Serialize(writer, value);
     }
-
-    public override bool CanRead => true;
-    public override bool CanWrite => false;
-
-    public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer) => serializer.Serialize(writer, value);
 }

@@ -1,41 +1,45 @@
 using System;
 using System.Linq;
-using static ForthDatum;
+using moo.common.Models;
+using static moo.common.Scripting.ForthDatum;
 
-public static class PartPMatch
+namespace moo.common.Scripting.ForthPrimatives
 {
-    public static ForthPrimativeResult Execute(ForthPrimativeParameters parameters)
+    public static class PartPMatch
     {
-        /*
-        PART_PMATCH (s -- d) 
+        public static ForthPrimativeResult Execute(ForthPrimativeParameters parameters)
+        {
+            /*
+            PART_PMATCH (s -- d) 
 
-        Takes a player name, or the first part of the name, and matches it against the names of the players who are currently online.
-        If the given string is a prefix of the name of a player who is online, then their dbref is returned.
-        If two players could be matched by the given string, it returns a #-2.
-        If None of the players online match, then it returns a #-1.
-        */
+            Takes a player name, or the first part of the name, and matches it against the names of the players who are currently online.
+            If the given string is a prefix of the name of a player who is online, then their dbref is returned.
+            If two players could be matched by the given string, it returns a #-2.
+            If None of the players online match, then it returns a #-1.
+            */
 
-        if (parameters.Stack.Count < 1)
-            return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, "PART_PMATCH requires one parameter");
+            if (parameters.Stack.Count < 1)
+                return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, "PART_PMATCH requires one parameter");
 
-        var s = parameters.Stack.Pop();
-        if (s.Type != DatumType.String)
-            return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "PART_PMATCH requires the top parameter on the stack to be a string");
+            var s = parameters.Stack.Pop();
+            if (s.Type != DatumType.String)
+                return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "PART_PMATCH requires the top parameter on the stack to be a string");
 
-        var prefix = s.Value == null ? (string?)s.Value : (string?)s.Value;
+            var prefix = s.Value == null ? (string?)s.Value : (string?)s.Value;
 
-        var matches = Server.GetInstance().GetConnectionPlayers()
-            .Where(x => prefix == null || x.Item2.StartsWith(prefix, StringComparison.InvariantCultureIgnoreCase))
-            .Distinct()
-            .ToArray();
+            var matches = Server.GetConnectionPlayers()
+                .Where(x => prefix == null || x.Item2.StartsWith(prefix, StringComparison.InvariantCultureIgnoreCase))
+                .Distinct()
+                .ToArray();
 
-        if (matches.Length == 0)
-            parameters.Stack.Push(new ForthDatum(Dbref.NOT_FOUND));
-        else if (matches.Length > 1)
-            parameters.Stack.Push(new ForthDatum(Dbref.AMBIGUOUS));
-        else
-            parameters.Stack.Push(new ForthDatum(matches[0].Item1));
+            if (matches.Length == 0)
+                parameters.Stack.Push(new ForthDatum(Dbref.NOT_FOUND));
+            else if (matches.Length > 1)
+                parameters.Stack.Push(new ForthDatum(Dbref.AMBIGUOUS));
+            else
+                parameters.Stack.Push(new ForthDatum(matches[0].Item1));
 
-        return ForthPrimativeResult.SUCCESS;
+            return ForthPrimativeResult.SUCCESS;
+        }
     }
 }

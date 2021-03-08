@@ -1,13 +1,16 @@
-public static class Trig
+namespace moo.common.Scripting.ForthPrimatives
 {
-    public static ForthPrimativeResult Execute(ForthPrimativeParameters parameters)
+    public static class Trig
     {
-        /*
-        TRIG ( -- d) 
+        public static ForthPrimativeResult Execute(ForthPrimativeParameters parameters)
+        {
+            /*
+            TRIG ( -- d) 
 
-        Returns the dbref of the original trigger.
-        */
-        parameters.Stack.Push(new ForthDatum(parameters.Trigger, 0));
-        return ForthPrimativeResult.SUCCESS;
+            Returns the dbref of the original trigger.
+            */
+            parameters.Stack.Push(new ForthDatum(parameters.Trigger, 0));
+            return ForthPrimativeResult.SUCCESS;
+        }
     }
 }

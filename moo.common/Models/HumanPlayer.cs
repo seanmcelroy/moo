@@ -1,15 +1,14 @@
-using System;
-using System.Text;
-using System.Threading.Tasks;
-
-public class HumanPlayer : Player
+namespace moo.common.Models
 {
-    public static HumanPlayer make(string name, Container location)
+    public class HumanPlayer : Player
     {
-        var player = ThingRepository.Make<HumanPlayer>();
-        player.name = name;
-        player.Home = location.id;
-        player.location = location.id;
-        return player;
+        public static HumanPlayer make(string name, Thing location)
+        {
+            var player = ThingRepository.Instance.Make<HumanPlayer>();
+            player.name = name;
+            player.Home = location.id;
+            player.Location = location.id;
+            return player;
+        }
     }
 }

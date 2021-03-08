@@ -1,30 +1,34 @@
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using moo.common.Models;
 
-public class ConsoleConnection : PlayerConnection
+namespace moo.common.Connections
 {
-    private readonly TextReader input;
-
-    private readonly TextWriter output;
-
-    private readonly Task consoleTask;
-
-    public ConsoleConnection(HumanPlayer player, TextReader input, TextWriter output, CancellationToken cancellationToken) : base(player)
+    public class ConsoleConnection : PlayerConnection
     {
-        this.input = input;
-        this.output = output;
+        private readonly TextReader input;
 
-        consoleTask = Task.Factory.StartNew(async () =>
-            {
-                await output.WriteLineAsync("Starting console interface");
-                do
+        private readonly TextWriter output;
+
+        private readonly Task consoleTask;
+
+        public ConsoleConnection(HumanPlayer player, TextReader input, TextWriter output, CancellationToken cancellationToken) : base(player)
+        {
+            this.input = input;
+            this.output = output;
+
+            consoleTask = Task.Factory.StartNew(async () =>
                 {
-                    var text = await input.ReadLineAsync();
-                    ReceiveInput(text + "\r\n");
-                } while (!cancellationToken.IsCancellationRequested);
-            }, cancellationToken);
-    }
+                    await output.WriteLineAsync("Starting console interface");
+                    do
+                    {
+                        var text = await input.ReadLineAsync();
+                        ReceiveInput(text + "\r\n");
+                    } while (!cancellationToken.IsCancellationRequested);
+                }, cancellationToken);
+        }
 
-    public override async Task sendOutput(string output) => await this.output.WriteLineAsync(output);
+        public override async Task sendOutput(string output) => await this.output.WriteLineAsync(output);
+    }
 }
