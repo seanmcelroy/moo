@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Dynamic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -232,7 +233,7 @@ namespace moo.common.Models
             return result;
         }
 
-        protected static IEnumerable<Tuple<object?, string>> DeserializePart(String serialized)
+        public static IEnumerable<Tuple<object?, string>> DeserializePart(String serialized)
         {
             if (serialized == null)
                 throw new System.ArgumentNullException(nameof(serialized));
@@ -244,8 +245,8 @@ namespace moo.common.Models
             }
             else if (serialized.StartsWith("<string/>"))
             {
-                var substring = serialized[8..]; // "<string/>".Length = 8
-                yield return Tuple.Create<object?, string>((string?)null, substring);
+                var substring = serialized[9..]; // "<string/>".Length = 9
+                yield return Tuple.Create<object?, string>(null, substring);
             }
             else if (serialized.StartsWith("<string>"))
             {
@@ -253,11 +254,11 @@ namespace moo.common.Models
                 var m = r.Match(serialized);
 
                 var substring = serialized[m.Length..];
-                yield return Tuple.Create<object?, string>(m.Groups["value"].Value, System.Web.HttpUtility.HtmlDecode(substring));
+                yield return Tuple.Create<object?, string>(System.Web.HttpUtility.HtmlDecode(m.Groups["value"].Value), substring);
             }
             else if (serialized.StartsWith("<lock/>"))
             {
-                var substring = serialized.Substring(7); // "<lock/>".Length
+                var substring = serialized[7..]; // "<lock/>".Length = 7
                 yield return Tuple.Create<object?, string>(Dbref.NOT_FOUND, substring);
             }
             else if (serialized.StartsWith("<lock>"))
@@ -307,6 +308,11 @@ namespace moo.common.Models
                 var substring = serialized[m.Length..];
                 yield return Tuple.Create<object?, string>(int.Parse(m.Groups["value"].Value), substring);
             }
+            else if (serialized.StartsWith("<uint16/>"))
+            {
+                var substring = serialized[9..]; // "<uint16/>".Length = 9
+                yield return Tuple.Create<object?, string>(null, substring);
+            }
             else if (serialized.StartsWith("<uint16>"))
             {
                 var r = new Regex(@"<uint16>(?<value>(?:.*?))<\/uint16>(?:.*?)", RegexOptions.Compiled);
@@ -314,6 +320,20 @@ namespace moo.common.Models
 
                 var substring = serialized[m.Length..];
                 yield return Tuple.Create<object?, string>(UInt16.Parse(m.Groups["value"].Value), substring);
+            }
+            else if (serialized.StartsWith("<date/>"))
+            {
+                var substring = serialized[7..]; // "<date/>".Length = 7
+                yield return Tuple.Create<object?, string>(null, substring);
+            }
+            else if (serialized.StartsWith("<date>"))
+            {
+                var r = new Regex(@"<date>(?<value>(?:.*?))<\/date>(?:.*?)", RegexOptions.Compiled);
+                var m = r.Match(serialized);
+
+                var substring = serialized[m.Length..];
+                var dto = DateTimeOffset.Parse(m.Groups["value"].Value, null, DateTimeStyles.RoundtripKind);
+                yield return Tuple.Create<object?, string>(dto.UtcDateTime, substring);
             }
             else if (serialized.StartsWith("<array>"))
             {
@@ -618,8 +638,6 @@ namespace moo.common.Models
                 return Serialize((int?)value);
             if (typeof(float?).IsAssignableFrom(valueType))
                 return Serialize((float?)value);
-            if (typeof(bool).IsAssignableFrom(valueType))
-                return Serialize((bool)value);
             if (typeof(Flag).IsAssignableFrom(valueType))
                 return Serialize((UInt16)value);
             if (typeof(DateTime?).IsAssignableFrom(valueType))
@@ -637,59 +655,19 @@ namespace moo.common.Models
             throw new System.InvalidOperationException($"Cannot handle object of type {value.GetType().Name}");
         }
 
-        public static string Serialize(Dbref value, byte dud)
-        {
-            return $"<dbref>{value}</dbref>";
-        }
+        public static string Serialize(Dbref value, byte dud) => $"<dbref>{value}</dbref>";
 
-        public static string Serialize(Lock value, byte dud)
-        {
-            return $"<lock>{value}</lock>";
-        }
+        public static string Serialize(Lock value, byte dud) => $"<lock>{value}</lock>";
 
-        public static string Serialize(string? value)
-        {
-            if (value == null)
-                return $"<string/>";
-            return $"<string>{System.Web.HttpUtility.HtmlEncode(value)}</string>";
-        }
+        public static string Serialize(string? value) => value == null ? $"<string/>" : $"<string>{System.Web.HttpUtility.HtmlEncode(value)}</string>";
 
-        public static string Serialize(float? value)
-        {
-            if (value == null)
-                return $"<float/>";
+        public static string Serialize(float? value) => value == null ? $"<float/>" : $"<float>{value.Value}</float>";
 
-            return $"<float>{value.Value}</float>";
-        }
+        public static string Serialize(int? value) => value == null ? $"<integer/>" : $"<integer>{value.Value}</integer>";
 
-        public static string Serialize(int? value)
-        {
-            if (value == null)
-                return $"<integer/>";
+        public static string Serialize(ushort? value) => value == null ? $"<uint16/>" : $"<uint16>{value.Value}</uint16>";
 
-            return $"<integer>{value.Value}</integer>";
-        }
-
-        public static string Serialize(bool value)
-        {
-            return value ? "<true/>" : "</false>";
-        }
-
-        public static string Serialize(UInt16? value)
-        {
-            if (value == null)
-                return $"<uint16/>";
-
-            return $"<uint16>{value.Value}</uint16>";
-        }
-
-        public static string Serialize(DateTime? value)
-        {
-            if (default == value || value == null)
-                return $"<date/>";
-
-            return $"<date>{value.Value:o}</date>";
-        }
+        public static string Serialize(DateTime? value) => default == value || value == null ? $"<date/>" : $"<date>{value.Value.ToUniversalTime():o}</date>";
 
         public string UnparseObject()
         {

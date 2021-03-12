@@ -362,5 +362,312 @@ namespace Tests
             Assert.AreEqual(0, local.Count);
             Assert.Pass();
         }
+
+        [Test]
+        [TestCase("dg")]
+        [TestCase("dog")]
+        [TestCase("doog")]
+        [TestCase("dorfg")]
+        [TestCase("DG")]
+        [TestCase("DOG")]
+        [TestCase("DoOg")]
+        public void SMatchWildDgMatch(string test)
+        {
+            /*
+            SMATCH ( s s2 -- i )
+
+            Takes a string s, and a string pattern, s2, to check against.
+            Returns true if the string fits the pattern.
+            This is case insensitive.
+             */
+            var stack = new Stack<ForthDatum>();
+            stack.Push(new ForthDatum(test));
+            stack.Push(new ForthDatum("d*g"));
+            var local = stack.ClonePreservingOrder();
+            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
+            var result = SMatch.Execute(parameters);
+            Assert.NotNull(result);
+            Assert.IsTrue(result.IsSuccessful);
+
+            Assert.AreEqual(1, local.Count);
+            var n1 = local.Pop();
+            Assert.AreEqual(ForthDatum.DatumType.Integer, n1.Type);
+            Assert.AreEqual(1, n1.Value);
+
+            Assert.AreEqual(0, local.Count);
+            Assert.Pass();
+        }
+
+        [Test]
+        [TestCase("dog")]
+        [TestCase("dig")]
+        [TestCase("dug")]
+        public void SMatchCharDgMatch(string test)
+        {
+            /*
+            SMATCH ( s s2 -- i )
+
+            Takes a string s, and a string pattern, s2, to check against.
+            Returns true if the string fits the pattern.
+            This is case insensitive.
+             */
+            var stack = new Stack<ForthDatum>();
+            stack.Push(new ForthDatum(test));
+            stack.Push(new ForthDatum("d?g"));
+            var local = stack.ClonePreservingOrder();
+            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
+            var result = SMatch.Execute(parameters);
+            Assert.NotNull(result);
+            Assert.IsTrue(result.IsSuccessful);
+
+            Assert.AreEqual(1, local.Count);
+            var n1 = local.Pop();
+            Assert.AreEqual(ForthDatum.DatumType.Integer, n1.Type);
+            Assert.AreEqual(1, n1.Value);
+
+            Assert.AreEqual(0, local.Count);
+            Assert.Pass();
+        }
+
+        [Test]
+        [TestCase("dg")]
+        [TestCase("drug")]
+        public void SMatchCharDgFail(string test)
+        {
+            /*
+            SMATCH ( s s2 -- i )
+
+            Takes a string s, and a string pattern, s2, to check against.
+            Returns true if the string fits the pattern.
+            This is case insensitive.
+             */
+            var stack = new Stack<ForthDatum>();
+            stack.Push(new ForthDatum(test));
+            stack.Push(new ForthDatum("d?g"));
+            var local = stack.ClonePreservingOrder();
+            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
+            var result = SMatch.Execute(parameters);
+            Assert.NotNull(result);
+            Assert.IsTrue(result.IsSuccessful);
+
+            Assert.AreEqual(1, local.Count);
+            var n1 = local.Pop();
+            Assert.AreEqual(ForthDatum.DatumType.Integer, n1.Type);
+            Assert.AreEqual(0, n1.Value);
+
+            Assert.AreEqual(0, local.Count);
+            Assert.Pass();
+        }
+
+        [Test]
+        [TestCase("Mr.")]
+        [TestCase("Ms.")]
+        public void SMatchCharBracketCharMatch(string test)
+        {
+            /*
+            SMATCH ( s s2 -- i )
+
+            Takes a string s, and a string pattern, s2, to check against.
+            Returns true if the string fits the pattern.
+            This is case insensitive.
+             */
+            var stack = new Stack<ForthDatum>();
+            stack.Push(new ForthDatum(test));
+            stack.Push(new ForthDatum("M[rs]."));
+            var local = stack.ClonePreservingOrder();
+            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
+            var result = SMatch.Execute(parameters);
+            Assert.NotNull(result);
+            Assert.IsTrue(result.IsSuccessful);
+
+            Assert.AreEqual(1, local.Count);
+            var n1 = local.Pop();
+            Assert.AreEqual(ForthDatum.DatumType.Integer, n1.Type);
+            Assert.AreEqual(1, n1.Value);
+
+            Assert.AreEqual(0, local.Count);
+            Assert.Pass();
+        }
+
+        [Test]
+        [TestCase("Ma")]
+        [TestCase("Mb")]
+        public void SMatchCharBracketRangeMatch(string test)
+        {
+            /*
+            SMATCH ( s s2 -- i )
+
+            Takes a string s, and a string pattern, s2, to check against.
+            Returns true if the string fits the pattern.
+            This is case insensitive.
+             */
+            var stack = new Stack<ForthDatum>();
+            stack.Push(new ForthDatum(test));
+            stack.Push(new ForthDatum("M[a-z]"));
+            var local = stack.ClonePreservingOrder();
+            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
+            var result = SMatch.Execute(parameters);
+            Assert.NotNull(result);
+            Assert.IsTrue(result.IsSuccessful);
+
+            Assert.AreEqual(1, local.Count);
+            var n1 = local.Pop();
+            Assert.AreEqual(ForthDatum.DatumType.Integer, n1.Type);
+            Assert.AreEqual(1, n1.Value);
+
+            Assert.AreEqual(0, local.Count);
+            Assert.Pass();
+        }
+
+        [Test]
+        [TestCase("Moira snores")]
+        [TestCase("Chupchup arghs.")]
+        public void SMatchCharWordMatch(string test)
+        {
+            /*
+            SMATCH ( s s2 -- i )
+
+            Takes a string s, and a string pattern, s2, to check against.
+            Returns true if the string fits the pattern.
+            This is case insensitive.
+             */
+            var stack = new Stack<ForthDatum>();
+            stack.Push(new ForthDatum(test));
+            stack.Push(new ForthDatum("{Moira|Chupchup}*"));
+            var local = stack.ClonePreservingOrder();
+            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
+            var result = SMatch.Execute(parameters);
+            Assert.NotNull(result);
+            Assert.IsTrue(result.IsSuccessful);
+
+            Assert.AreEqual(1, local.Count);
+            var n1 = local.Pop();
+            Assert.AreEqual(ForthDatum.DatumType.Integer, n1.Type);
+            Assert.AreEqual(1, n1.Value);
+
+            Assert.AreEqual(0, local.Count);
+            Assert.Pass();
+        }
+
+        [Test]
+        [TestCase("Moira' snores")]
+        public void SMatchCharWordFail(string test)
+        {
+            /*
+            SMATCH ( s s2 -- i )
+
+            Takes a string s, and a string pattern, s2, to check against.
+            Returns true if the string fits the pattern.
+            This is case insensitive.
+             */
+            var stack = new Stack<ForthDatum>();
+            stack.Push(new ForthDatum(test));
+            stack.Push(new ForthDatum("{Moira|Chupchup}*"));
+            var local = stack.ClonePreservingOrder();
+            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
+            var result = SMatch.Execute(parameters);
+            Assert.NotNull(result);
+            Assert.IsTrue(result.IsSuccessful);
+
+            Assert.AreEqual(1, local.Count);
+            var n1 = local.Pop();
+            Assert.AreEqual(ForthDatum.DatumType.Integer, n1.Type);
+            Assert.AreEqual(0, n1.Value);
+
+            Assert.AreEqual(0, local.Count);
+            Assert.Pass();
+        }
+
+        [Test]
+        [TestCase("Foxen tickles Wolfen?")]
+        [TestCase("Lynx tickle Wolfen?")]
+        [TestCase("Fiera tyckle Wolfen?")]
+        [TestCase("Fiero tyckle?")]
+        public void SMatchCharWordMatchComplex(string test)
+        {
+            /*
+            SMATCH ( s s2 -- i )
+
+            Takes a string s, and a string pattern, s2, to check against.
+            Returns true if the string fits the pattern.
+            This is case insensitive.
+             */
+            var stack = new Stack<ForthDatum>();
+            stack.Push(new ForthDatum(test));
+            stack.Push(new ForthDatum(@"{Foxen|Lynx|Fier[ao]} *t[iy]ckle*\?"));
+            var local = stack.ClonePreservingOrder();
+            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
+            var result = SMatch.Execute(parameters);
+            Assert.NotNull(result);
+            Assert.IsTrue(result.IsSuccessful);
+
+            Assert.AreEqual(1, local.Count);
+            var n1 = local.Pop();
+            Assert.AreEqual(ForthDatum.DatumType.Integer, n1.Type);
+            Assert.AreEqual(1, n1.Value);
+
+            Assert.AreEqual(0, local.Count);
+            Assert.Pass();
+        }
+
+        [Test]
+        [TestCase("Sean")]
+        [TestCase("Jacob")]
+        public void SMatchCharWordNegateMatch(string test)
+        {
+            /*
+            SMATCH ( s s2 -- i )
+
+            Takes a string s, and a string pattern, s2, to check against.
+            Returns true if the string fits the pattern.
+            This is case insensitive.
+             */
+            var stack = new Stack<ForthDatum>();
+            stack.Push(new ForthDatum(test));
+            stack.Push(new ForthDatum(@"{^Foxen|Fiera}"));
+            var local = stack.ClonePreservingOrder();
+            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
+            var result = SMatch.Execute(parameters);
+            Assert.NotNull(result);
+            Assert.IsTrue(result.IsSuccessful);
+
+            Assert.AreEqual(1, local.Count);
+            var n1 = local.Pop();
+            Assert.AreEqual(ForthDatum.DatumType.Integer, n1.Type);
+            Assert.AreEqual(1, n1.Value);
+
+            Assert.AreEqual(0, local.Count);
+            Assert.Pass();
+        }
+
+        [Test]
+        [TestCase("Foxen")]
+        [TestCase("Fiera")]
+        public void SMatchCharWordNegateFail(string test)
+        {
+            /*
+            SMATCH ( s s2 -- i )
+
+            Takes a string s, and a string pattern, s2, to check against.
+            Returns true if the string fits the pattern.
+            This is case insensitive.
+             */
+            var stack = new Stack<ForthDatum>();
+            stack.Push(new ForthDatum(test));
+            stack.Push(new ForthDatum(@"{^Foxen|Fiera}"));
+            var local = stack.ClonePreservingOrder();
+            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
+            var result = SMatch.Execute(parameters);
+            Assert.NotNull(result);
+            Assert.IsTrue(result.IsSuccessful);
+
+            Assert.AreEqual(1, local.Count);
+            var n1 = local.Pop();
+            Assert.AreEqual(ForthDatum.DatumType.Integer, n1.Type);
+            Assert.AreEqual(0, n1.Value);
+
+            Assert.AreEqual(0, local.Count);
+            Assert.Pass();
+        }
     }
 }

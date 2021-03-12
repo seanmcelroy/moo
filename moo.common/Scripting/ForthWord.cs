@@ -125,6 +125,7 @@ namespace moo.common.Scripting
             callTable.Add("strncmp", (p) => StrNCmp.Execute(p));
             callTable.Add("stringcmp", (p) => StringCmp.Execute(p));
             callTable.Add("stringpfx", (p) => StringPfx.Execute(p));
+            callTable.Add("smatch", (p) => SMatch.Execute(p));
             callTable.Add("instr", (p) => Instr.Execute(p));
             callTable.Add("rinstr", (p) => RInstr.Execute(p));
             callTable.Add("strcut", (p) => StrCut.Execute(p));
