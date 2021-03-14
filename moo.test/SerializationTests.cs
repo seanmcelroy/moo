@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using moo.common;
 using moo.common.Models;
@@ -19,6 +20,7 @@ namespace Tests
             var deserializedResultArray = deserializedResult.ToArray();
             Assert.NotNull(deserializedResultArray);
             Assert.AreEqual(1, deserializedResultArray.Length);
+            Assert.AreEqual(string.Empty, deserializedResultArray[0].Item2);
             var deserialized = deserializedResultArray[0].Item1;
             Assert.NotNull(deserialized);
             Assert.AreEqual(testFloat, deserialized);
@@ -35,6 +37,7 @@ namespace Tests
             var deserializedResultArray = deserializedResult.ToArray();
             Assert.NotNull(deserializedResultArray);
             Assert.AreEqual(1, deserializedResultArray.Length);
+            Assert.AreEqual(string.Empty, deserializedResultArray[0].Item2);
             var deserialized = deserializedResultArray[0].Item1;
             Assert.Null(deserialized);
             Assert.AreEqual(testFloat, deserialized);
@@ -51,6 +54,7 @@ namespace Tests
             var deserializedResultArray = deserializedResult.ToArray();
             Assert.NotNull(deserializedResultArray);
             Assert.AreEqual(1, deserializedResultArray.Length);
+            Assert.AreEqual(string.Empty, deserializedResultArray[0].Item2);
             var deserialized = deserializedResultArray[0].Item1;
             Assert.NotNull(deserialized);
             Assert.AreEqual(testInt, deserialized);
@@ -67,6 +71,7 @@ namespace Tests
             var deserializedResultArray = deserializedResult.ToArray();
             Assert.NotNull(deserializedResultArray);
             Assert.AreEqual(1, deserializedResultArray.Length);
+            Assert.AreEqual(string.Empty, deserializedResultArray[0].Item2);
             var deserialized = deserializedResultArray[0].Item1;
             Assert.Null(deserialized);
             Assert.AreEqual(testInt, deserialized);
@@ -83,6 +88,7 @@ namespace Tests
             var deserializedResultArray = deserializedResult.ToArray();
             Assert.NotNull(deserializedResultArray);
             Assert.AreEqual(1, deserializedResultArray.Length);
+            Assert.AreEqual(string.Empty, deserializedResultArray[0].Item2);
             var deserialized = deserializedResultArray[0].Item1;
             Assert.NotNull(deserialized);
             Assert.AreEqual(testUInt16, deserialized);
@@ -99,6 +105,7 @@ namespace Tests
             var deserializedResultArray = deserializedResult.ToArray();
             Assert.NotNull(deserializedResultArray);
             Assert.AreEqual(1, deserializedResultArray.Length);
+            Assert.AreEqual(string.Empty, deserializedResultArray[0].Item2);
             var deserialized = deserializedResultArray[0].Item1;
             Assert.Null(deserialized);
             Assert.AreEqual(testUInt16, deserialized);
@@ -115,6 +122,7 @@ namespace Tests
             var deserializedResultArray = deserializedResult.ToArray();
             Assert.NotNull(deserializedResultArray);
             Assert.AreEqual(1, deserializedResultArray.Length);
+            Assert.AreEqual(string.Empty, deserializedResultArray[0].Item2);
             var deserialized = deserializedResultArray[0].Item1;
             Assert.NotNull(deserialized);
             Assert.AreEqual(testDateTime, deserialized);
@@ -131,6 +139,7 @@ namespace Tests
             var deserializedResultArray = deserializedResult.ToArray();
             Assert.NotNull(deserializedResultArray);
             Assert.AreEqual(1, deserializedResultArray.Length);
+            Assert.AreEqual(string.Empty, deserializedResultArray[0].Item2);
             var deserialized = deserializedResultArray[0].Item1;
             Assert.Null(deserialized);
             Assert.AreEqual(testDateTime, deserialized);
@@ -147,6 +156,7 @@ namespace Tests
             var deserializedResultArray = deserializedResult.ToArray();
             Assert.NotNull(deserializedResultArray);
             Assert.AreEqual(1, deserializedResultArray.Length);
+            Assert.AreEqual(string.Empty, deserializedResultArray[0].Item2);
             var deserialized = deserializedResultArray[0].Item1;
             Assert.NotNull(deserialized);
             Assert.AreEqual(test, deserialized);
@@ -163,9 +173,79 @@ namespace Tests
             var deserializedResultArray = deserializedResult.ToArray();
             Assert.NotNull(deserializedResultArray);
             Assert.AreEqual(1, deserializedResultArray.Length);
+            Assert.AreEqual(string.Empty, deserializedResultArray[0].Item2);
             var deserialized = deserializedResultArray[0].Item1;
             Assert.Null(deserialized);
             Assert.AreEqual(test, deserialized);
+        }
+
+        [Test]
+        public void ReserializeArray()
+        {
+            var testArray = new string[] { "one", "two", "three" };
+            var serialized = Thing.Serialize(testArray);
+            Assert.NotNull(serialized);
+            var deserializedResult = Thing.DeserializePart(serialized);
+            Assert.NotNull(deserializedResult);
+            var deserializedResultArray = deserializedResult.ToArray();
+            Assert.NotNull(deserializedResultArray);
+            Assert.AreEqual(1, deserializedResultArray.Length);
+            Assert.AreEqual(string.Empty, deserializedResultArray[0].Item2);
+            var deserialized = deserializedResultArray[0].Item1;
+            Assert.NotNull(deserialized);
+            Assert.AreEqual(testArray, deserialized);
+        }
+
+        [Test]
+        public void ReserializeArrayNull()
+        {
+            string[]? testArray = null;
+            var serialized = Thing.Serialize(testArray);
+            Assert.NotNull(serialized);
+            var deserializedResult = Thing.DeserializePart(serialized);
+            Assert.NotNull(deserializedResult);
+            var deserializedResultArray = deserializedResult.ToArray();
+            Assert.NotNull(deserializedResultArray);
+            Assert.AreEqual(1, deserializedResultArray.Length);
+            Assert.AreEqual(string.Empty, deserializedResultArray[0].Item2);
+            var deserialized = deserializedResultArray[0].Item1;
+            Assert.Null(deserialized);
+            Assert.AreEqual(testArray, deserialized);
+        }
+
+        [Test]
+        public void ReserializeDictionary()
+        {
+            var testDict = new Dictionary<string, object?> {
+                 { "string", "STRING" }
+            };
+            var serialized = Thing.Serialize(testDict);
+            Assert.NotNull(serialized);
+            var deserializedResult = Thing.DeserializePart(serialized);
+            Assert.NotNull(deserializedResult);
+            var deserializedResultArray = deserializedResult.ToArray();
+            Assert.NotNull(deserializedResultArray);
+            Assert.AreEqual(1, deserializedResultArray.Length);
+            Assert.AreEqual(string.Empty, deserializedResultArray[0].Item2);
+            var deserialized = deserializedResultArray[0].Item1;
+            Assert.NotNull(deserialized);
+            Assert.AreEqual(testDict, deserialized);
+        }
+
+        [Test]
+        public void ReserializeDictionaryNull()
+        {
+            Dictionary<string, object?>? testDict = null;
+            var serialized = Thing.Serialize(testDict);
+            Assert.NotNull(serialized);
+            var deserializedResult = Thing.DeserializePart(serialized);
+            Assert.NotNull(deserializedResult);
+            var deserializedResultArray = deserializedResult.ToArray();
+            Assert.NotNull(deserializedResultArray);
+            Assert.AreEqual(1, deserializedResultArray.Length);
+            Assert.AreEqual(string.Empty, deserializedResultArray[0].Item2);
+            var deserialized = deserializedResultArray[0].Item1;
+            Assert.Null(deserialized);
         }
 
         [Test]
@@ -179,6 +259,7 @@ namespace Tests
             var deserializedResultArray = deserializedResult.ToArray();
             Assert.NotNull(deserializedResultArray);
             Assert.AreEqual(1, deserializedResultArray.Length);
+            Assert.AreEqual(string.Empty, deserializedResultArray[0].Item2);
             var deserialized = deserializedResultArray[0].Item1;
             Assert.NotNull(deserialized);
             Assert.AreEqual(testString, deserialized);
@@ -195,6 +276,7 @@ namespace Tests
             var deserializedResultArray = deserializedResult.ToArray();
             Assert.NotNull(deserializedResultArray);
             Assert.AreEqual(1, deserializedResultArray.Length);
+            Assert.AreEqual(string.Empty, deserializedResultArray[0].Item2);
             var deserialized = deserializedResultArray[0].Item1;
             Assert.Null(deserialized);
             Assert.AreEqual(testString, deserialized);
@@ -211,13 +293,14 @@ namespace Tests
             var deserializedResultArray = deserializedResult.ToArray();
             Assert.NotNull(deserializedResultArray);
             Assert.AreEqual(1, deserializedResultArray.Length);
+            Assert.AreEqual(string.Empty, deserializedResultArray[0].Item2);
             var deserialized = deserializedResultArray[0].Item1;
             Assert.NotNull(deserialized);
             Assert.AreEqual(testString, deserialized);
         }
 
         [Test]
-        public void ReserializePropertyDirectory()
+        public void ReserializePropertyDirectory0Level()
         {
             var propdir = new PropertyDirectory {
                 {"prop1", "STRING"},
@@ -225,17 +308,41 @@ namespace Tests
             };
             var serialized = Thing.Serialize(propdir);
             Assert.NotNull(serialized);
-            var deserializedResult = Thing.DeserializePart(serialized);
+            var deserializedResult = Thing.DeserializePart(serialized).ToArray();
             Assert.NotNull(deserializedResult);
             var deserializedResultArray = deserializedResult.ToArray();
             Assert.NotNull(deserializedResultArray);
             Assert.AreEqual(1, deserializedResultArray.Length);
+            Assert.AreEqual(string.Empty, deserializedResultArray[0].Item2);
             var deserialized = deserializedResultArray[0].Item1;
             Assert.NotNull(deserialized);
             Assert.AreEqual(propdir, deserialized);
         }
 
+        [Test]
+        public void ReserializePropertyDirectory1Level()
+        {
+            var propdir = new PropertyDirectory
+            {
+                { "level1/prop1", "STRING" },
+                { "level1/prop2", 123 }
+            };
+            Assert.AreEqual(1, propdir.Count);
 
+            var serialized = Thing.Serialize(propdir);
+            Assert.NotNull(serialized);
+            var deserializedResult = Thing.DeserializePart(serialized).ToArray();
+            Assert.NotNull(deserializedResult);
+            var deserializedResultArray = deserializedResult.ToArray();
+            Assert.NotNull(deserializedResultArray);
+            Assert.AreEqual(1, deserializedResultArray.Length);
+            Assert.AreEqual(string.Empty, deserializedResultArray[0].Item2);
+            var deserialized = deserializedResultArray[0].Item1;
+            Assert.NotNull(deserialized);
+            Assert.IsInstanceOf<PropertyDirectory>(deserialized);
+            Assert.AreEqual(propdir.ElementAt(0), ((PropertyDirectory)deserialized).ElementAt(0));
+            Assert.AreEqual(propdir, deserialized);
+        }
 
         [Test]
         public void SerializeDeserializeThing()
@@ -271,8 +378,6 @@ namespace Tests
             Assert.NotNull(reserialized);
 
             Assert.AreEqual(serialized, reserialized);
-            Assert.Pass();
         }
-
     }
 }

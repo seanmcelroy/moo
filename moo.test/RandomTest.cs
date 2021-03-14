@@ -25,8 +25,6 @@ namespace Tests
             Assert.Greater(n.UnwrapInt(), 0);
 
             Assert.AreEqual(0, local.Count);
-
-            Assert.Pass();
         }
 
         [Test]
@@ -45,8 +43,6 @@ namespace Tests
             Assert.Greater(n.UnwrapInt(), 0);
 
             Assert.AreEqual(0, local.Count);
-
-            Assert.Pass();
         }
 
         [Test]
@@ -65,8 +61,6 @@ namespace Tests
             Assert.NotNull(seed.Value);
 
             Assert.AreEqual(0, local.Count);
-
-            Assert.Pass();
         }
 
         [Test]
@@ -108,8 +102,6 @@ namespace Tests
             var getRandom3Value = getRandom3Stack.Pop().UnwrapInt();
 
             Assert.AreNotEqual(getRandom2Value, getRandom3Value, "Subsequent random numbers should not be the same");
-
-            Assert.Pass();
         }
     }
 }

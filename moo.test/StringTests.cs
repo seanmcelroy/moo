@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using moo.common;
 using moo.common.Models;
 using moo.common.Scripting;
 using moo.common.Scripting.ForthPrimatives;
@@ -8,6 +9,79 @@ namespace Tests
 {
     public class StringTests
     {
+        [Test]
+        public void NextClosingTagSimple()
+        {
+            var test = "<html></html>";
+            var nextClosing = test.FindIndexOfClosingTag("html");
+            Assert.AreEqual(6, nextClosing);
+        }
+
+        [Test]
+        public void NextClosingTagNexted()
+        {
+            var test = "<html><html></html></html>";
+            var nextClosing = test.FindIndexOfClosingTag("html");
+            Assert.AreEqual(19, nextClosing);
+        }
+
+        [Test]
+        public void NextClosingTagUnclosed()
+        {
+            var test = "<html><html>";
+            var nextClosing = test.FindIndexOfClosingTag("html");
+            Assert.AreEqual(-1, nextClosing);
+        }
+
+        [Test]
+        public void FindInnerTextSimple()
+        {
+            var test = "<html>TEXT</html>";
+            var inner = test.FindInnerXml("html");
+            Assert.AreEqual("TEXT", inner.inner);
+            Assert.AreEqual(inner.endOfClosingTag, test.Length);
+        }
+
+        [Test]
+        public void FindInnerTextDeep()
+        {
+            var test = "<html><title>This is a title</title><body><h2>Header</h2></body></html>";
+            var inner = test.FindInnerXml("h2");
+            Assert.AreEqual("Header", inner.inner);
+            Assert.AreEqual(57, inner.endOfClosingTag);
+        }
+
+        [Test]
+        public void FindInnerTextDeepMultiple()
+        {
+            var test = "<html><title>This is a title</title><body><h2>First</h2><h2>Second</h2></body></html>";
+            var inner = test.FindInnerXml("h2");
+            Assert.AreEqual("First", inner.inner);
+            Assert.AreEqual(56, inner.endOfClosingTag);
+        }
+
+        [Test]
+        public void FindInnerTextDeepPractical()
+        {
+            var test = "<propdir><key>prop1</key><value><prop><name>level1/prop1</name><string>STRING</string></prop></value><key>prop2</key><value><prop><name>level1/prop2</name><integer>123</integer></prop></value></propdir>";
+            var (inner, endOfClosingTag) = test.FindInnerXml("propdir");
+            Assert.AreEqual(test.Length, endOfClosingTag);
+            Assert.AreEqual("<key>prop1</key><value><prop><name>level1/prop1</name><string>STRING</string></prop></value><key>prop2</key><value><prop><name>level1/prop2</name><integer>123</integer></prop></value>", inner);
+
+            var key1 = test.FindInnerXml("key");
+            Assert.AreEqual("prop1", key1.inner);
+            Assert.AreEqual(25, key1.endOfClosingTag);
+        }
+
+        [Test]
+        public void FindInnerTextDeepPractical2()
+        {
+            var test = "<propdir><key>deep</key><value><prop><name>deep</name><propdir><key>string</key><value><prop><name>string</name><string>STRING TEST &lt; WOO &gt;</string></prop></value><key>int</key><value><prop><name>int</name><float>321</float></prop></value><key>dbref</key><value><prop><name>dbref</name><dbref>#2468G</dbref></prop></value><key>float</key><value><prop><name>float</name><float>12.34</float></prop></value></propdir>";
+            var (inner, endOfClosingTag) = test.FindInnerXml("propdir");
+            Assert.AreEqual(test.Length, endOfClosingTag);
+            Assert.AreEqual("<key>deep</key><value><prop><name>deep</name><propdir><key>string</key><value><prop><name>string</name><string>STRING TEST &lt; WOO &gt;</string></prop></value><key>int</key><value><prop><name>int</name><float>321</float></prop></value><key>dbref</key><value><prop><name>dbref</name><dbref>#2468G</dbref></prop></value><key>float</key><value><prop><name>float</name><float>12.34</float></prop></value>", inner);
+        }
+
         [Test]
         public void StripLeadingSpace()
         {
@@ -30,7 +104,6 @@ namespace Tests
             Assert.AreEqual(ForthDatum.DatumType.String, res.Type);
             Assert.AreEqual("abcd ", res.Value);
             Assert.AreEqual(0, local.Count);
-            Assert.Pass();
         }
 
         [Test]
@@ -55,7 +128,6 @@ namespace Tests
             Assert.AreEqual(ForthDatum.DatumType.String, res.Type);
             Assert.AreEqual(" abcd", res.Value);
             Assert.AreEqual(0, local.Count);
-            Assert.Pass();
         }
 
         [Test]
@@ -85,7 +157,6 @@ namespace Tests
             Assert.AreEqual("abcdefg", s1.Value);
 
             Assert.AreEqual(0, local.Count);
-            Assert.Pass();
         }
 
         [Test]
@@ -115,7 +186,6 @@ namespace Tests
             Assert.AreEqual("abc", s1.Value);
 
             Assert.AreEqual(0, local.Count);
-            Assert.Pass();
         }
 
         [Test]
@@ -145,7 +215,6 @@ namespace Tests
             Assert.AreEqual("abc", s1.Value);
 
             Assert.AreEqual(0, local.Count);
-            Assert.Pass();
         }
 
 
@@ -176,7 +245,6 @@ namespace Tests
             Assert.AreEqual("abcdefg", s1.Value);
 
             Assert.AreEqual(0, local.Count);
-            Assert.Pass();
         }
 
         [Test]
@@ -206,7 +274,6 @@ namespace Tests
             Assert.AreEqual("abc", s1.Value);
 
             Assert.AreEqual(0, local.Count);
-            Assert.Pass();
         }
 
         [Test]
@@ -236,7 +303,6 @@ namespace Tests
             Assert.AreEqual("abcdefg", s1.Value);
 
             Assert.AreEqual(0, local.Count);
-            Assert.Pass();
         }
 
         [Test]
@@ -268,7 +334,6 @@ namespace Tests
             Assert.AreEqual("Foo", s1.Value);
 
             Assert.AreEqual(0, local.Count);
-            Assert.Pass();
         }
 
         [Test]
@@ -300,7 +365,6 @@ namespace Tests
             Assert.AreEqual("", s1.Value);
 
             Assert.AreEqual(0, local.Count);
-            Assert.Pass();
         }
 
         [Test]
@@ -332,7 +396,6 @@ namespace Tests
             Assert.AreEqual("Foobar", s1.Value);
 
             Assert.AreEqual(0, local.Count);
-            Assert.Pass();
         }
 
         [Test]
@@ -360,7 +423,7 @@ namespace Tests
             Assert.AreEqual("est", s1.Value);
 
             Assert.AreEqual(0, local.Count);
-            Assert.Pass();
+
         }
 
         [Test]
@@ -395,7 +458,7 @@ namespace Tests
             Assert.AreEqual(1, n1.Value);
 
             Assert.AreEqual(0, local.Count);
-            Assert.Pass();
+
         }
 
         [Test]
@@ -426,7 +489,7 @@ namespace Tests
             Assert.AreEqual(1, n1.Value);
 
             Assert.AreEqual(0, local.Count);
-            Assert.Pass();
+
         }
 
         [Test]
@@ -456,7 +519,7 @@ namespace Tests
             Assert.AreEqual(0, n1.Value);
 
             Assert.AreEqual(0, local.Count);
-            Assert.Pass();
+
         }
 
         [Test]
@@ -486,7 +549,7 @@ namespace Tests
             Assert.AreEqual(1, n1.Value);
 
             Assert.AreEqual(0, local.Count);
-            Assert.Pass();
+
         }
 
         [Test]
@@ -516,7 +579,7 @@ namespace Tests
             Assert.AreEqual(1, n1.Value);
 
             Assert.AreEqual(0, local.Count);
-            Assert.Pass();
+
         }
 
         [Test]
@@ -546,7 +609,7 @@ namespace Tests
             Assert.AreEqual(1, n1.Value);
 
             Assert.AreEqual(0, local.Count);
-            Assert.Pass();
+
         }
 
         [Test]
@@ -575,7 +638,7 @@ namespace Tests
             Assert.AreEqual(0, n1.Value);
 
             Assert.AreEqual(0, local.Count);
-            Assert.Pass();
+
         }
 
         [Test]
@@ -607,7 +670,7 @@ namespace Tests
             Assert.AreEqual(1, n1.Value);
 
             Assert.AreEqual(0, local.Count);
-            Assert.Pass();
+
         }
 
         [Test]
@@ -637,7 +700,7 @@ namespace Tests
             Assert.AreEqual(1, n1.Value);
 
             Assert.AreEqual(0, local.Count);
-            Assert.Pass();
+
         }
 
         [Test]
@@ -667,7 +730,6 @@ namespace Tests
             Assert.AreEqual(0, n1.Value);
 
             Assert.AreEqual(0, local.Count);
-            Assert.Pass();
         }
     }
 }

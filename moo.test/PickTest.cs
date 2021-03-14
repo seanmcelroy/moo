@@ -32,8 +32,6 @@ namespace Tests
             Assert.AreEqual(ForthDatum.DatumType.String, x2.Type);
             Assert.AreEqual("x", x2.Value);
             Assert.AreEqual(x1, x2);
-
-            Assert.Pass();
         }
 
         [Test]
@@ -64,8 +62,6 @@ namespace Tests
             Assert.AreEqual(ForthDatum.DatumType.String, x2.Type);
             Assert.AreEqual("x", x2.Value);
             Assert.AreEqual(x1, x2);
-
-            Assert.Pass();
         }
 
         [Test]
@@ -106,8 +102,6 @@ namespace Tests
             var a = local.Pop();
             Assert.AreEqual(ForthDatum.DatumType.String, a.Type);
             Assert.AreEqual("a", a.Value);
-
-            Assert.Pass();
         }
     }
 }

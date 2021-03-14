@@ -27,8 +27,6 @@ namespace Tests
             Assert.AreEqual(123, n.Value);
 
             Assert.AreEqual(0, local.Count);
-
-            Assert.Pass();
         }
 
         [Test]
@@ -49,8 +47,6 @@ namespace Tests
             Assert.AreEqual(113, n.Value);
 
             Assert.AreEqual(0, local.Count);
-
-            Assert.Pass();
         }
 
         [Test]
@@ -71,8 +67,6 @@ namespace Tests
             Assert.AreEqual(10, n.Value);
 
             Assert.AreEqual(0, local.Count);
-
-            Assert.Pass();
         }
 
         [Test]
@@ -93,8 +87,6 @@ namespace Tests
             Assert.AreEqual(196, n.Value);
 
             Assert.AreEqual(0, local.Count);
-
-            Assert.Pass();
         }
 
         [Test]
@@ -115,8 +107,6 @@ namespace Tests
             Assert.AreEqual(12, n.Value);
 
             Assert.AreEqual(0, local.Count);
-
-            Assert.Pass();
         }
 
         [Test]
@@ -137,8 +127,6 @@ namespace Tests
             Assert.AreEqual(0, n.Value);
 
             Assert.AreEqual(0, local.Count);
-
-            Assert.Pass();
         }
 
         [Test]
@@ -159,8 +147,6 @@ namespace Tests
             Assert.AreEqual(0, n.Value);
 
             Assert.AreEqual(0, local.Count);
-
-            Assert.Pass();
         }
 
         [Test]
@@ -181,8 +167,6 @@ namespace Tests
             Assert.AreEqual(49, n.Value);
 
             Assert.AreEqual(0, local.Count);
-
-            Assert.Pass();
         }
     }
 }

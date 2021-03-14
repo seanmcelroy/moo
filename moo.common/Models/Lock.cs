@@ -10,10 +10,7 @@ namespace moo.common.Models
     {
         private string raw;
 
-        public Lock(string raw)
-        {
-            this.raw = raw;
-        }
+        public Lock(string raw) => this.raw = raw;
 
         public static bool TryParse(string s, out Lock result)
         {
@@ -24,10 +21,7 @@ namespace moo.common.Models
             return true;
         }
 
-        public override int GetHashCode()
-        {
-            return raw.GetHashCode();
-        }
+        public override int GetHashCode() => raw.GetHashCode();
 
         public bool Equals(Lock obj) => string.Equals(obj.raw, this.raw, StringComparison.Ordinal);
 
@@ -41,14 +35,8 @@ namespace moo.common.Models
 
         public override string ToString() => raw;
 
-        public static bool operator ==(Lock left, Lock right)
-        {
-            return left.Equals(right);
-        }
+        public static bool operator ==(Lock left, Lock right) => left.Equals(right);
 
-        public static bool operator !=(Lock left, Lock right)
-        {
-            return !(left == right);
-        }
+        public static bool operator !=(Lock left, Lock right) => !(left == right);
     }
 }

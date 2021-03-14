@@ -67,8 +67,6 @@ namespace Tests
                 Assert.AreEqual(DatumType.String, pop.Type);
                 Assert.AreEqual("propValue1", pop.Value);
             }
-
-            Assert.Pass();
         }
 
         [Test]
@@ -124,8 +122,6 @@ namespace Tests
                 Assert.AreEqual(DatumType.String, pop.Type);
                 Assert.AreEqual("propValue1", pop.Value);
             }
-
-            Assert.Pass();
         }
 
         [Test]
@@ -158,8 +154,6 @@ namespace Tests
                 Assert.AreEqual(DatumType.String, pop.Type);
                 Assert.AreEqual("", pop.Value);
             }
-
-            Assert.Pass();
         }
     }
 }

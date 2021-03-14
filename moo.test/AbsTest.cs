@@ -26,8 +26,6 @@ namespace Tests
             Assert.AreEqual(42, n.Value);
 
             Assert.AreEqual(0, local.Count);
-
-            Assert.Pass();
         }
 
         [Test]
@@ -47,8 +45,6 @@ namespace Tests
             Assert.AreEqual(42, n.Value);
 
             Assert.AreEqual(0, local.Count);
-
-            Assert.Pass();
         }
     }
 }

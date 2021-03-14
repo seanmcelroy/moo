@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using moo.common.Scripting;
 using static moo.common.Models.Property;
@@ -23,7 +24,7 @@ namespace moo.common.Models
             return sb.ToString();
         }
 
-        public Property Add(string name, string value)
+        public void AddInPath(string name, Property property)
         {
             if (name.Contains('/'))
             {
@@ -45,71 +46,28 @@ namespace moo.common.Models
                     }
 
                     var remainingTitle = name[(propdirTitle.Length + 1)..];
-                    return subdir.Add(remainingTitle, value);
+                    subdir.AddInPath(remainingTitle, property);
+                    return;
                 }
             }
 
-            var newProp = new Property(name, value);
             if (this.ContainsKey(name))
-                this[name] = newProp;
+                this[name] = property;
             else
-                this.Add(name, newProp);
-            return newProp;
+                this.Add(name, property);
         }
 
-        public void Add(string name, int value)
-        {
-            this.Add(name, new Property(name, value));
-        }
+        public void Add(string name, string value) => AddInPath(name, new Property(name, value));
 
-        public void Add(string name, Lock value)
-        {
-            this.Add(name, new Property(name, value));
-        }
+        public void Add(string name, int value) => AddInPath(name, new Property(name, value));
 
-        public Property Add(string name, Dbref value)
-        {
-            if (name.Contains('/'))
-            {
-                var parts = name.Split('/');
-                if (parts.Length > 1 && parts[0].Length > 0 && parts[1].Length > 1)
-                {
-                    var propdirTitle = parts[0];
-                    PropertyDirectory subdir;
-                    if (this.ContainsKey(propdirTitle))
-                    {
-                        subdir = (PropertyDirectory)this[propdirTitle].directory!;
-                        if (subdir == null)
-                            throw new System.InvalidOperationException();
-                    }
-                    else
-                    {
-                        subdir = new PropertyDirectory();
-                        this.Add(propdirTitle, subdir);
-                    }
+        public void Add(string name, Lock value) => AddInPath(name, new Property(name, value));
 
-                    var remainingTitle = name[(propdirTitle.Length + 1)..];
-                    return subdir.Add(remainingTitle, value);
-                }
-            }
+        public void Add(string name, Dbref value) => AddInPath(name, new Property(name, value));
 
-            var newProp = new Property(name, value);
-            if (this.ContainsKey(name))
-                this[name] = newProp;
-            else
-                this.Add(name, newProp);
-            return newProp;
-        }
+        public void Add(string name, float value) => AddInPath(name, new Property(name, value));
 
-        public void Add(string name, float value)
-        {
-            this.Add(name, new Property(name, value));
-        }
-
-        public void Add(string name, PropertyDirectory value)
-        {
-            this.Add(name, new Property(name, value));
-        }
+        public void Add(string name, PropertyDirectory value) => this.Add(name, new Property(name, value));
 
         public Property GetPropertyPathValue(string path)
         {
@@ -314,5 +272,27 @@ namespace moo.common.Models
                     throw new System.InvalidOperationException($"Unable to handle property type: {value.Type}");
             }
         }
+
+        public override bool Equals(object? obj)
+        {
+            if (!(obj is PropertyDirectory))
+                return false;
+
+            var pd = (PropertyDirectory)obj;
+            if (pd.Keys.Count != Keys.Count)
+                return false;
+
+            foreach (var pdk in pd.Keys)
+                if (!this.ContainsKey(pdk) || pd[pdk].GetHashCode() != this[pdk].GetHashCode())
+                    return false;
+
+            return true;
+        }
+
+        public static bool operator ==(PropertyDirectory left, PropertyDirectory right) => left.Equals(right);
+
+        public static bool operator !=(PropertyDirectory left, PropertyDirectory right) => !(left == right);
+
+        public override int GetHashCode() => this.Select(x => x.GetHashCode()).Aggregate((c, n) => c ^ n);
     }
 }

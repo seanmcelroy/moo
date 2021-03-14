@@ -48,8 +48,6 @@ namespace Tests
             Assert.AreEqual("b", b.Value);
 
             Assert.AreEqual(0, local.Count);
-
-            Assert.Pass();
         }
 
         [Test]
@@ -92,8 +90,6 @@ namespace Tests
             Assert.AreEqual("d", d.Value);
 
             Assert.AreEqual(0, local.Count);
-
-            Assert.Pass();
         }
 
         [Test]
@@ -129,10 +125,6 @@ namespace Tests
             Assert.AreEqual("y", y.Value);
 
             Assert.AreEqual(0, local.Count);
-
-            Assert.Pass();
         }
-
-
     }
 }

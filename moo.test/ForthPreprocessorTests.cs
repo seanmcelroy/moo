@@ -19,8 +19,6 @@ namespace Tests
             var prep = await ForthPreprocessor.Preprocess(null, script, script.programText, CancellationToken.None);
             Assert.IsTrue(prep.IsSuccessful);
             Assert.AreEqual("BAR\r\n", prep.ProcessedProgram);
-
-            Assert.Pass();
         }
 
         [Test]
@@ -34,8 +32,6 @@ namespace Tests
             var prep = await ForthPreprocessor.Preprocess(null, script, script.programText, CancellationToken.None);
             Assert.IsTrue(prep.IsSuccessful);
             Assert.AreEqual("3 push\r\n", prep.ProcessedProgram);
-
-            Assert.Pass();
         }
 
         [Test]
@@ -49,8 +45,6 @@ namespace Tests
             var prep = await ForthPreprocessor.Preprocess(null, script, script.programText, CancellationToken.None);
             Assert.IsTrue(prep.IsSuccessful);
             Assert.AreEqual("3 push\r\n", prep.ProcessedProgram);
-
-            Assert.Pass();
         }
 
         [Test]
@@ -64,8 +58,6 @@ namespace Tests
             var prep = await ForthPreprocessor.Preprocess(null, script, script.programText, CancellationToken.None);
             Assert.IsTrue(prep.IsSuccessful);
             Assert.AreEqual("3 3\r\n", prep.ProcessedProgram);
-
-            Assert.Pass();
         }
 
         [Test]
@@ -79,8 +71,6 @@ namespace Tests
             var prep = await ForthPreprocessor.Preprocess(null, script, script.programText, CancellationToken.None);
             Assert.IsTrue(prep.IsSuccessful);
             Assert.AreEqual("2 2\r\n", prep.ProcessedProgram);
-
-            Assert.Pass();
         }
 
         [Test]
@@ -94,8 +84,6 @@ namespace Tests
             var prep = await ForthPreprocessor.Preprocess(null, script, script.programText, CancellationToken.None);
             Assert.IsTrue(prep.IsSuccessful);
             Assert.AreEqual("", prep.ProcessedProgram);
-
-            Assert.Pass();
         }
 
         [Test]
@@ -109,8 +97,6 @@ namespace Tests
             var prep = await ForthPreprocessor.Preprocess(null, script, script.programText, CancellationToken.None);
             Assert.IsTrue(prep.IsSuccessful);
             Assert.AreEqual("3 3", prep.ProcessedProgram.TrimEnd(new char[] { '\r', '\n' }));
-
-            Assert.Pass();
         }
 
         [Test]
@@ -124,8 +110,6 @@ namespace Tests
             var prep = await ForthPreprocessor.Preprocess(null, script, script.programText, CancellationToken.None);
             Assert.IsTrue(prep.IsSuccessful);
             Assert.AreEqual("2 2", prep.ProcessedProgram.TrimEnd(new char[] { '\r', '\n' }));
-
-            Assert.Pass();
         }
 
         [Test]
@@ -139,8 +123,6 @@ namespace Tests
             var prep = await ForthPreprocessor.Preprocess(null, script, script.programText, CancellationToken.None);
             Assert.IsTrue(prep.IsSuccessful);
             Assert.AreEqual("4 4", prep.ProcessedProgram.TrimEnd(new char[] { '\r', '\n' }));
-
-            Assert.Pass();
         }
 
         [Test]
@@ -154,8 +136,6 @@ namespace Tests
             var prep = await ForthPreprocessor.Preprocess(null, script, script.programText, CancellationToken.None);
             Assert.IsTrue(prep.IsSuccessful);
             Assert.AreEqual("5 5", prep.ProcessedProgram.TrimEnd(new char[] { '\r', '\n' }));
-
-            Assert.Pass();
         }
     }
 }

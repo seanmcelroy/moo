@@ -46,8 +46,6 @@ namespace Tests
             Assert.AreEqual("propName", prop.Name);
             Assert.AreEqual(PropertyType.String, prop.Type);
             Assert.AreEqual("propValue", prop.Value);
-
-            Assert.Pass();
         }
 
         [Test]
@@ -85,8 +83,6 @@ namespace Tests
             Assert.AreEqual("propName", prop.Name);
             Assert.AreEqual(PropertyType.Integer, prop.Type);
             Assert.AreEqual(123, prop.Value);
-
-            Assert.Pass();
         }
 
         [Test]
@@ -146,8 +142,6 @@ namespace Tests
                 Assert.AreEqual(PropertyType.String, prop.Type);
                 Assert.AreEqual("propValue2", prop.Value);
             }
-
-            Assert.Pass();
         }
     }
 }
