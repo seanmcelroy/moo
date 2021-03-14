@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Threading;
 using System.Threading.Tasks;
 using moo.common.Connections;
@@ -15,7 +16,7 @@ namespace moo.common.Scripting
 
         public readonly Stack<ForthDatum> Stack;
 
-        public readonly Dictionary<string, ForthVariable>? Variables;
+        private readonly Dictionary<string, ForthVariable>? variables;
 
         public readonly PlayerConnection? Connection;
 
@@ -26,6 +27,8 @@ namespace moo.common.Scripting
         public readonly CancellationToken CancellationToken;
 
         public Dbref? LastListItem => lastListItem;
+
+        public ImmutableDictionary<string, ForthVariable>? Variables => variables?.ToImmutableDictionary();
 
         public ForthPrimativeParameters(
             ForthProcess? process,
@@ -39,14 +42,14 @@ namespace moo.common.Scripting
             Dbref? lastListItem,
             CancellationToken cancellationToken)
         {
-            this.Process = process;
-            this.Stack = stack;
-            this.Variables = variables;
-            this.Connection = connection;
-            this.Trigger = trigger;
-            this.Command = command;
+            Process = process;
+            Stack = stack;
+            this.variables = variables;
+            Connection = connection;
+            Trigger = trigger;
+            Command = command;
             this.lastListItem = lastListItem;
-            this.CancellationToken = cancellationToken;
+            CancellationToken = cancellationToken;
         }
     }
 }

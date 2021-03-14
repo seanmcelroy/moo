@@ -88,6 +88,21 @@ namespace moo.common
             return thing.isSuccess && thing.value != null && thing.value.id != NOT_FOUND;
         }
 
+        public async Task<RepositoryGetResult<Player>> FindOnePlayerByName(string name, CancellationToken cancellationToken)
+        {
+            // Check cache first.
+            foreach (var cached in _cache)
+            {
+                if (cached.Key.Type == DbrefObjectType.Player && string.Compare(name, cached.Value.name, StringComparison.OrdinalIgnoreCase) == 0)
+                {
+                    var player = (Player)cached.Value;
+                    return new RepositoryGetResult<Player>(player, $"{player.id} (find={name}) found in cache");
+                }
+            }
+
+            return await LoadPlayerFromDatabaseByNameAsync(name, cancellationToken);
+        }
+
         public async Task<RepositoryGetResult<Thing>> GetAsync(Dbref id, CancellationToken cancellationToken)
         {
             bool isSuccess;
@@ -192,6 +207,34 @@ namespace moo.common
             }
 
             return new RepositoryGetResult<T>(x, $"{id} retrieved from storage");
+        }
+
+        public async Task<RepositoryGetResult<Player>> LoadPlayerFromDatabaseByNameAsync(string name, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                return new RepositoryGetResult<Player>($"Invalid name: '{name}'");
+
+            if (storageProvider == null)
+                return new RepositoryGetResult<Player>("No storage provider is loaded");
+
+            var providerResult = await storageProvider.LoadPlayerByNameAsync(name, cancellationToken);
+            if (!providerResult.isSuccess || providerResult.type == null)
+                return new RepositoryGetResult<Player>($"Player '{name}' not found in storage provider");
+
+            // Deserialize
+            var player = Thing.Deserialize<HumanPlayer>(providerResult.serialized);
+
+            if (_cache.ContainsKey(player.id))
+            {
+                if (_cache.TryRemove(player.id, out _))
+                    _cache.TryAdd(player.id, player);
+            }
+            else
+            {
+                _cache.TryAdd(player.id, player);
+            }
+
+            return new RepositoryGetResult<Player>(player, $"Player '{player.name}' retrieved from storage");
         }
 
         public async Task<bool> FlushToDatabaseAsync<T>(T obj, CancellationToken cancellationToken) where T : Thing

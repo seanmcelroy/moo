@@ -50,9 +50,9 @@ namespace moo.common.Database
             */
         }
 
-        public static async Task<Dbref> Result(this Task<MatchResult> matchTask) => await (await matchTask).Result();
+        public static async Task<Dbref> Result(this Task<MatchResult> matchTask) => (await matchTask).Result();
 
-        public static async Task<Dbref> Result(this MatchResult match)
+        public static Dbref Result(this MatchResult match)
         {
             if (match.ExactMatch != Dbref.NOT_FOUND)
                 return match.ExactMatch;
@@ -69,7 +69,7 @@ namespace moo.common.Database
 
         public static async Task<Dbref> NoisyResult(this MatchResult match)
         {
-            var result = await match.Result();
+            var result = match.Result();
             if (result.Equals(Dbref.NOT_FOUND))
             {
                 await Server.NotifyAsync(match.Player.id, $"I don't understand '{match.MatchName}'.");
@@ -162,7 +162,7 @@ namespace moo.common.Database
             return match;
         }
 
-        private static async Task<MatchResult> MatchRegistered(this Task<MatchResult> match) => await (await match).MatchRegistered();
+        public static async Task<MatchResult> MatchRegistered(this Task<MatchResult> match) => await (await match).MatchRegistered();
 
         public static async Task<MatchResult> MatchRegistered(this MatchResult match)
         {
@@ -216,7 +216,7 @@ namespace moo.common.Database
 
         public static async Task<MatchResult> MatchNeighbor(this Task<MatchResult> match) => await (await match).MatchNeighbor();
 
-        private static async Task<MatchResult> MatchNeighbor(this MatchResult match) => match.MatchFrom.Location != NOT_FOUND ? await match.MatchContents(match.MatchFrom.Location) : match;
+        public static async Task<MatchResult> MatchNeighbor(this MatchResult match) => match.MatchFrom.Location != NOT_FOUND ? await match.MatchContents(match.MatchFrom.Location) : match;
 
         public static async Task<MatchResult> MatchPossession(this Task<MatchResult> match) => await (await match).MatchPossession();
 
@@ -300,14 +300,23 @@ namespace moo.common.Database
             return match;
         }
 
+        public static async Task<MatchResult> MatchAbsolute(this Task<MatchResult> matchTask) => await (await matchTask).MatchAbsolute();
 
-        private static async Task<MatchResult> MatchAbsolute(this Task<MatchResult> matchTask) => await (await matchTask).MatchAbsolute();
-
-        private static async Task<MatchResult> MatchAbsolute(this MatchResult match)
+        public static async Task<MatchResult> MatchAbsolute(this MatchResult match)
         {
             var abs = await AbsoluteName(match);
             if (abs != Dbref.NOT_FOUND)
                 match.ExactMatch = abs;
+            return match;
+        }
+
+        public static async Task<MatchResult> MatchPlayer(this Task<MatchResult> matchTask) => await (await matchTask).MatchPlayer();
+
+        private static async Task<MatchResult> MatchPlayer(this MatchResult match)
+        {
+            var p = await ThingRepository.Instance.FindOnePlayerByName(match.MatchName, match.CancellationToken);
+            if (p.isSuccess && p.value != null)
+                match.ExactMatch = p.value.id;
             return match;
         }
     }

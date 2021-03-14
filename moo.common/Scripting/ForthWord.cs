@@ -159,6 +159,7 @@ namespace moo.common.Scripting
             // TODO: CALLER
             // TODO: DBTOP
             callTable.Add("dbcmp", (p) => DbCmp.Execute(p));
+            callTable.Add("owner", (p) => Owner.ExecuteAsync(p).Result);
             callTable.Add("location", (p) => Location.ExecuteAsync(p).Result);
             callTable.Add("contents", (p) => Contents.ExecuteAsync(p).Result);
             callTable.Add("next", (p) => Next.ExecuteAsync(p).Result);
@@ -196,14 +197,15 @@ namespace moo.common.Scripting
             callTable.Add("descriptors", (p) => Descriptors.Execute(p));
 
             // MISCELLANEOUS
-            callTable.Add("version", (p) => moo.common.Scripting.ForthPrimatives.Version.Execute(p));
+            callTable.Add("force", (p) => Force.ExecuteAsync(p).Result);
+            callTable.Add("version", (p) => ForthPrimatives.Version.Execute(p));
         }
 
         public ForthWord(string name, List<ForthDatum> programData)
         {
-            this.name = name ?? throw new System.ArgumentNullException(nameof(name));
-            this.programData = programData ?? throw new System.ArgumentNullException(nameof(programData));
-            this.functionScopedVariables = new Dictionary<string, ForthVariable>();
+            this.name = name ?? throw new ArgumentNullException(nameof(name));
+            this.programData = programData ?? throw new ArgumentNullException(nameof(programData));
+            functionScopedVariables = new Dictionary<string, ForthVariable>();
         }
 
         public static ICollection<string> GetPrimatives() => callTable.Keys;
@@ -299,7 +301,7 @@ namespace moo.common.Scripting
                     return new ForthWordResult(ForthErrorResult.SYNTAX_ERROR, $"Unable to handle datum on top of stack: {topOfStack}({topOfStack.FileLineNumber},{topOfStack.ColumnNumber})");
 
                 // Execution Control
-                if (datum.Type == ForthDatum.DatumType.Unknown)
+                if (datum.Type == DatumType.Unknown)
                 {
                     // IF
                     if (string.Compare("if", datumLiteral, true) == 0)
@@ -635,11 +637,11 @@ namespace moo.common.Scripting
                     await DumpStackToDebugAsync(stack, connection, lineCount, datum);
 
                 // Function calls
-                if ((datum.Type == ForthDatum.DatumType.Primitive || datum.Type == ForthDatum.DatumType.Unknown) &&
+                if ((datum.Type == DatumType.Primitive || datum.Type == ForthDatum.DatumType.Unknown) &&
                     process.HasWord(datum.Value.ToString()))
                 {
                     // Yield to other word.
-                    var wordResult = await process.RunWordAsync(datum.Value.ToString(), trigger, command, lastListItem, cancellationToken);
+                    var wordResult = await process.RunWordAsync(datum.Value.ToString(), trigger, command, lastListItem, process.EffectiveMuckerLevel, cancellationToken);
                     if (!wordResult.IsSuccessful)
                         return wordResult;
                     continue;
@@ -650,7 +652,7 @@ namespace moo.common.Scripting
                                 .Union(functionScopedVariables)
                                 .ToDictionary(k => k.Key, v => v.Value);
 
-                if ((datum.Type == ForthDatum.DatumType.Unknown || datum.Type == ForthDatum.DatumType.Variable) &&
+                if ((datum.Type == DatumType.Unknown || datum.Type == DatumType.Variable) &&
                     (string.Compare("me", datumLiteral, true) == 0
                     || string.Compare("here", datumLiteral, true) == 0
                     || string.Compare("loc", datumLiteral, true) == 0
@@ -661,7 +663,7 @@ namespace moo.common.Scripting
                     continue;
                 }
 
-                if ((datum.Type == ForthDatum.DatumType.Unknown || datum.Type == ForthDatum.DatumType.Variable)
+                if ((datum.Type == DatumType.Unknown || datum.Type == DatumType.Variable)
                     && variables.ContainsKey(datumLiteral))
                 {
                     var v = variables[datumLiteral];
@@ -675,13 +677,13 @@ namespace moo.common.Scripting
                 // Literals
                 switch (datum.Type)
                 {
-                    case ForthDatum.DatumType.Float:
-                    case ForthDatum.DatumType.Integer:
-                    case ForthDatum.DatumType.String:
-                    case ForthDatum.DatumType.Unknown:
+                    case DatumType.Float:
+                    case DatumType.Integer:
+                    case DatumType.String:
+                    case DatumType.Unknown:
                         stack.Push(datum);
                         continue;
-                    case ForthDatum.DatumType.DbRef:
+                    case DatumType.DbRef:
                         // Correct type for built-in's.
                         if (((Dbref)datum.Value).ToInt32() == 0)
                             stack.Push(new ForthDatum(Dbref.AETHER, datum.FileLineNumber, datum.ColumnNumber, datum.WordName, datum.WordLineNumber));
@@ -691,7 +693,7 @@ namespace moo.common.Scripting
                 }
 
                 // Primatives
-                if (datum.Type == ForthDatum.DatumType.Primitive)
+                if (datum.Type == DatumType.Primitive)
                 {
                     if (callTable.Keys.Contains(datumLiteral, StringComparer.InvariantCultureIgnoreCase))
                     {

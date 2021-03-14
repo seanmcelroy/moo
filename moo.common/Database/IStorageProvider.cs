@@ -14,6 +14,8 @@ namespace moo.common.Database
 
         Task<StorageProviderRetrieveResult> LoadAsync(Dbref id, CancellationToken cancellationToken);
 
+        Task<StorageProviderRetrieveResult> LoadPlayerByNameAsync(string name, CancellationToken cancellationToken);
+
         Task<bool> SaveAsync(Dbref id, string type, string serialized, CancellationToken cancellationToken);
     }
 }

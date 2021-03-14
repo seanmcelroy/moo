@@ -55,6 +55,8 @@ namespace moo.common
             }
         }
 
+        public static bool IsPlayerConnected(Dbref dbref) => _players.Any(p => p.Dbref == dbref);
+
         public ConsoleConnection AttachConsolePlayer(HumanPlayer player, TextReader input, TextWriter output, CancellationToken cancellationToken)
         {
             var consoleConnection = new ConsoleConnection(player, input, output, cancellationToken);
@@ -71,12 +73,20 @@ namespace moo.common
             globalActions.Add(action);
         }
 
-        public static Script RegisterScript(string name, Dbref owner, string? programText = null)
+        public static Script RegisterScript(string name, Player player, string? programText = null)
         {
-            var scriptObject = ThingRepository.Instance.Make<Script>();
+            Script scriptObject = ThingRepository.Instance.Make<Script>();
             scriptObject.name = name ?? throw new System.ArgumentNullException(nameof(name));
-            scriptObject.owner = owner;
+            scriptObject.owner = player.id;
             scriptObject.programText = programText;
+            if (player.HasFlag(Thing.Flag.WIZARD))
+                scriptObject.SetFlag(Thing.Flag.WIZARD);
+            else if (player.HasFlag(Thing.Flag.LEVEL_3))
+                scriptObject.SetFlag(Thing.Flag.LEVEL_3);
+            else if (player.HasFlag(Thing.Flag.LEVEL_2))
+                scriptObject.SetFlag(Thing.Flag.LEVEL_2);
+            else if (player.HasFlag(Thing.Flag.LEVEL_1))
+                scriptObject.SetFlag(Thing.Flag.LEVEL_1);
             var insertedScriptObject = ThingRepository.Instance.Insert(scriptObject);
             globalActions.Add(insertedScriptObject);
             return insertedScriptObject;
@@ -120,10 +130,10 @@ namespace moo.common
                 while (
                     !cancellationToken.IsCancellationRequested &&
                     processes.Any(p =>
-                    (p.State != ForthProcess.ProcessState.Paused &&
-                     p.State != ForthProcess.ProcessState.Preempted &&
-                     p.State != ForthProcess.ProcessState.Complete
-                     ) && p.ProcessId != processId))
+                        p.State != ForthProcess.ProcessState.Paused &&
+                        p.State != ForthProcess.ProcessState.Preempted &&
+                        p.State != ForthProcess.ProcessState.Complete &&
+                        p.ProcessId != processId))
                 {
                     foreach (var p in processes.Where(p => p.State != ForthProcess.ProcessState.Paused && p.ProcessId != processId))
                     {
@@ -141,6 +151,8 @@ namespace moo.common
 
             Task.WaitAll(new[] { task }, 60 * 1000, cancellationToken);
         }
+
+        public static PlayerConnection? GetConnection(Dbref playerId) => _players.Where(x => x.Dbref == playerId).FirstOrDefault();
 
         public static IEnumerable<int> GetConnectionNumber(Dbref playerId)
         {

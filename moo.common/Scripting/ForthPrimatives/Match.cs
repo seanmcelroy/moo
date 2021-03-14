@@ -45,9 +45,20 @@ namespace moo.common.Scripting.ForthPrimatives
                     .MatchNil();
             }
 
+            if (parameters.Process?.EffectiveMuckerLevel >= 4)
+            {
+                matcher = matcher
+                    .MatchAbsolute();
+            }
+
             // TODO: Wiz program permissions https://github.com/fuzzball-muck/fuzzball/blob/b0ea12f4d40a724a16ef105f599cb8b6a037a77a/src/p_db.c#L866
 
             Dbref result = await matcher.Result();
+            if (result == Dbref.NOT_FOUND)
+            {
+                var a = 3;
+                a++;
+            }
 
             parameters.Stack.Push(new ForthDatum(result, 0));
             return ForthPrimativeResult.SUCCESS;

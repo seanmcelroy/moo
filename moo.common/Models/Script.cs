@@ -79,7 +79,15 @@ namespace moo.common.Models
             CancellationToken cancellationToken)
         {
             // TODO: Right now we block on programs
-            var process = new ForthProcess(id, connection)
+
+            byte effectiveMuckerLevel =
+                this.HasFlag(Flag.WIZARD) ? 4
+                : this.HasFlag(Flag.LEVEL_3) ? 3
+                : this.HasFlag(Flag.LEVEL_2) ? 2
+                : this.HasFlag(Flag.LEVEL_1) ? 1
+                : 0;
+
+            var process = new ForthProcess(id, effectiveMuckerLevel, connection)
             {
                 State = ForthProcess.ProcessState.Parsing
             };
@@ -96,7 +104,10 @@ namespace moo.common.Models
                 foreach (var v in tokenized.ProgramLocalVariables)
                     process.SetProgramLocalVariable(v.Key, v.Value);
 
-            var result = await Server.ExecuteAsync(process, tokenized.Words, connection.Dbref, command.getVerb(), new[] { command.getNonVerbPhrase() }, cancellationToken);
+            var result = await Server.ExecuteAsync(process, tokenized.Words, connection.Dbref,
+                command.getVerb(),
+                new[] { command.getNonVerbPhrase() },
+                cancellationToken);
             var scriptResult = new VerbResult(result.IsSuccessful, result.Reason?.ToString());
 
             process.State = ForthProcess.ProcessState.Complete;

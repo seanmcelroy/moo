@@ -166,12 +166,12 @@ namespace moo.common.Models
 
             switch (linkTo.Type)
             {
-                case Dbref.DbrefObjectType.Room:
+                case DbrefObjectType.Room:
                     {
                         await connection.MoveToAsync(linkTo, cancellationToken);
                         return new VerbResult(true, "Moved.");
                     }
-                case Dbref.DbrefObjectType.Program:
+                case DbrefObjectType.Program:
                     {
                         var actionResult = await ((Script)linkTo).Process(connection, command, cancellationToken);
                         if (!actionResult.isSuccess)

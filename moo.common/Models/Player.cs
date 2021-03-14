@@ -8,7 +8,11 @@ namespace moo.common.Models
 {
     public abstract class Player : Thing
     {
-        public Dbref Home = Dbref.NOT_FOUND;
+        public Dbref Home
+        {
+            get => this.LinkTargets.DefaultIfEmpty(Dbref.AETHER).FirstOrDefault();
+            set => this.SetLinkTargets(new[] { value });
+        }
 
         public override Dbref Owner => this.id;
 
@@ -53,8 +57,7 @@ namespace moo.common.Models
         {
             if (targets == null || targets.Count() != 1)
                 throw new System.ArgumentOutOfRangeException(nameof(targets), "Players can only link to one target, their home");
-
-            this.Home = targets.First();
+            base.SetLinkTargets(targets);
         }
     }
 }

@@ -22,7 +22,7 @@ namespace moo.common.Actions.BuiltIn
 
         public Task<VerbResult> Process(PlayerConnection connection, CommandResult command, CancellationToken cancellationToken)
         {
-            var script = Server.RegisterScript(command.getDirectObject(), connection.Dbref);
+            var script = Server.RegisterScript(command.getDirectObject(), connection.GetPlayer());
             connection.EnterEditMode(script, command.getDirectObject(), async t =>
             {
                 // Move this to my inventory

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using moo.common.Models;
 
 namespace moo.common.Scripting.ForthPrimatives
@@ -32,6 +33,8 @@ namespace moo.common.Scripting.ForthPrimatives
 
             return new ForthPrimativeResult(ForthErrorResult.UNKNOWN_TYPE, $"Unable to determine data type for {variableName}: {variableValue.Value}");
         }
+
+        public static ForthVariable ResolveVariableByName(ImmutableDictionary<string, ForthVariable> variables, Dbref id, Dbref location, Dbref trigger, string command, string variableName) => ResolveVariableByName(new Dictionary<string, ForthVariable>(variables), id, location, trigger, command, variableName);
 
         public static ForthVariable ResolveVariableByName(Dictionary<string, ForthVariable> variables, Dbref id, Dbref location, Dbref trigger, string command, string variableName)
         {

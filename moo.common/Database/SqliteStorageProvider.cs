@@ -57,6 +57,32 @@ namespace moo.common.Database
             return default(StorageProviderRetrieveResult).Equals(result) ? new StorageProviderRetrieveResult("Not found.") : result;
         }
 
+        public async Task<StorageProviderRetrieveResult> LoadPlayerByNameAsync(string name, CancellationToken cancellationToken)
+        {
+            var result = default(StorageProviderRetrieveResult);
+
+            using (var connection = new SqliteConnection("Data Source=./objects.sqlite"))
+            {
+                await connection.OpenAsync(cancellationToken);
+
+                using (var command = new SqliteCommand("SELECT [type], [data], [id] FROM [objects] WHERE [name]=@name;", connection))
+                {
+                    command.Parameters.AddWithValue("@name", (string)name);
+                    SqliteDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
+                    if (await reader.ReadAsync(cancellationToken))
+                    {
+                        var dbref = Dbref.Parse(reader.GetString(2));
+                        result = new StorageProviderRetrieveResult(dbref, reader.GetString(0), reader.GetString(1));
+                        reader.Close();
+                    }
+                }
+
+                connection.Close();
+            }
+
+            return default(StorageProviderRetrieveResult).Equals(result) ? new StorageProviderRetrieveResult("Not found.") : result;
+        }
+
         public async Task<bool> SaveAsync(Dbref id, string type, string serialized, CancellationToken cancellationToken)
         {
             try

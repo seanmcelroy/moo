@@ -47,6 +47,7 @@ namespace moo.common.Scripting
         private readonly ConcurrentDictionary<string, ForthVariable> programLocalVariables = new();
 
         private readonly Dbref scriptId;
+        private readonly byte effectiveMuckerLevel;
         private readonly PlayerConnection connection;
         private readonly string scopeId;
         private readonly string outerScopeId;
@@ -55,8 +56,11 @@ namespace moo.common.Scripting
         public int ProcessId => processId;
         public MultitaskingMode Mode => mode;
 
+        public byte EffectiveMuckerLevel => effectiveMuckerLevel;
+
         public ForthProcess(
             Dbref scriptId,
+            byte effectiveMuckerLevel,
             PlayerConnection connection,
             string? outerScopeId = null,
             Dictionary<string, ForthVariable>? outerScopeVariables = null)
@@ -65,6 +69,7 @@ namespace moo.common.Scripting
             this.State = ProcessState.Initializing;
             this.mode = MultitaskingMode.Foreground;
             this.scriptId = scriptId;
+            this.effectiveMuckerLevel = effectiveMuckerLevel;
             this.connection = connection;
             this.scopeId = Guid.NewGuid().ToString();
 
@@ -107,9 +112,14 @@ namespace moo.common.Scripting
 
         public bool HasWord(string wordName) => this.words.Any(w => string.Compare(w.name, wordName, true) == 0);
 
-        public async Task<ForthWordResult> RunWordAsync(string wordName, Dbref trigger, string command, Dbref? lastListItem, CancellationToken cancellationToken)
+        public async Task<ForthWordResult> RunWordAsync(string wordName, Dbref trigger,
+            string command, Dbref? lastListItem,
+            byte effectiveMuckerLevel,
+             CancellationToken cancellationToken)
         {
-            return await this.words.Single(w => string.Compare(w.name, wordName, true) == 0).RunAsync(this, stack, connection, trigger, command, lastListItem, cancellationToken);
+            return await this.words
+                .Single(w => string.Compare(w.name, wordName, true) == 0)
+                .RunAsync(this, stack, connection, trigger, command, lastListItem, cancellationToken);
         }
 
         public void Pause()
@@ -168,9 +178,9 @@ namespace moo.common.Scripting
                     stack.Push(new ForthDatum((string)args[0]));
             }
 
-            this.State = ProcessState.Running;
+            State = ProcessState.Running;
             var result = await words.Last().RunAsync(this, stack, connection, trigger, command, null, cancellationToken);
-            this.State = ProcessState.Complete;
+            State = ProcessState.Complete;
 
             if (Server.GetInstance().PreemptProcessId == this.processId)
                 Server.GetInstance().PreemptProcessId = 0;

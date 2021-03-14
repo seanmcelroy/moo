@@ -18,11 +18,15 @@ namespace moo.common.Database
 
         Task<bool> Exists(Dbref id, CancellationToken cancellationToken);
 
+        Task<RepositoryGetResult<Player>> FindOnePlayerByName(string name, CancellationToken cancellationToken);
+
         Task<RepositoryGetResult<Thing>> GetAsync(Dbref id, CancellationToken cancellationToken);
 
         Task<RepositoryGetResult<T>> GetAsync<T>(Dbref id, CancellationToken cancellationToken) where T : Thing, new();
 
         Task<RepositoryGetResult<T>> LoadFromDatabaseAsync<T>(Dbref id, CancellationToken cancellationToken) where T : Thing, new();
+
+        Task<RepositoryGetResult<Player>> LoadPlayerFromDatabaseByNameAsync(string name, CancellationToken cancellationToken);
 
         Task<bool> FlushToDatabaseAsync<T>(T obj, CancellationToken cancellationToken) where T : Thing;
 

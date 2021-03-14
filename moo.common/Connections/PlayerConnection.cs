@@ -71,7 +71,10 @@ namespace moo.common.Connections
         {
             unattended = true;
             lastInput = DateTime.Now;
-            buffer.AppendLine(lines.Aggregate((c, n) => $"{c}\n{n}"));
+            buffer.AppendLine(
+                    lines
+                        .Where(l => !(l.StartsWith('(') && l.EndsWith(')')))
+                        .Aggregate((c, n) => $"{c}\n{n}"));
 
             while (buffer.Length > 0)
             {
@@ -211,7 +214,6 @@ namespace moo.common.Connections
                 Console.WriteLine($"Unknown at-command: {command.raw}");
 
             await sendOutput("Huh?");
-            actionResult = new VerbResult(false, $"Command not found for verb {command.getVerb()}");
         }
     }
 }
