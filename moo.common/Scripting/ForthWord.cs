@@ -503,7 +503,7 @@ namespace moo.common.Scripting
                             }
                         }
 
-                        await DumpStackToDebugAsync(stack, connection, lineCount, datum);
+                        //await DumpStackToDebugAsync(stack, connection, lineCount, datum);
                         controlFlow.Push(new ControlFlowMarker(ControlFlowElement.SkipToAfterNextUntilOrRepeat, x));
                         continue;
                     }

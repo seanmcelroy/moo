@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using moo.common.Connections;
+using moo.common.Database;
 using moo.common.Models;
 
 namespace moo.common.Actions.BuiltIn
@@ -29,7 +30,7 @@ namespace moo.common.Actions.BuiltIn
             var name = parts[0].Trim();
             var predicate = parts[1].Trim();
 
-            var targetDbref = await connection.FindThingForThisPlayerAsync(name, cancellationToken);
+            var targetDbref = await Matcher.MatchControlled(player, name, cancellationToken);
             if (targetDbref.Equals(Dbref.NOT_FOUND))
                 return new VerbResult(false, $"Can't find '{name}' here");
             if (targetDbref.Equals(Dbref.AMBIGUOUS))
@@ -52,7 +53,7 @@ namespace moo.common.Actions.BuiltIn
             target.name = predicateParts[0];
             //await ThingRepository.FlushToDatabaseAsync(target, cancellationToken);
 
-            return new VerbResult(true, $"Object {target.UnparseObject()} updated");
+            return new VerbResult(true, $"Object {target.UnparseObjectInternal()} updated");
         }
     }
 }

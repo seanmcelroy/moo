@@ -7,26 +7,22 @@ namespace moo.common.Models
 {
     public static class ModelUtility
     {
+        public static async Task<(bool result, Thing? who, Thing? what)> Controls(this Dbref whoDbref, Dbref whatDbref, CancellationToken cancellationToken)
+        {
+            var what = await whatDbref.Get(cancellationToken);
+            var (result, who) = await what.IsControlledBy(whoDbref, cancellationToken);
+            return (result, who, what);
+        }
 
-        public static async Task<bool> Controls(this Dbref whoDbref, Dbref whatDbref, CancellationToken cancellationToken) =>
-             await (await whatDbref.Get(cancellationToken)).IsControlledBy(whoDbref, cancellationToken);
+        public static async Task<(bool result, Thing? who)> Controls(this Dbref whoDbref, Thing what, CancellationToken cancellationToken) => await what.IsControlledBy(whoDbref, cancellationToken);
 
-        public static async Task<bool> Controls(this Dbref whoDbref, Thing what, CancellationToken cancellationToken) =>
-            await what.IsControlledBy(whoDbref, cancellationToken);
+        public static async Task<(bool result, Thing? who)> IsControlledBy(this Thing? what, Dbref whoDbref, CancellationToken cancellationToken)
+        {
+            var who = await whoDbref.Get(cancellationToken);
+            return (what.IsControlledBy(who), who);
+        }
 
-        public static async Task<bool> Controls(this PlayerConnection connection, Dbref whatDbref, CancellationToken cancellationToken) =>
-            await (await whatDbref.Get(cancellationToken)).IsControlledBy(connection.Dbref, cancellationToken);
-
-        public static async Task<bool> Controls(this PlayerConnection connection, Thing what, CancellationToken cancellationToken) =>
-            await what.IsControlledBy(connection.Dbref, cancellationToken);
-
-        public static async Task<bool> IsControlledBy(this Thing what, Dbref whoDbref, CancellationToken cancellationToken) =>
-            await what.IsControlledBy(await whoDbref.Get(cancellationToken), cancellationToken);
-
-        public static async Task<bool> IsControlledBy(this Dbref whatDbref, PlayerConnection connection, CancellationToken cancellationToken) =>
-            await (await whatDbref.Get(cancellationToken)).IsControlledBy(connection.GetPlayer(), cancellationToken);
-
-        public static async Task<bool> IsControlledBy(this Thing? what, Thing? who, CancellationToken cancellationToken)
+        public static bool IsControlledBy(this Thing? what, Thing? who)
         {
             /*
             You control anything you own.
@@ -94,6 +90,38 @@ namespace moo.common.Models
                 return null;
 
             return result.value;
+        }
+
+        public static async Task<(string, Thing?)> UnparseObject(this Dbref dbref, Dbref player, CancellationToken cancellationToken)
+        {
+            var thing = await dbref.Get(cancellationToken);
+            if (thing == null)
+                return ("*INVALID*", null);
+            return (await thing.UnparseObject(player, cancellationToken), thing);
+        }
+
+        public static async Task<(bool result, Thing? who, Thing? where)> CanTeleportTo(this Dbref whoDbref, Dbref whereDbref, CancellationToken cancellationToken)
+        {
+            var (controls, who, where) = await Controls(whoDbref, whereDbref, cancellationToken);
+            if (who == null || where == null)
+                return (false, null, null);
+            var result = who.CanTeleportTo(where, controls);
+            return (result, who, where);
+        }
+
+        public static bool CanTeleportTo(this Thing who, Thing where, bool? knownToControl = null)
+        {
+            var controls = knownToControl ?? where.IsControlledBy(who);
+            var result = controls
+                || (
+                    // TODO LOCK TEST &&
+                    (
+                        (where != null && where.HasFlag(Thing.Flag.LINK_OK))
+                        || (where != null && where.Type != Dbref.DbrefObjectType.Thing && where.HasFlag(Thing.Flag.ABODE))
+                    )
+                );
+
+            return result;
         }
     }
 }

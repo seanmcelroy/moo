@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using moo.common.Connections;
+using moo.common.Database;
 using moo.common.Models;
 
 namespace moo.common.Actions.BuiltIn
@@ -29,7 +30,7 @@ namespace moo.common.Actions.BuiltIn
             var name = parts[0].Trim();
             var predicate = parts[1].Trim();
 
-            var targetDbref = await connection.FindThingForThisPlayerAsync(name, cancellationToken);
+            var targetDbref = await Matcher.MatchControlled(player, name, cancellationToken);
             if (targetDbref.Equals(Dbref.NOT_FOUND))
                 return new VerbResult(false, $"Can't find '{name}' here");
             if (targetDbref.Equals(Dbref.AMBIGUOUS))
@@ -48,7 +49,7 @@ namespace moo.common.Actions.BuiltIn
             if (string.Compare("erase", predicateParts[0], true) == 0)
             {
                 target.ClearPropertyPath(predicateParts[1]);
-                return new VerbResult(true, $"Cleared property path {predicateParts[1]} on {target.UnparseObject()}");
+                return new VerbResult(true, $"Cleared property path {predicateParts[1]} on {target.UnparseObjectInternal()}");
             }
 
             Property.PropertyType type;
@@ -68,7 +69,7 @@ namespace moo.common.Actions.BuiltIn
                 return new VerbResult(false, "@PROPSET <object>=<type>:<property>:<value> -or-\r\n@PROPSET <object>=erase:<property>\r\n\r\n@propset can set and clear properties from an object.\r\n\r\nIf the first format above is specified, the @propset command sets <property> on <object> to <value>, where <value> is of type <type>. <type> can be one of 'string', 'integer', 'float, 'dbref', or 'lock'. A string can be any set of characters the MUCK recognizes. An integer must be composed solely of numerals with the possible exception of a leading sign indicator (+ or -). A float must be a valid floating point number. A dbref must be of the form # followed by a positive integer, and it must be a valid dbref (i.e., the object must exist). A lock value must be a key that would be accepted by @lock or a similar command (see the help for @lock for more details).\r\n\r\nThe second format removes <property> on object. Note that if <property> is a propdir, it removes all properties below <property> as well. If you wish to clear the value of a propdir without removing the properties below it, use '@propset <object> = integer:<property>:0'.");
 
             target.SetPropertyPathValue(predicateParts[1], type, predicateParts[2]);
-            return new VerbResult(true, $"Object {target.UnparseObject()} updated");
+            return new VerbResult(true, $"Object {target.UnparseObjectInternal()} updated");
         }
     }
 }

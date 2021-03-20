@@ -31,7 +31,7 @@ namespace moo.common.Actions.BuiltIn
                         .InitObjectSearch(player, str, Dbref.DbrefObjectType.Program, cancellationToken)
                         .MatchEverything()
                         .Result();
-            // OLD: var sourceDbref = await connection.FindThingForThisPlayerAsync(str, cancellationToken);
+
             if (sourceDbref.Equals(Dbref.NOT_FOUND))
                 return new VerbResult(false, $"Can't find '{str}' here");
             if (sourceDbref.Equals(Dbref.AMBIGUOUS))
@@ -51,10 +51,11 @@ namespace moo.common.Actions.BuiltIn
                 return new VerbResult(false, $"No such program found.");
 
             if (program.Type != Dbref.DbrefObjectType.Program)
-                return new VerbResult(false, $"Only programs can be edited, but {program.UnparseObject()} is not one.");
+                return new VerbResult(false, $"Only programs can be edited, but {await program.UnparseObject(player, cancellationToken)} is not one.");
 
-            if (!await program.IsControlledBy(player, cancellationToken))
-                return new VerbResult(false, $"You don't control {program.id}");
+            var (result, who) = await program.IsControlledBy(player, cancellationToken);
+            if (!result)
+                return new VerbResult(false, $"You don't control {await program.UnparseObject(player, cancellationToken)}");
 
             connection.EnterEditMode(null, command.GetDirectObject(), async t =>
             {

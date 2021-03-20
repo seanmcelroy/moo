@@ -11,7 +11,7 @@ namespace moo.console
 {
     class Program
     {
-        static void Main()
+        static async Task Main()
         {
             Console.Out.WriteLine("\r\n\r\nMoo!\r\n");
             var cts = new CancellationTokenSource();
@@ -20,24 +20,8 @@ namespace moo.console
             {
                 var server = Server.Initialize(Console.Out);
 
-                var consolePlayer = LoadSandbox(cts.Token);
+                var consolePlayer = await LoadSandbox(cts.Token);
                 var consoleConnection = server.AttachConsolePlayer(consolePlayer, Console.In, Console.Out, cts.Token);
-
-                Console.Out.WriteLine("\r\nLoading built-in actions");
-                foreach (var action in new IRunnable[] {
-                new ActionBuiltIn(),
-                new ChownBuiltIn(),
-                new EditBuiltIn(),
-                new LinkBuiltIn(),
-                new LoadBuiltIn(),
-                new NameBuiltIn(),
-                new NewPasswordBuiltIn(),
-                new RecycleBuiltIn(),
-                new SaveBuiltIn(),
-                new SetBuiltIn(),
-                new ProgramBuiltIn(),
-                new PropSetBuiltIn() })
-                    Server.RegisterBuiltInAction(action);
 
                 Console.Out.WriteLine("Starting server");
                 server.Start(cts.Token);
@@ -107,7 +91,7 @@ namespace moo.console
             }
         }
 
-        private static HumanPlayer LoadSandbox(CancellationToken cancellationToken)
+        private static async Task<HumanPlayer> LoadSandbox(CancellationToken cancellationToken)
         {
             var aether = Room.Make("The Aether", Dbref.GOD);
             aether.id = Dbref.AETHER;
@@ -115,9 +99,8 @@ namespace moo.console
             var player = HumanPlayer.make("Wizard", aether);
             player.SetFlag(Thing.Flag.WIZARD);
 
-            Console.Out.WriteLine($"Created new player {player.UnparseObject()}");
-
-            var moveResult = player.MoveToAsync(aether, cancellationToken).Result;
+            Console.Out.WriteLine($"Created new player {player.UnparseObjectInternal()}");
+            _ = await player.MoveToAsync(aether, cancellationToken);
 
             return player;
         }

@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using moo.common.Connections;
+using moo.common.Database;
 using moo.common.Models;
 
 namespace moo.common.Actions.BuiltIn
@@ -30,7 +31,15 @@ namespace moo.common.Actions.BuiltIn
             var sourcePhrase = parts[1].Trim();
             var regname = parts.Length == 3 ? parts[2].Trim() : null;
 
-            var sourceDbref = await connection.FindThingForThisPlayerAsync(sourcePhrase, cancellationToken);
+            var sourceDbref = await Matcher.InitObjectSearch(player, sourcePhrase, Dbref.DbrefObjectType.Unknown, cancellationToken)
+                .MatchNeighbor()
+                .MatchMe()
+                .MatchHere()
+                .MatchPossession()
+                .MatchRegistered()
+                .MatchAbsolute()
+                .NoisyResult();
+
             if (sourceDbref.Equals(Dbref.NOT_FOUND))
                 return new VerbResult(false, $"Can't find '{sourcePhrase}' here");
             if (sourceDbref.Equals(Dbref.AMBIGUOUS))
@@ -39,7 +48,8 @@ namespace moo.common.Actions.BuiltIn
             var source = await sourceDbref.Get(cancellationToken);
             if (source == null)
             {
-                await connection.SendOutput($"You can't seem to find that.");
+                if (connection != null)
+                    await connection.SendOutput($"You can't seem to find that.");
                 return new VerbResult(false, "Target not found");
             }
             if (source.Type == Dbref.DbrefObjectType.Exit)
@@ -47,12 +57,13 @@ namespace moo.common.Actions.BuiltIn
             if (source.Type == Dbref.DbrefObjectType.Program)
                 return new VerbResult(false, $"An exit cannot be attached to a program ({source.id})");
 
-            if (!await source.IsControlledBy(player, cancellationToken))
+            var (result, _) = await source.IsControlledBy(player, cancellationToken);
+            if (!result)
                 return new VerbResult(false, $"You don't control {source.id}");
 
             var exit = Exit.Make(name, player);
             var moveResult = await exit.MoveToAsync(source, cancellationToken);
-            if (!moveResult.isSuccess)
+            if (!moveResult.isSuccess && connection != null)
                 await connection.SendOutput($"You can't seem to do that on {sourcePhrase}.  {moveResult.reason}");
 
             if (regname != null)

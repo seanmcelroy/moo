@@ -52,7 +52,8 @@ namespace moo.common.Actions.BuiltIn
                         var exit = exitLookup.value;
                         if (exit.LinkTargets.Count > 0)
                         {
-                            if (await exit.IsControlledBy(player, cancellationToken))
+                            var (playerControlsExit, _) = await exit.IsControlledBy(player, cancellationToken);
+                            if (playerControlsExit)
                                 return new VerbResult(false, "That exit is already linked.");
                             else
                                 return new VerbResult(false, "Permission denied. (you don't control the exit to relink)");

@@ -653,12 +653,57 @@ namespace moo.common.Models
 
         public static string Serialize(DateTime? value) => default == value || value == null ? $"<date/>" : $"<date>{value.Value.ToUniversalTime():o}</date>";
 
-        public string UnparseObject()
+        public async Task<string> UnparseObject(Dbref player, CancellationToken cancellationToken)
+        {
+            // See https://github.com/fuzzball-muck/fuzzball/blob/b0ea12f4d40a724a16ef105f599cb8b6a037a77a/src/db.c#L1381
+            if (player != Dbref.NOT_FOUND)
+                player = await player.GetOwner(cancellationToken); // In case the object is a zombie.
+
+            switch (player.Number)
+            {
+                case Dbref.DBREF_NUMBER_NOT_FOUND: // If only .NET has const structs..
+                    return "*NOTHING*";
+                case Dbref.DBREF_NUMBER_AMBIGUOUS:
+                    return "*AMBIGUOUS*";
+                case Dbref.DBREF_NUMBER_HOME:
+                    return "*HOME*";
+                case Dbref.DBREF_NUMBER_NIL:
+                    return "*NIL*";
+                default:
+                    /* Show the details if:
+                     * player == NOT_FOUND
+                     * or player does not have STICKY flag AND:
+                     *   'loc' has flags that can be seen - @see can_see_flags
+                     *   or 'loc' is not a player and 'player' controls 'loc'
+                     *   or 'loc' is CHOWN_OK
+                     */
+                    if (player == Dbref.NOT_FOUND)
+                        return UnparseObjectInternal();
+
+                    var playerObj = await player.Get(cancellationToken);
+                    if (playerObj != null
+                        && !playerObj.HasFlag(Flag.STICKY)
+                        && (
+                            HasFlag(Flag.CHOWN_OK)
+                            || Type != Dbref.DbrefObjectType.Player && this.IsControlledBy(playerObj)
+                            || playerObj.CanTeleportTo(this)))
+                        return UnparseObjectInternal();
+
+                    // Otherwise, we just share the name.
+                    return name ?? "*UNNAMED*";
+            }
+        }
+
+        public string UnparseObjectInternal()
         {
             var flagString = this.flags == null || this.flags.Length == 0 ? string.Empty : this.flags.Select(f => ((char)f).ToString()).Aggregate((c, n) => $"{c}{n}");
             return $"{this.name}(#{this.id.ToInt32()}{(char)this.id.Type}{flagString})";
         }
 
         public bool IsGod() => this.id == Dbref.GOD;
+
+        public bool IsLinkable => (Type == Dbref.DbrefObjectType.Room || Type == Dbref.DbrefObjectType.Thing)
+                ? HasFlag(Flag.ABODE)
+                : HasFlag(Flag.LINK_OK);
     }
 }

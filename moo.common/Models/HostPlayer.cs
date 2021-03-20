@@ -10,7 +10,7 @@ namespace moo.common.Models
             host.name = name;
             host.Location = location.id;
             host.Home = location.id;
-            Console.WriteLine($"Created new host {host.UnparseObject()}");
+            Console.WriteLine($"Created new host {host.UnparseObjectInternal()}");
             return host;
         }
     }

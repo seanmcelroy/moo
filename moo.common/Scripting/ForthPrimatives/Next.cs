@@ -33,7 +33,7 @@ namespace moo.common.Scripting.ForthPrimatives
 
             if (!targetResult.isSuccess || targetResult.value == null || (targetResult.value.Type != DbrefObjectType.Room && targetResult.value.Type != DbrefObjectType.Player))
             {
-                parameters.Stack.Push(new ForthDatum(Dbref.NOT_FOUND, 0));
+                parameters.Stack.Push(new ForthDatum(NOT_FOUND, 0));
                 return ForthPrimativeResult.SUCCESS;
             }
 

@@ -18,6 +18,7 @@ namespace moo.common.Models
             player.Location = location.id;
             return player;
         }
+
         protected override Dictionary<string, object?> GetSerializedElements()
         {
             var result = base.GetSerializedElements();

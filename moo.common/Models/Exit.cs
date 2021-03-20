@@ -21,7 +21,7 @@ namespace moo.common.Models
             var exit = ThingRepository.Instance.Make<Exit>();
             exit.name = name;
             exit.owner = owner;
-            Console.WriteLine($"Created new exit {exit.UnparseObject()}");
+            Console.WriteLine($"Created new exit {exit.UnparseObjectInternal()}");
             return exit;
         }
 
@@ -106,7 +106,7 @@ namespace moo.common.Models
                     case DbrefObjectType.Program:
                         if (newNonNullLinks > 0)
                         {
-                            await Server.NotifyAsync(player, $"Only one player, room, or program destination allowed. Destination {target.UnparseObject()} ignored.");
+                            await Server.NotifyAsync(player, $"Only one player, room, or program destination allowed. Destination {await target.UnparseObject(player, cancellationToken)} ignored.");
                             continue;
                         }
 
@@ -119,7 +119,7 @@ namespace moo.common.Models
                     case DbrefObjectType.Exit:
                         if (await ExitLoopCheck(exit, target, cancellationToken))
                         {
-                            await Server.NotifyAsync(player, $"Destination {target.UnparseObject()}  would create a loop, ignored.");
+                            await Server.NotifyAsync(player, $"Destination {await target.UnparseObject(player, cancellationToken)}  would create a loop, ignored.");
                             continue;
                         }
                         newLinks.Add(targetDbref);
@@ -134,7 +134,7 @@ namespace moo.common.Models
                     if (targetDbref == HOME)
                         await Server.NotifyAsync(player, "Linked to HOME.");
                     else
-                        await Server.NotifyAsync(player, $"Linked to {target.UnparseObject()}.");
+                        await Server.NotifyAsync(player, $"Linked to {await target.UnparseObject(player, cancellationToken)}.");
                 }
 
             }
@@ -167,7 +167,8 @@ namespace moo.common.Models
             {
                 case DbrefObjectType.Room:
                     {
-                        await connection.MoveToAsync(linkTo, cancellationToken);
+                        if (connection != null)
+                            await connection.MoveToAsync(linkTo, cancellationToken);
                         return new VerbResult(true, "Moved.");
                     }
                 case DbrefObjectType.Program:
@@ -179,8 +180,8 @@ namespace moo.common.Models
                     }
                 default:
                     if (connection != null)
-                        await connection.SendOutput($"Cannot process exit linked to {linkTo.UnparseObject()}");
-                    return new VerbResult(false, $"Cannot process exit linked to {linkTo.UnparseObject()}");
+                        await connection.SendOutput($"Cannot process exit linked to {await linkTo.UnparseObject(player, cancellationToken)}");
+                    return new VerbResult(false, $"Cannot process exit linked to {linkTo.UnparseObjectInternal()}");
             }
         }
 

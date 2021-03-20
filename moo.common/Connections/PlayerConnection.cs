@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using moo.common.Database;
 using moo.common.Models;
 using moo.common.Scripting;
 
@@ -64,17 +63,23 @@ namespace moo.common.Connections
         public void ReceiveInput(string line)
         {
             lastInput = DateTime.Now;
-            buffer.AppendLine(line);
+            lock (bufferLock)
+            {
+                buffer.AppendLine(line);
+            }
         }
 
         public void ReceiveInputUnattended(IEnumerable<string> lines)
         {
             unattended = true;
             lastInput = DateTime.Now;
-            buffer.AppendLine(
-                    lines
-                        .Where(l => !(l.StartsWith('(') && l.EndsWith(')')))
-                        .Aggregate((c, n) => $"{c}\n{n}"));
+            lock (bufferLock)
+            {
+                buffer.AppendLine(
+                        lines
+                            .Where(l => !(l.StartsWith('(') && l.EndsWith(')')))
+                            .Aggregate((c, n) => $"{c}\n{n}"));
+            }
 
             while (buffer.Length > 0)
             {
@@ -96,17 +101,31 @@ namespace moo.common.Connections
             {
                 while (buffer.Length > 0 && buffer[0] == '\n')
                     buffer.Remove(0, 1);
+                while (buffer.Length > 1 && buffer[0] == '\r' && buffer[1] == '\n')
+                    buffer.Remove(0, 2);
 
                 if (buffer.Length < 2)
                     return default;
 
                 var bufferString = buffer.ToString();
+
                 int firstBreak = bufferString.IndexOfAny(new[] { '\r', '\n' });
+                var breakChar = bufferString[firstBreak];
                 if (firstBreak < 1) // None, or zero.
                     return default;
 
                 var raw = bufferString.Substring(0, firstBreak);
-                buffer.Remove(0, raw.Length + "\n".Length);
+                switch (breakChar)
+                {
+                    case '\n':
+                        buffer.Remove(0, raw.Length + 1);
+                        break;
+                    case '\r':
+                        buffer.Remove(0, raw.Length + 1);
+                        if (buffer.Length > 0 && buffer[0] == '\n')
+                            buffer.Remove(0, 1);
+                        break;
+                }
 
                 if (raw.Length == 0)
                     return default;
@@ -124,17 +143,13 @@ namespace moo.common.Connections
 
         public Player GetPlayer() => this.player;
 
-        public bool HasFlag(Thing.Flag flag) => this.player.HasFlag(flag);
-
-        public async Task<Dbref> FindThingForThisPlayerAsync(string s, CancellationToken cancellationToken) => await this.player.FindThingForThisPlayerAsync(s, cancellationToken);
-
         public void SetPropertyPathValue(string path, Dbref value) => this.player.SetPropertyPathValue(path, value);
 
         public async Task RunNextCommand(CancellationToken cancellationToken)
         {
             var command = PopCommand();
 
-            if (default(CommandResult).Equals(command) || command.raw.Length == 0)
+            if (default(CommandResult).Equals(command) || command.Raw.Length == 0)
             {
                 Thread.Sleep(200);
                 return;
@@ -142,7 +157,7 @@ namespace moo.common.Connections
 
             if (editor != null)
             {
-                var editorResult = await editor.HandleInputAsync(command.raw, cancellationToken);
+                var editorResult = await editor.HandleInputAsync(command.Raw, cancellationToken);
 
                 if (!editorResult.IsSuccessful)
                     await SendOutput($"ERROR: {editorTag}: {editorResult.Reason}");

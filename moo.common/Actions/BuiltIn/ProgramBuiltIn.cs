@@ -33,7 +33,7 @@ namespace moo.common.Actions.BuiltIn
                 script.programText = t;
                 await script.MoveToAsync(connection, cancellationToken);
 
-                Console.WriteLine($"Created new program {script.UnparseObject()}");
+                Console.WriteLine($"Created new program {script.UnparseObjectInternal()}");
             });
 
             return Task.FromResult(new VerbResult(true, "Editor initiated"));

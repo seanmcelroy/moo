@@ -60,13 +60,13 @@ namespace moo.common.Actions.BuiltIn
                         target.SetFlag(flagValue);
                 }
 
-                return new VerbResult(true, $"Object {target.UnparseObject()} modified.");
+                return new VerbResult(true, $"Object {target.UnparseObjectInternal()} modified.");
             }
 
             if (string.Compare(predicate, ":clear", true) == 0)
             {
                 target.ClearProperties();
-                return new VerbResult(true, $"Object {target.UnparseObject()} cleared of properties.");
+                return new VerbResult(true, $"Object {target.UnparseObjectInternal()} cleared of properties.");
             }
 
             if (predicate.EndsWith(':'))
@@ -74,7 +74,7 @@ namespace moo.common.Actions.BuiltIn
                 // Remove property at directory
                 var propertyPath = predicate.Substring(0, predicate.IndexOf(':') - 1);
                 target.ClearPropertyPath(propertyPath);
-                return new VerbResult(true, $"Object {target.UnparseObject()} cleared of properties under {propertyPath}.");
+                return new VerbResult(true, $"Object {target.UnparseObjectInternal()} cleared of properties under {propertyPath}.");
             }
             else if (predicate.Contains(':'))
             {

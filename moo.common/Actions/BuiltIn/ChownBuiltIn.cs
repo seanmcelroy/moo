@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using moo.common.Connections;
+using moo.common.Database;
 using moo.common.Models;
 
 namespace moo.common.Actions.BuiltIn
@@ -40,7 +41,10 @@ namespace moo.common.Actions.BuiltIn
                     return new VerbResult(false, "I couldn't find that player."); // Must be a player
             }
 
-            var targetDbref = await connection.FindThingForThisPlayerAsync(targetString, cancellationToken);
+            var targetDbref = await Matcher.InitObjectSearch(player, targetString, Dbref.DbrefObjectType.Unknown, cancellationToken)
+                .MatchEverything()
+                .NoisyResult();
+
             if (targetDbref.Equals(Dbref.NOT_FOUND))
                 return new VerbResult(false, $"Can't find '{targetString}' here");
             if (targetDbref.Equals(Dbref.AMBIGUOUS))
@@ -49,14 +53,15 @@ namespace moo.common.Actions.BuiltIn
             var targetLookup = await ThingRepository.Instance.GetAsync<Thing>(targetDbref, cancellationToken);
             if (!targetLookup.isSuccess || targetLookup.value == null)
             {
-                await connection.SendOutput($"You can't seem to find that.  {targetLookup.reason}");
+                if (connection != null)
+                    await connection.SendOutput($"You can't seem to find that.  {targetLookup.reason}");
                 return new VerbResult(false, "Target not found");
             }
 
             var target = targetLookup.value;
             target.owner = ownerDbref;
             await ThingRepository.Instance.FlushToDatabaseAsync(target, cancellationToken);
-            return new VerbResult(true, $"Owner of {target.UnparseObject()} changed to {ownerDbref}.");
+            return new VerbResult(true, $"Owner of {target.UnparseObjectInternal()} changed to {ownerDbref}.");
         }
     }
 }

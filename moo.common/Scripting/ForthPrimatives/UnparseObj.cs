@@ -27,7 +27,9 @@ namespace moo.common.Scripting.ForthPrimatives
                 return ForthPrimativeResult.SUCCESS;
             }
 
-            parameters.Stack.Push(new ForthDatum(targetResult.value.UnparseObject(), sTarget.FileLineNumber, null, sTarget.WordName, sTarget.WordLineNumber));
+            var unparsed = await targetResult.value.UnparseObject(parameters.Player, parameters.CancellationToken);
+
+            parameters.Stack.Push(new ForthDatum(unparsed, sTarget.FileLineNumber, null, sTarget.WordName, sTarget.WordLineNumber));
             return ForthPrimativeResult.SUCCESS;
         }
     }

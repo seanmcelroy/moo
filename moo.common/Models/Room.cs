@@ -16,7 +16,7 @@ namespace moo.common.Models
             room.name = name;
             room.DropTo = room.id;
             room.owner = owner;
-            Console.WriteLine($"Created new room {room.UnparseObject()}");
+            Console.WriteLine($"Created new room {room.UnparseObjectInternal()}");
             return room;
         }
     }

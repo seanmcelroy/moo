@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using moo.common.Actions.BuiltIn;
 using moo.common.Connections;
 using moo.common.Database;
 using moo.common.Models;
@@ -18,7 +19,22 @@ namespace moo.common
 
         private static readonly ConcurrentBag<PlayerConnection> _players = new();
 
-        private static readonly ConcurrentBag<IRunnable> globalActions = new();
+        private static readonly List<IRunnable> globalActions = new()
+        {
+            new ActionBuiltIn(),
+            new ChownBuiltIn(),
+            new EditBuiltIn(),
+            new LinkBuiltIn(),
+            new LoadBuiltIn(),
+            new NameBuiltIn(),
+            new NewPasswordBuiltIn(),
+            new RecycleBuiltIn(),
+            new SaveBuiltIn(),
+            new SetBuiltIn(),
+            new ProgramBuiltIn(),
+            new PropSetBuiltIn(),
+            new Look(),
+        };
 
         private static readonly ConcurrentBag<ForthProcess> processes = new();
 
@@ -61,16 +77,8 @@ namespace moo.common
         {
             var consoleConnection = new ConsoleConnection(player, input, output, cancellationToken);
             _players.Add(consoleConnection);
-            statusWriter.WriteLine($"Console player {player.UnparseObject()} attached");
+            statusWriter.WriteLine($"Console player {player.UnparseObjectInternal()} attached");
             return consoleConnection;
-        }
-
-        public static void RegisterBuiltInAction(IRunnable action)
-        {
-            if (action == null)
-                throw new System.ArgumentNullException(nameof(action));
-
-            globalActions.Add(action);
         }
 
         public static Script RegisterScript(string name, Player player, string? programText = null)
@@ -223,7 +231,7 @@ namespace moo.common
                     CommandResult command,
                     CancellationToken cancellationToken)
         {
-            if (command == default || command.raw.Length == 0)
+            if (command == default || command.Raw.Length == 0)
                 return;
 
             // Global actions
@@ -272,11 +280,11 @@ namespace moo.common
                 }
 
                 if (connection != null)
-                    await connection.SendOutput($"I don't know how to process {matchedLookup.value.UnparseObject()}");
+                    await connection.SendOutput($"I don't know how to process {await matchedLookup.value.UnparseObject(player, cancellationToken)}");
             }
 
-            if (command.raw.StartsWith("@"))
-                Console.WriteLine($"Unknown at-command: {command.raw}");
+            if (command.Raw.StartsWith("@"))
+                Console.WriteLine($"Unknown at-command: {command.Raw}");
 
             if (connection != null)
                 await connection.SendOutput("Huh?");

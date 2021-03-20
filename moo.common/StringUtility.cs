@@ -2,8 +2,10 @@ namespace moo.common
 {
     public static class StringUtility
     {
-        public static int? StringMatch(string src, string sub)
+        public static int? StringMatch(string? src, string? sub)
         {
+            if (src == null)
+                return null;
             if (!string.IsNullOrEmpty(sub))
             {
                 for (int i = 0; i < src.Length; i++)

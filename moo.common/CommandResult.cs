@@ -7,12 +7,12 @@ namespace moo.common
     {
         private static readonly Regex parts = new(@"^\s*(?<verb>[^\s]+)(?:(?: +(?<io>(?:.*?)) +(?<prepI>to) +(?<doI>.*)$)|(?: +(?:(?<prepD>above|beside|around|at|in|on|off|under) *)?(?<doD>.*)$))?", RegexOptions.Compiled);
 
-        public string raw;
+        public string Raw { get; init; }
         private readonly Match match;
 
         public CommandResult(string raw)
         {
-            this.raw = raw;
+            Raw = raw;
             match = parts.Match(raw);
         }
 
@@ -20,7 +20,7 @@ namespace moo.common
 
         public string GetNonVerbPhrase()
         {
-            var text = raw;
+            var text = Raw;
             var search = GetVerb();
             var replace = "";
 
@@ -38,12 +38,12 @@ namespace moo.common
 
         public string GetDirectObject() => !string.IsNullOrWhiteSpace(match.Groups["doI"].Value) ? match.Groups["doI"].Value : match.Groups["doD"].Value;
 
-        public override string ToString() => raw;
+        public override string ToString() => Raw;
 
         public override bool Equals(object? obj) => obj is CommandResult result &&
-                   string.Compare(raw, result.raw, StringComparison.Ordinal) == 0;
+                   string.Compare(Raw, result.Raw, StringComparison.Ordinal) == 0;
 
-        public override int GetHashCode() => string.GetHashCode(raw);
+        public override int GetHashCode() => string.GetHashCode(Raw);
 
         public static bool operator ==(CommandResult left, CommandResult right) => left.Equals(right);
 
