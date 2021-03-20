@@ -223,6 +223,8 @@ namespace moo.common
 
             // Deserialize
             var player = Thing.Deserialize<HumanPlayer>(providerResult.serialized);
+            if (player == null)
+                return new RepositoryGetResult<Player>($"Unable to deserialize provider result: {providerResult.serialized}");
 
             if (_cache.ContainsKey(player.id))
             {

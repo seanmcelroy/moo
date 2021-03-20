@@ -3,12 +3,9 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 
 namespace moo.common.Models
 {
-    //[JsonConverter(typeof(PropertySerializer))]
-    [JsonObject(MemberSerialization.OptIn)]
     [DebuggerDisplay("{Name}={(directory != null ? \"directory\" : value)} ({Type})")]
     public struct Property
     {
@@ -23,13 +20,10 @@ namespace moo.common.Models
             Lock = 6
         }
 
-        [JsonProperty]
         public string Name;
 
-        [JsonProperty]
         public PropertyDirectory? directory;
 
-        [JsonProperty]
         public object? value;
 
         public object? Value
@@ -52,7 +46,6 @@ namespace moo.common.Models
             }
         }
 
-        [JsonProperty]
         public PropertyType Type;
 
         public Property(string name, string value)

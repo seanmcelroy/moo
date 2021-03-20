@@ -8,19 +8,25 @@ namespace moo.common.Models
     public static class ModelUtility
     {
 
-        public static async Task<bool> Controls(this Dbref whoDbref, Dbref whatDbref, CancellationToken cancellationToken) => await whatDbref.IsControlledBy(whoDbref, cancellationToken);
+        public static async Task<bool> Controls(this Dbref whoDbref, Dbref whatDbref, CancellationToken cancellationToken) =>
+             await (await whatDbref.Get(cancellationToken)).IsControlledBy(whoDbref, cancellationToken);
 
-        public static async Task<bool> Controls(this Dbref whoDbref, Thing what, CancellationToken cancellationToken) => await what.id.IsControlledBy(whoDbref, cancellationToken);
+        public static async Task<bool> Controls(this Dbref whoDbref, Thing what, CancellationToken cancellationToken) =>
+            await what.IsControlledBy(whoDbref, cancellationToken);
 
-        public static async Task<bool> Controls(this PlayerConnection connection, Dbref whatDbref, CancellationToken cancellationToken) => await whatDbref.IsControlledBy(connection.Dbref, cancellationToken);
+        public static async Task<bool> Controls(this PlayerConnection connection, Dbref whatDbref, CancellationToken cancellationToken) =>
+            await (await whatDbref.Get(cancellationToken)).IsControlledBy(connection.Dbref, cancellationToken);
 
-        public static async Task<bool> Controls(this PlayerConnection connection, Thing what, CancellationToken cancellationToken) => await what.id.IsControlledBy(connection.Dbref, cancellationToken);
+        public static async Task<bool> Controls(this PlayerConnection connection, Thing what, CancellationToken cancellationToken) =>
+            await what.IsControlledBy(connection.Dbref, cancellationToken);
 
-        public static async Task<bool> IsControlledBy(this Thing what, Dbref whoDbref, CancellationToken cancellationToken) => await what.id.IsControlledBy(whoDbref, cancellationToken);
+        public static async Task<bool> IsControlledBy(this Thing what, Dbref whoDbref, CancellationToken cancellationToken) =>
+            await what.IsControlledBy(await whoDbref.Get(cancellationToken), cancellationToken);
 
-        public static async Task<bool> IsControlledBy(this Thing what, PlayerConnection connection, CancellationToken cancellationToken) => await what.id.IsControlledBy(connection.Dbref, cancellationToken);
+        public static async Task<bool> IsControlledBy(this Dbref whatDbref, PlayerConnection connection, CancellationToken cancellationToken) =>
+            await (await whatDbref.Get(cancellationToken)).IsControlledBy(connection.GetPlayer(), cancellationToken);
 
-        public static async Task<bool> IsControlledBy(this Dbref whatDbref, Dbref whoDbref, CancellationToken cancellationToken)
+        public static async Task<bool> IsControlledBy(this Thing? what, Thing? who, CancellationToken cancellationToken)
         {
             /*
             You control anything you own.
@@ -31,26 +37,18 @@ namespace moo.common.Models
             */
 
             // No one controls invalid objects
-            if (!whatDbref.IsValid())
+            if (what == null || !what.id.IsValid())
                 return false;
 
-            if (!whoDbref.IsValid())
-                return false;
-
-            var what = await ThingRepository.Instance.GetAsync<Thing>(whoDbref, cancellationToken);
-            if (!what.isSuccess || what.value == null)
-                return false;
-
-            var who = await ThingRepository.Instance.GetAsync<Thing>(whoDbref, cancellationToken);
-            if (!who.isSuccess || who.value == null)
+            if (who == null || !who.id.IsValid())
                 return false;
 
             // Wizard controls everything
-            if (who.value.HasFlag(Thing.Flag.WIZARD))
+            if (who.HasFlag(Thing.Flag.WIZARD))
             {
 #if GOD_PRIV
                 // Only God controls God's objects
-                if (what.value.Owner.IsGod() && !who.value.IsGod())
+                if (what.Owner.IsGod() && !who.IsGod())
                     return false;
                 else
 #endif
@@ -58,7 +56,7 @@ namespace moo.common.Models
             }
 
             // Owners control their own stuff
-            if (whoDbref == what.value.Owner)
+            if (who.id == what.Owner)
                 return true;
 
             return false;
@@ -66,37 +64,36 @@ namespace moo.common.Models
             //return (test_lock_false_default(NOTHING, who, what, MESGPROP_OWNLOCK));
         }
 
-        public static async Task<Thing?> GetLocation(this Dbref dbref, CancellationToken cancellationToken)
+        public static async Task<Dbref> GetLocation(this Dbref dbref, CancellationToken cancellationToken)
         {
             if (!dbref.IsValid())
-                return null;
+                return Dbref.NOT_FOUND;
             var thing = await ThingRepository.Instance.GetAsync<Thing>(dbref, cancellationToken);
             if (!thing.isSuccess || thing.value == null)
-                return null;
+                return Dbref.NOT_FOUND;
 
             var locationDbRef = thing.value.Location;
-            var location = await ThingRepository.Instance.GetAsync<Thing>(locationDbRef, cancellationToken);
-            if (!location.isSuccess || location.value == null)
-                return null;
-
-            return location.value;
+            return locationDbRef;
         }
 
-        public static async Task<Thing?> GetOwner(this Dbref dbref, CancellationToken cancellationToken)
+        public static async Task<Dbref> GetOwner(this Dbref dbref, CancellationToken cancellationToken)
         {
             if (!dbref.IsValid())
-                return null;
+                return Dbref.NOT_FOUND;
             var thing = await ThingRepository.Instance.GetAsync<Thing>(dbref, cancellationToken);
             if (!thing.isSuccess || thing.value == null)
-                return null;
+                return Dbref.NOT_FOUND;
 
-            var ownerDbRef = thing.value.Owner;
-            var owner = await ThingRepository.Instance.GetAsync<Thing>(ownerDbRef, cancellationToken);
-            if (!owner.isSuccess || owner.value == null)
-                return null;
-
-            return owner.value;
+            return thing.value.Owner;
         }
 
+        public static async Task<Thing?> Get(this Dbref dbref, CancellationToken cancellationToken)
+        {
+            var result = await ThingRepository.Instance.GetAsync<Thing>(dbref, cancellationToken);
+            if (!result.isSuccess || result.value == null)
+                return null;
+
+            return result.value;
+        }
     }
 }

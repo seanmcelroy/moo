@@ -26,14 +26,14 @@ namespace moo.common.Scripting.ForthPrimatives
                 return ForthPrimativeResult.SUCCESS;
             }
 
-            var targetResult = await ThingRepository.Instance.GetAsync<Thing>(sTarget.UnwrapDbref(), parameters.CancellationToken);
-            if (!targetResult.isSuccess || targetResult.value == null)
+            var target = await sTarget.UnwrapDbref().Get(parameters.CancellationToken);
+            if (target == null)
             {
                 parameters.Stack.Push(new ForthDatum(0));
                 return ForthPrimativeResult.SUCCESS;
             }
 
-            if (targetResult.value.type != (int)Dbref.DbrefObjectType.Program)
+            if (target.type != (int)Dbref.DbrefObjectType.Program)
                 parameters.Stack.Push(new ForthDatum(0));
             else
                 parameters.Stack.Push(new ForthDatum(1));

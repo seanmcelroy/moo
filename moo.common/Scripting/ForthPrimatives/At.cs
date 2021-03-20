@@ -20,7 +20,7 @@ namespace moo.common.Scripting.ForthPrimatives
                 return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "@ requires the top parameter on the stack to be a variable");
 
             var variableName = reference.Value.ToString().ToLowerInvariant();
-            var variableValue = ResolveVariableByName(parameters.Variables, parameters.Connection.Dbref, parameters.Connection.Location, parameters.Trigger, parameters.Command, variableName);
+            var variableValue = ResolveVariableByName(parameters.Variables, parameters.Player, parameters.Location, parameters.Trigger, parameters.Command, variableName);
 
             if (default(ForthVariable).Equals(variableValue) && !parameters.Variables.ContainsKey(variableName))
                 return new ForthPrimativeResult(ForthErrorResult.VARIABLE_NOT_FOUND, $"No variable named {variableName} was found");

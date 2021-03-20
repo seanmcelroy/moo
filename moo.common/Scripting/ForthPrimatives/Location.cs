@@ -21,15 +21,8 @@ namespace moo.common.Scripting.ForthPrimatives
                 return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "LOCATION requires the top parameter on the stack to be a dbref");
 
             var target = n1.UnwrapDbref();
-            var targetResult = await ThingRepository.Instance.GetAsync<Thing>(target, parameters.CancellationToken);
-
-            if (!targetResult.isSuccess || targetResult.value == null)
-            {
-                parameters.Stack.Push(new ForthDatum(Dbref.NOT_FOUND, 0));
-                return ForthPrimativeResult.SUCCESS;
-            }
-
-            parameters.Stack.Push(new ForthDatum(targetResult.value.Location, 0));
+            var targetLocation = await target.GetLocation(parameters.CancellationToken);
+            parameters.Stack.Push(new ForthDatum(targetLocation, 0));
             return ForthPrimativeResult.SUCCESS;
         }
     }

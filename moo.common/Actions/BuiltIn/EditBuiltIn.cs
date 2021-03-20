@@ -9,23 +9,26 @@ namespace moo.common.Actions.BuiltIn
 {
     public class EditBuiltIn : IRunnable
     {
-        public Tuple<bool, string?> CanProcess(PlayerConnection connection, CommandResult command)
+        public Tuple<bool, string?> CanProcess(Dbref player, CommandResult command)
         {
-            var verb = command.getVerb().ToLowerInvariant();
-            if (string.Compare(verb, "@edit", StringComparison.OrdinalIgnoreCase) == 0 && command.hasDirectObject())
+            var verb = command.GetVerb().ToLowerInvariant();
+            if (string.Compare(verb, "@edit", StringComparison.OrdinalIgnoreCase) == 0 && command.HasDirectObject())
                 return new Tuple<bool, string?>(true, verb);
             return new Tuple<bool, string?>(false, null);
         }
 
-        public async Task<VerbResult> Process(PlayerConnection connection, CommandResult command, CancellationToken cancellationToken)
+        public async Task<VerbResult> Process(Dbref player, PlayerConnection? connection, CommandResult command, CancellationToken cancellationToken)
         {
-            var str = command.getNonVerbPhrase();
+            if (connection == null)
+                throw new InvalidOperationException("Missing connection for interactive command!"); // TODO gracefully
+
+            var str = command.GetNonVerbPhrase();
             if (str == null || str.Trim().Length == 0)
                 return new VerbResult(false, "@edit <program>\r\nSearches for a program and if a match is found, puts the player into edit mode. Programs must be created with @PROGRAM.");
 
 
             var sourceDbref = await Matcher
-                        .InitObjectSearch(connection.GetPlayer(), str, Dbref.DbrefObjectType.Program, cancellationToken)
+                        .InitObjectSearch(player, str, Dbref.DbrefObjectType.Program, cancellationToken)
                         .MatchEverything()
                         .Result();
             // OLD: var sourceDbref = await connection.FindThingForThisPlayerAsync(str, cancellationToken);
@@ -37,7 +40,8 @@ namespace moo.common.Actions.BuiltIn
             var sourceLookup = await ThingRepository.Instance.GetAsync<Script>(sourceDbref, cancellationToken);
             if (!sourceLookup.isSuccess)
             {
-                await connection.sendOutput($"You can't seem to find that.  {sourceLookup.reason}");
+                if (connection != null)
+                    await connection.SendOutput($"You can't seem to find that.  {sourceLookup.reason}");
                 return new VerbResult(false, "Target not found");
             }
 
@@ -49,10 +53,10 @@ namespace moo.common.Actions.BuiltIn
             if (program.Type != Dbref.DbrefObjectType.Program)
                 return new VerbResult(false, $"Only programs can be edited, but {program.UnparseObject()} is not one.");
 
-            if (!await program.IsControlledBy(connection, cancellationToken))
+            if (!await program.IsControlledBy(player, cancellationToken))
                 return new VerbResult(false, $"You don't control {program.id}");
 
-            connection.EnterEditMode(null, command.getDirectObject(), async t =>
+            connection.EnterEditMode(null, command.GetDirectObject(), async t =>
             {
                 program.programText += $"\n{t}";
                 program.Uncompile();

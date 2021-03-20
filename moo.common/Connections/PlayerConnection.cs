@@ -54,7 +54,7 @@ namespace moo.common.Connections
             this.connectionTime = DateTime.Now;
         }
 
-        public abstract Task sendOutput(string output);
+        public abstract Task SendOutput(string output);
 
         //public async Task<Dbref> MatchAsync(string name, CancellationToken cancellationToken) => await this.player.MatchAsync(name, cancellationToken);
 
@@ -130,7 +130,7 @@ namespace moo.common.Connections
 
         public void SetPropertyPathValue(string path, Dbref value) => this.player.SetPropertyPathValue(path, value);
 
-        public async Task RunNextCommand(IEnumerable<IRunnable> globalActions, CancellationToken cancellationToken)
+        public async Task RunNextCommand(CancellationToken cancellationToken)
         {
             var command = PopCommand();
 
@@ -145,7 +145,7 @@ namespace moo.common.Connections
                 var editorResult = await editor.HandleInputAsync(command.raw, cancellationToken);
 
                 if (!editorResult.IsSuccessful)
-                    await sendOutput($"ERROR: {editorTag}: {editorResult.Reason}");
+                    await SendOutput($"ERROR: {editorTag}: {editorResult.Reason}");
 
                 if (editorResult.ShouldExit)
                 {
@@ -161,59 +161,7 @@ namespace moo.common.Connections
             //if (Unattended)
             //    await sendOutput($"AUTO> {command.raw}");
 
-            // Global actions
-            VerbResult actionResult;
-            foreach (var action in globalActions)
-            {
-                if (action.CanProcess(this, command).Item1)
-                {
-                    // TODO: Right now we block on programs
-                    actionResult = await action.Process(this, command, cancellationToken);
-                    if (!actionResult.isSuccess)
-                    {
-                        await sendOutput($"ERROR: {actionResult.reason}");
-                        return;
-                    }
-
-                    return;
-                }
-            }
-
-            var matchResult = await Matcher
-                .InitObjectSearch(this.GetPlayer(), command.getVerb(), Dbref.DbrefObjectType.Unknown, cancellationToken)
-                .MatchEverything()
-                .Result();
-
-            // Todo, everything below here needs to be checked against Fuzzball
-            if (matchResult.IsValid())
-            {
-                var matchedLookup = await ThingRepository.Instance.GetAsync(matchResult, cancellationToken);
-                if (!matchedLookup.isSuccess || matchedLookup.value == null)
-                {
-                    await sendOutput($"Cannot retrieve {matchResult}: {matchedLookup.reason}");
-                    return;
-                }
-
-                if (matchResult.Type == Dbref.DbrefObjectType.Exit)
-                {
-                    var exit = (Exit)matchedLookup.value!;
-                    if (!exit.CanProcess(this, command).Item1)
-                    {
-                        await sendOutput($"Locked.");
-                        return;
-                    }
-
-                    await exit.Process(this, command, cancellationToken);
-                    return;
-                }
-
-                await sendOutput($"I don't know how to process {matchedLookup.value.UnparseObject()}");
-            }
-
-            if (command.raw.StartsWith("@"))
-                Console.WriteLine($"Unknown at-command: {command.raw}");
-
-            await sendOutput("Huh?");
+            await Server.RunCommand(this.Dbref, this, command, cancellationToken);
         }
     }
 }

@@ -273,7 +273,7 @@ namespace moo.common.Scripting
                                      || controlCurrent.Element == ControlFlowElement.SkipToAfterNextUntilOrRepeat)
                                     {
                                         if (verbosity >= 2 && verbosity <= 3 && connection != null)
-                                            await connection.sendOutput($"SKIPPED LINE: {line}");
+                                            await connection.SendOutput($"SKIPPED LINE: {line}");
                                         controlFlow.Push(new ControlFlowMarker(ControlFlowElement.SkippedBranch, x));
                                         tokenHandled = true;
                                         continue;
@@ -310,7 +310,7 @@ namespace moo.common.Scripting
                                      || controlCurrent.Element == ControlFlowElement.SkipToAfterNextUntilOrRepeat)
                                     {
                                         if (verbosity >= 2 && verbosity <= 3 && connection != null)
-                                            await connection.sendOutput($"SKIPPED LINE: {line}");
+                                            await connection.SendOutput($"SKIPPED LINE: {line}");
                                         controlFlow.Push(new ControlFlowMarker(ControlFlowElement.SkippedBranch, x));
                                         tokenHandled = true;
                                         continue;
@@ -346,7 +346,7 @@ namespace moo.common.Scripting
                                      || controlCurrent.Element == ControlFlowElement.SkipToAfterNextUntilOrRepeat)
                                     {
                                         if (verbosity >= 2 && verbosity <= 3 && connection != null)
-                                            await connection.sendOutput($"SKIPPED LINE: {line}");
+                                            await connection.SendOutput($"SKIPPED LINE: {line}");
                                         tokenHandled = true;
                                         continue;
                                     }
@@ -382,7 +382,7 @@ namespace moo.common.Scripting
                                      || controlCurrent.Element == ControlFlowElement.SkipToAfterNextUntilOrRepeat)
                                     {
                                         if (verbosity >= 2 && verbosity <= 3 && connection != null)
-                                            await connection.sendOutput($"SKIPPED LINE: {line}");
+                                            await connection.SendOutput($"SKIPPED LINE: {line}");
                                         // A skipped if will push a SkippedBranch, so we should pop it.
                                         controlFlow.Pop();
                                         continue;
@@ -411,7 +411,7 @@ namespace moo.common.Scripting
                             {
                                 // Debug, print stack
                                 if (verbosity >= 2 && verbosity <= 3 && connection != null)
-                                    await connection.sendOutput($"SKIPPED LINE: {line}");
+                                    await connection.SendOutput($"SKIPPED LINE: {line}");
                                 tokenHandled = true;
                                 continue;
                             }
@@ -423,7 +423,7 @@ namespace moo.common.Scripting
                             if (echoMatch.Success)
                             {
                                 if (connection != null)
-                                    await connection.sendOutput(echoMatch.Groups["value"].Value);
+                                    await connection.SendOutput(echoMatch.Groups["value"].Value);
                                 tokenHandled = true;
                                 continue;
                             }
@@ -539,14 +539,14 @@ namespace moo.common.Scripting
                         }
 
                         if (connection != null)
-                            await connection.sendOutput($"UNHANDLED PREPROCESSOR TOKEN: {token}");
+                            await connection.SendOutput($"UNHANDLED PREPROCESSOR TOKEN: {token}");
                     }
 
                     if (tokenHandled)
                         continue;
 
                     if (connection != null)
-                        await connection.sendOutput($"UNHANDLED PREPROCESSOR LINE: {line}");
+                        await connection.SendOutput($"UNHANDLED PREPROCESSOR LINE: {line}");
                 }
                 else
                 {
@@ -597,16 +597,16 @@ namespace moo.common.Scripting
                             line2 = line2.Replace(hold.Key, hold.Value);
 
                     if (verbosity > 0 && verbosity <= 3 && line.CompareTo(line2) != 0 && connection != null)
-                        await connection.sendOutput($"XFORM \"{line}\" into \"{line2}\"");
+                        await connection.SendOutput($"XFORM \"{line}\" into \"{line2}\"");
                     else if (verbosity >= 4 && connection != null)
-                        await connection.sendOutput($"PRE: {line2}");
+                        await connection.SendOutput($"PRE: {line2}");
 
                     sb.AppendLine(line2);
                 }
             }
 
             if (controlFlow.Count != 0 && connection != null)
-                await connection.sendOutput($"UNCLOSED CONTROL FLOW! in {script.name}!");
+                await connection.SendOutput($"UNCLOSED CONTROL FLOW! in {script.name}!");
 
             return new ForthPreprocessingResult(sb.ToString(), publicFunctionNames, null);
         }

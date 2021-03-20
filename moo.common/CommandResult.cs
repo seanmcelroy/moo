@@ -5,24 +5,23 @@ namespace moo.common
 {
     public struct CommandResult
     {
-
         private static readonly Regex parts = new(@"^\s*(?<verb>[^\s]+)(?:(?: +(?<io>(?:.*?)) +(?<prepI>to) +(?<doI>.*)$)|(?: +(?:(?<prepD>above|beside|around|at|in|on|off|under) *)?(?<doD>.*)$))?", RegexOptions.Compiled);
 
-        public String raw;
-        private readonly System.Text.RegularExpressions.Match match;
+        public string raw;
+        private readonly Match match;
 
-        public CommandResult(String raw)
+        public CommandResult(string raw)
         {
             this.raw = raw;
-            this.match = parts.Match(raw);
+            match = parts.Match(raw);
         }
 
-        public string getVerb() => match.Groups["verb"].Value;
+        public string GetVerb() => match.Groups["verb"].Value;
 
-        public string getNonVerbPhrase()
+        public string GetNonVerbPhrase()
         {
-            var text = this.raw;
-            var search = this.getVerb();
+            var text = raw;
+            var search = GetVerb();
             var replace = "";
 
             int pos = text.IndexOf(search);
@@ -33,12 +32,21 @@ namespace moo.common
             return (text.Substring(0, pos) + replace + text[(pos + search.Length)..]).TrimStart();
         }
 
-        public bool hasIndirectObject() => !string.IsNullOrWhiteSpace(match.Groups["io"].Value);
+        public bool HasIndirectObject() => !string.IsNullOrWhiteSpace(match.Groups["io"].Value);
 
-        public bool hasDirectObject() => !string.IsNullOrWhiteSpace(match.Groups["doI"].Value) || !string.IsNullOrWhiteSpace(match.Groups["doD"].Value);
+        public bool HasDirectObject() => !string.IsNullOrWhiteSpace(match.Groups["doI"].Value) || !string.IsNullOrWhiteSpace(match.Groups["doD"].Value);
 
-        public string getDirectObject() => !string.IsNullOrWhiteSpace(match.Groups["doI"].Value) ? match.Groups["doI"].Value : match.Groups["doD"].Value;
+        public string GetDirectObject() => !string.IsNullOrWhiteSpace(match.Groups["doI"].Value) ? match.Groups["doI"].Value : match.Groups["doD"].Value;
 
-        public override string ToString() => this.raw;
+        public override string ToString() => raw;
+
+        public override bool Equals(object? obj) => obj is CommandResult result &&
+                   string.Compare(raw, result.raw, StringComparison.Ordinal) == 0;
+
+        public override int GetHashCode() => string.GetHashCode(raw);
+
+        public static bool operator ==(CommandResult left, CommandResult right) => left.Equals(right);
+
+        public static bool operator !=(CommandResult left, CommandResult right) => !(left == right);
     }
 }

@@ -1,10 +1,10 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using moo.common.Database;
-using Newtonsoft.Json;
 using static moo.common.Models.Thing;
 
 namespace moo.common.Models
@@ -33,6 +33,7 @@ namespace moo.common.Models
         private readonly int id;
         private readonly DbrefObjectType type;
 
+        [JsonIgnore]
         public DbrefObjectType Type => type;
 
         public Dbref(int id, DbrefObjectType type)
@@ -162,9 +163,15 @@ namespace moo.common.Models
             }
 
             s = s.Trim();
-            if (Regex.IsMatch(s, @"^#\d+[A-Z]?$"))
+
+            var m = Regex.Match(s, @"^#(?<num>\d+)(?<type>[EGPFRT]?)$");
+            if (m.Success)
             {
-                var type = (s[^1]) switch
+                var num = int.Parse(m.Groups["num"].Value);
+                char? typeChar = m.Groups["type"].Success && !string.IsNullOrEmpty(m.Groups["type"].Value)
+                    ? m.Groups["type"].Value[0]
+                    : null;
+                var type = (typeChar) switch
                 {
                     'E' => DbrefObjectType.Exit,
                     'G' => DbrefObjectType.Garbage,
@@ -173,14 +180,8 @@ namespace moo.common.Models
                     'R' => DbrefObjectType.Room,
                     _ => DbrefObjectType.Thing,
                 };
-                if (int.TryParse(s[1..], out int i))
-                {
-                    result = new Dbref(i, type);
-                    return true;
-                }
-
-                result = NOT_FOUND;
-                return false;
+                result = new Dbref(num, type);
+                return true;
             }
 
             result = NOT_FOUND;

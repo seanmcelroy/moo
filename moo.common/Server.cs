@@ -16,7 +16,7 @@ namespace moo.common
     {
         private static Server Instance;
 
-        private static readonly ConcurrentQueue<PlayerConnection> _players = new();
+        private static readonly ConcurrentBag<PlayerConnection> _players = new();
 
         private static readonly ConcurrentBag<IRunnable> globalActions = new();
 
@@ -60,7 +60,7 @@ namespace moo.common
         public ConsoleConnection AttachConsolePlayer(HumanPlayer player, TextReader input, TextWriter output, CancellationToken cancellationToken)
         {
             var consoleConnection = new ConsoleConnection(player, input, output, cancellationToken);
-            _players.Enqueue(consoleConnection);
+            _players.Add(consoleConnection);
             statusWriter.WriteLine($"Console player {player.UnparseObject()} attached");
             return consoleConnection;
         }
@@ -185,18 +185,17 @@ namespace moo.common
         public static async Task NotifyAsync(Dbref player, string message)
         {
             foreach (var connection in _players.Where(p => p.Dbref == player))
-                await connection.sendOutput(message);
+                await connection.SendOutput(message);
         }
 
         public static async Task NotifyRoomAsync(Dbref room, string message, List<Dbref>? exclude = null)
         {
             foreach (var connection in _players.Where(p => p.Location == room && (exclude == null || !exclude.Contains(p.Dbref))))
-                await connection.sendOutput(message);
+                await connection.SendOutput(message);
         }
 
         public void Start(CancellationToken cancellationToken)
         {
-
             statusWriter.WriteLine("Initializing sqlite storage provider");
             var storageProvider = new SqliteStorageProvider();
             storageProvider.Initialize();
@@ -211,11 +210,76 @@ namespace moo.common
             {
                 do
                 {
-                    await Task.WhenAll(GetConnectedPlayers().Select(async (connection) => await connection.RunNextCommand(globalActions, cancellationToken)));
+                    await Task.WhenAll(GetConnectedPlayers().Select(async (connection) => await connection.RunNextCommand(cancellationToken)));
                 } while (!cancellationToken.IsCancellationRequested);
 
             }, cancellationToken);
             playerHandlerTask.Start();
+        }
+
+        public static async Task RunCommand(
+                    Dbref player,
+                    PlayerConnection? connection,
+                    CommandResult command,
+                    CancellationToken cancellationToken)
+        {
+            if (command == default || command.raw.Length == 0)
+                return;
+
+            // Global actions
+            VerbResult actionResult;
+            foreach (var action in globalActions)
+            {
+                if (action.CanProcess(player, command).Item1)
+                {
+                    // TODO: Right now we block on programs
+                    actionResult = await action.Process(player, connection, command, cancellationToken);
+                    if (!actionResult.isSuccess && connection != null)
+                        await connection.SendOutput($"ERROR: {actionResult.reason}");
+
+                    return;
+                }
+            }
+
+            var matchResult = await Matcher
+                .InitObjectSearch(player, command.GetVerb(), Dbref.DbrefObjectType.Unknown, cancellationToken)
+                .MatchEverything()
+                .Result();
+
+            // Todo, everything below here needs to be checked against Fuzzball
+            if (matchResult.IsValid())
+            {
+                var matchedLookup = await ThingRepository.Instance.GetAsync(matchResult, cancellationToken);
+                if (!matchedLookup.isSuccess || matchedLookup.value == null)
+                {
+                    if (connection != null)
+                        await connection.SendOutput($"Cannot retrieve {matchResult}: {matchedLookup.reason}");
+                    return;
+                }
+
+                if (matchResult.Type == Dbref.DbrefObjectType.Exit)
+                {
+                    var exit = (Exit)matchedLookup.value!;
+                    if (!exit.CanProcess(player, command).Item1)
+                    {
+                        if (connection != null)
+                            await connection.SendOutput($"Locked.");
+                        return;
+                    }
+
+                    await exit.Process(player, connection, command, cancellationToken);
+                    return;
+                }
+
+                if (connection != null)
+                    await connection.SendOutput($"I don't know how to process {matchedLookup.value.UnparseObject()}");
+            }
+
+            if (command.raw.StartsWith("@"))
+                Console.WriteLine($"Unknown at-command: {command.raw}");
+
+            if (connection != null)
+                await connection.SendOutput("Huh?");
         }
     }
 }

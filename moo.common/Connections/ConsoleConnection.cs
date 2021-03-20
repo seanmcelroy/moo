@@ -29,6 +29,6 @@ namespace moo.common.Connections
                 }, cancellationToken);
         }
 
-        public override async Task sendOutput(string output) => await this.output.WriteLineAsync(output);
+        public override async Task SendOutput(string output) => await this.output.WriteLineAsync(output);
     }
 }

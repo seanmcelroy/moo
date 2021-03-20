@@ -38,8 +38,8 @@ namespace moo.common.Scripting.ForthPrimatives
             if (d.Type != DatumType.DbRef)
                 return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "ADDPROP requires the fourth-to-top parameter on the stack to be a dbref");
 
-            var targetResult = await ThingRepository.Instance.GetAsync<Thing>(d.UnwrapDbref(), parameters.CancellationToken);
-            if (!targetResult.isSuccess || targetResult.value == null)
+            var target = await d.UnwrapDbref().Get(parameters.CancellationToken);
+            if (target == null)
                 return new ForthPrimativeResult(ForthErrorResult.NO_SUCH_OBJECT, $"Unable to find object with dbref {d.UnwrapDbref()}");
 
             var path = ((string?)s1.Value) ?? string.Empty;
@@ -47,10 +47,10 @@ namespace moo.common.Scripting.ForthPrimatives
             //if (!await targetResult.value.IsControlledBy(parameters.Connection.Dbref, parameters.CancellationToken) && path.Contains('_'))
             //    return new ForthPrimativeResult(ForthErrorResult.INSUFFICIENT_PERMISSION, $"Permission not granted to write protected property {path} on {d.UnwrapDbref()}");
 
-            if (s2.isTrue())
-                targetResult.value.SetPropertyPathValue(path, new ForthVariable((string?)s2.Value ?? string.Empty));
+            if (s2.IsTrue())
+                target.SetPropertyPathValue(path, new ForthVariable((string?)s2.Value ?? string.Empty));
             else
-                targetResult.value.SetPropertyPathValue(path, new ForthVariable(i.UnwrapInt()));
+                target.SetPropertyPathValue(path, new ForthVariable(i.UnwrapInt()));
 
             return ForthPrimativeResult.SUCCESS;
         }

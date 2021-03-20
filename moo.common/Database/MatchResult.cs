@@ -9,8 +9,8 @@ namespace moo.common.Database
 {
     public sealed class MatchResult
     {
-        public Thing MatchFrom { get; init; }
-        public Player Player { get; init; }
+        public Dbref MatchFrom { get; init; }
+        public Dbref Player { get; init; }
         public string MatchName { get; init; }
         public DbrefObjectType PreferredType { get; init; } = DbrefObjectType.Unknown;
         public CancellationToken CancellationToken { get; init; }
@@ -30,7 +30,7 @@ namespace moo.common.Database
             get => _matches.ToImmutableList();
         }
 
-        private MatchResult(Player player, string matchName, DbrefObjectType preferredType, CancellationToken cancellationToken)
+        private MatchResult(Dbref player, string matchName, DbrefObjectType preferredType, CancellationToken cancellationToken)
         {
             MatchFrom = player;
             Player = player;
@@ -39,12 +39,12 @@ namespace moo.common.Database
             CancellationToken = cancellationToken;
         }
 
-        internal static MatchResult InitObjectSearch(Player player, string matchName, DbrefObjectType preferredType, CancellationToken cancellationToken)
+        internal static MatchResult InitObjectSearch(Dbref player, string matchName, DbrefObjectType preferredType, CancellationToken cancellationToken)
         {
             return new MatchResult(player, matchName, preferredType, cancellationToken);
         }
 
-        internal static MatchResult InitRemoteSearch(Player player, Thing matchFrom, string matchName, DbrefObjectType preferredType, CancellationToken cancellationToken)
+        internal static MatchResult InitRemoteSearch(Dbref player, Dbref matchFrom, string matchName, DbrefObjectType preferredType, CancellationToken cancellationToken)
         {
             var result = new MatchResult(player, matchName, preferredType, cancellationToken)
             {
@@ -87,8 +87,8 @@ namespace moo.common.Database
             }
 
             // Try environment distance, pick the closer one if applicable.
-            int d1 = await Dbref.EnvironmentalDistance(MatchFrom.id, thing1, this.CancellationToken);
-            int d2 = await Dbref.EnvironmentalDistance(MatchFrom.id, thing2, this.CancellationToken);
+            int d1 = await Dbref.EnvironmentalDistance(MatchFrom, thing1, this.CancellationToken);
+            int d2 = await Dbref.EnvironmentalDistance(MatchFrom, thing2, this.CancellationToken);
 
             if (d1 < d2) return thing1;
             else if (d2 < d1) return thing2;

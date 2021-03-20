@@ -21,16 +21,14 @@ namespace moo.common.Scripting.ForthPrimatives
             if (n1.Type != DatumType.DbRef)
                 return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "CONTENTS requires the top parameter on the stack to be a dbref");
 
-            var target = n1.UnwrapDbref();
-            var targetResult = await ThingRepository.Instance.GetAsync<Thing>(target, parameters.CancellationToken);
-
-            if (!targetResult.isSuccess || targetResult.value == null || (targetResult.value.Type != DbrefObjectType.Room && targetResult.value.Type != DbrefObjectType.Player))
+            var target = await n1.UnwrapDbref().Get(parameters.CancellationToken);
+            if (target == null || (target.Type != DbrefObjectType.Room && target.Type != DbrefObjectType.Player))
             {
                 parameters.Stack.Push(new ForthDatum(Dbref.NOT_FOUND, 0));
                 return ForthPrimativeResult.SUCCESS;
             }
 
-            var container = targetResult.value;
+            var container = target;
             var first = container.FirstContent();
 
             parameters.Stack.Push(new ForthDatum(first, 0));

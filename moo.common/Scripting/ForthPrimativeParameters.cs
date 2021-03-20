@@ -18,6 +18,10 @@ namespace moo.common.Scripting
 
         private readonly Dictionary<string, ForthVariable>? variables;
 
+        public readonly Dbref Player;
+
+        public readonly Dbref Location;
+
         public readonly PlayerConnection? Connection;
 
         public readonly Dbref Trigger;
@@ -46,6 +50,8 @@ namespace moo.common.Scripting
             Stack = stack;
             this.variables = variables;
             Connection = connection;
+            Player = connection?.Dbref ?? Dbref.NOT_FOUND;
+            Location = connection?.GetPlayer().Location ?? Dbref.NOT_FOUND;
             Trigger = trigger;
             Command = command;
             this.lastListItem = lastListItem;

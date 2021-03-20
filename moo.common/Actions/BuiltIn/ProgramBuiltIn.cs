@@ -2,14 +2,15 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using moo.common.Connections;
+using moo.common.Models;
 
 namespace moo.common.Actions.BuiltIn
 {
     public class ProgramBuiltIn : IRunnable
     {
-        public Tuple<bool, string?> CanProcess(PlayerConnection player, CommandResult command)
+        public Tuple<bool, string?> CanProcess(Dbref player, CommandResult command)
         {
-            string verb = command.getVerb().ToLowerInvariant();
+            string verb = command.GetVerb().ToLowerInvariant();
 
             foreach (var key in new[] { "@prog", "@program" })
             {
@@ -20,10 +21,13 @@ namespace moo.common.Actions.BuiltIn
             return new Tuple<bool, string?>(false, null);
         }
 
-        public Task<VerbResult> Process(PlayerConnection connection, CommandResult command, CancellationToken cancellationToken)
+        public Task<VerbResult> Process(Dbref player, PlayerConnection? connection, CommandResult command, CancellationToken cancellationToken)
         {
-            var script = Server.RegisterScript(command.getDirectObject(), connection.GetPlayer());
-            connection.EnterEditMode(script, command.getDirectObject(), async t =>
+            if (connection == null)
+                throw new InvalidOperationException("Missing connection for interactive command!"); // TODO gracefully
+
+            var script = Server.RegisterScript(command.GetDirectObject(), connection.GetPlayer());
+            connection.EnterEditMode(script, command.GetDirectObject(), async t =>
             {
                 // Move this to my inventory
                 script.programText = t;

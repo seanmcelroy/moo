@@ -1,11 +1,7 @@
 using System;
-using System.Diagnostics.CodeAnalysis;
-using moo.common.Database;
-using Newtonsoft.Json;
 
 namespace moo.common.Models
 {
-    [JsonConverter(typeof(LockSerializer))]
     public struct Lock
     {
         private string raw;

@@ -16,16 +16,13 @@ namespace moo.common.Models
 
         public override Dbref Owner => this.id;
 
-        protected Player()
-        {
-            this.type = (int)Dbref.DbrefObjectType.Player;
-        }
+        protected Player() => type = (int)Dbref.DbrefObjectType.Player;
 
         public async Task<Dbref> FindThingForThisPlayerAsync(string s, CancellationToken cancellationToken)
         {
-            if (String.Compare("me", s, true) == 0)
+            if (string.Compare("me", s, true) == 0)
                 return this.id;
-            if (String.Compare("here", s, true) == 0)
+            if (string.Compare("here", s, true) == 0)
                 return this.Location;
 
             if (s.StartsWith("$"))

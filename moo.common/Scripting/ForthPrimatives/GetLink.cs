@@ -24,11 +24,11 @@ namespace moo.common.Scripting.ForthPrimatives
             if (sTarget.Type != DatumType.DbRef)
                 return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "GETLINK requires the top parameter on the stack to be a dbref");
 
-            var targetResult = await ThingRepository.Instance.GetAsync<Thing>(sTarget.UnwrapDbref(), parameters.CancellationToken);
-            if (!targetResult.isSuccess || targetResult.value == null)
+            var target = await sTarget.UnwrapDbref().Get(parameters.CancellationToken);
+            if (target == null)
                 return new ForthPrimativeResult(ForthErrorResult.NO_SUCH_OBJECT, $"Unable to find object with dbref {sTarget.UnwrapDbref()}");
 
-            parameters.Stack.Push(new ForthDatum(targetResult.value.LinkTargets.DefaultIfEmpty(Dbref.NOT_FOUND).FirstOrDefault(), 0));
+            parameters.Stack.Push(new ForthDatum(target.LinkTargets.DefaultIfEmpty(Dbref.NOT_FOUND).FirstOrDefault(), 0));
             return ForthPrimativeResult.SUCCESS;
         }
     }

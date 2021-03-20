@@ -41,10 +41,10 @@ namespace moo.common.Scripting
                 Property.PropertyType.Unknown => DatumType.Unknown,
                 _ => throw new System.ArgumentException($"Unhandled variable type: {property.Type}", nameof(property)),
             };
-            this.FileLineNumber = fileLineNumber;
-            this.ColumnNumber = columnNumber;
-            this.WordName = wordName;
-            this.WordLineNumber = wordLineNumber;
+            FileLineNumber = fileLineNumber;
+            ColumnNumber = columnNumber;
+            WordName = wordName;
+            WordLineNumber = wordLineNumber;
         }
 
         public ForthDatum(ForthVariable variable, int? fileLineNumber = null, int? columnNumber = null, string? wordName = null, int? wordLineNumber = null)
@@ -77,22 +77,22 @@ namespace moo.common.Scripting
 
         public ForthDatum(Dbref value, int? fileLineNumber = null, int? columnNumber = null, string? wordName = null, int? wordLineNumber = null)
         {
-            this.Value = value;
-            this.Type = DatumType.DbRef;
-            this.FileLineNumber = fileLineNumber;
-            this.ColumnNumber = columnNumber;
-            this.WordName = wordName;
-            this.WordLineNumber = wordLineNumber;
+            Value = value;
+            Type = DatumType.DbRef;
+            FileLineNumber = fileLineNumber;
+            ColumnNumber = columnNumber;
+            WordName = wordName;
+            WordLineNumber = wordLineNumber;
         }
 
-        public ForthDatum(string value, int? fileLineNumber = null, int? columnNumber = null, string? wordName = null, int? wordLineNumber = null)
+        public ForthDatum(string? value, int? fileLineNumber = null, int? columnNumber = null, string? wordName = null, int? wordLineNumber = null)
         {
-            this.Value = value;
-            this.Type = DatumType.String;
-            this.FileLineNumber = fileLineNumber;
-            this.ColumnNumber = columnNumber;
-            this.WordName = wordName;
-            this.WordLineNumber = wordLineNumber;
+            Value = value;
+            Type = DatumType.String;
+            FileLineNumber = fileLineNumber;
+            ColumnNumber = columnNumber;
+            WordName = wordName;
+            WordLineNumber = wordLineNumber;
         }
 
         public ForthDatum(int? value, int? fileLineNumber = null, int? columnNumber = null, string? wordName = null, int? wordLineNumber = null)
@@ -151,7 +151,7 @@ namespace moo.common.Scripting
             return false;
         }
 
-        public bool isFalse() => Type switch
+        public bool IsFalse() => Type switch
         {
             DatumType.Integer => UnwrapInt() == 0,
             DatumType.Float => Value == null || (float)Value == 0,
@@ -160,7 +160,7 @@ namespace moo.common.Scripting
             _ => false,
         };
 
-        public bool isTrue() => !isFalse();
+        public bool IsTrue() => !IsFalse();
 
         public ForthDatum ToInteger() => Type switch
         {
@@ -170,10 +170,7 @@ namespace moo.common.Scripting
             _ => new ForthDatum(0),
         };
 
-        public override string ToString()
-        {
-            return $"({Enum.GetName(typeof(DatumType), Type)}){Value}";
-        }
+        public override string ToString() => $"({Enum.GetName(typeof(DatumType), Type)}){Value}";
 
         public Dbref UnwrapDbref()
         {

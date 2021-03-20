@@ -17,7 +17,7 @@ namespace moo.common.Scripting.ForthPrimatives
                 return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, "NOT requires at least one parameter");
 
             var n1 = parameters.Stack.Pop();
-            parameters.Stack.Push(new ForthDatum(n1.isFalse() ? 1 : 0));
+            parameters.Stack.Push(new ForthDatum(n1.IsFalse() ? 1 : 0));
             return ForthPrimativeResult.SUCCESS;
         }
     }

@@ -31,6 +31,7 @@ namespace moo.console
                 new LinkBuiltIn(),
                 new LoadBuiltIn(),
                 new NameBuiltIn(),
+                new NewPasswordBuiltIn(),
                 new RecycleBuiltIn(),
                 new SaveBuiltIn(),
                 new SetBuiltIn(),
@@ -85,7 +86,7 @@ namespace moo.console
                         {
                             Thread.Sleep(250);
                         }
-                        await consoleConnection.sendOutput($"Read in script file {scriptPath}");
+                        await consoleConnection.SendOutput($"Read in script file {scriptPath}");
                     }));
                 }
 

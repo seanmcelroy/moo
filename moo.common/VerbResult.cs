@@ -15,9 +15,6 @@ namespace moo.common
             this.reason = reason;
         }
 
-        public static implicit operator bool(VerbResult verbResult)
-        {
-            return verbResult.isSuccess;
-        }
+        public static implicit operator bool(VerbResult verbResult) => verbResult.isSuccess;
     }
 }

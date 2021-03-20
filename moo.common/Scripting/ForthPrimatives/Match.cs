@@ -26,7 +26,7 @@ namespace moo.common.Scripting.ForthPrimatives
 
             var s = (string)n1.Value;
 
-            var initMatch = Matcher.InitObjectSearch(parameters.Connection.GetPlayer(), s, Dbref.DbrefObjectType.Unknown, parameters.CancellationToken);
+            var initMatch = Matcher.InitObjectSearch(parameters.Player, s, Dbref.DbrefObjectType.Unknown, parameters.CancellationToken);
             Task<MatchResult> matcher;
 
             if (s[0] == '$')

@@ -1,5 +1,4 @@
 using System.Threading.Tasks;
-using moo.common.Database;
 using moo.common.Models;
 using static moo.common.Scripting.ForthDatum;
 
@@ -45,10 +44,8 @@ namespace moo.common.Scripting.ForthPrimatives
             //    abort_interp("Cannot force god (1).");
 
             var conn = Server.GetConnection(target);
-            if (conn == null)
-                return ForthPrimativeResult.SUCCESS;
+            await Server.RunCommand(target, conn, new CommandResult(action), parameters.CancellationToken);
 
-            conn.ReceiveInput(action);
             // TODO: force levels to track recursion https://github.com/fuzzball-muck/fuzzball/blob/e8c6e70c91098d8b7ba7f96a10c88b58f34acd1f/src/p_misc.c#L615
             return ForthPrimativeResult.SUCCESS;
         }

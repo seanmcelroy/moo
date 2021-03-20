@@ -9,7 +9,7 @@ namespace moo.common.Models
 {
     public class PropertyDirectory : Dictionary<string, Property>
     {
-        public static string Serialize(PropertyDirectory value)
+        public static string Serialize(PropertyDirectory? value)
         {
             if (value == null)
                 return $"<propdir/>";

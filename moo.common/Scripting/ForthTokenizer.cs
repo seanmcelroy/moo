@@ -84,7 +84,7 @@ namespace moo.common.Scripting
                             currentWordName = currentWordNameBuilder.ToString();
                             currentWordLineNumber = 0;
                             if (verbosity >= 1 && connection != null)
-                                await connection.sendOutput($"WORD({lineNumber},{columnNumber - currentWordName.Length}): {currentWordName}");
+                                await connection.SendOutput($"WORD({lineNumber},{columnNumber - currentWordName.Length}): {currentWordName}");
                             forwardOperation = ForwardOperation.None;
                             if (linebreakCharacters.Contains(c))
                             {
@@ -141,7 +141,7 @@ namespace moo.common.Scripting
                     if (currentWordNameBuilder.Length > 0 && currentDatum.Length > 0 && currentWordData != null)
                     {
                         if (verbosity > 3 && connection != null)
-                            await connection.sendOutput($"DATUM({lineNumber},{columnNumber - currentDatum.ToString().Length}): {currentDatum}");
+                            await connection.SendOutput($"DATUM({lineNumber},{columnNumber - currentDatum.ToString().Length}): {currentDatum}");
 
                         if (ForthWord.GetPrimatives().Contains(currentDatum.ToString()))
                         {
@@ -176,7 +176,7 @@ namespace moo.common.Scripting
                             }
 
                             if (verbosity > 3 && connection != null)
-                                await connection.sendOutput($"PRE({lineNumber},{columnNumber - currentNonDatum.ToString().Length}): {currentNonDatum}");
+                                await connection.SendOutput($"PRE({lineNumber},{columnNumber - currentNonDatum.ToString().Length}): {currentNonDatum}");
                         }
                         currentNonDatum.Clear();
                     }
@@ -202,7 +202,7 @@ namespace moo.common.Scripting
                     if (currentWordNameBuilder.Length > 0 && currentDatum.Length > 0)
                     {
                         if (verbosity > 3 && connection != null)
-                            await connection.sendOutput($"DATUM({lineNumber},{columnNumber - currentDatum.ToString().Length}): {currentDatum}");
+                            await connection.SendOutput($"DATUM({lineNumber},{columnNumber - currentDatum.ToString().Length}): {currentDatum}");
 
                         if (ForthWord.GetPrimatives().Contains(currentDatum.ToString()))
                         {
@@ -270,9 +270,9 @@ namespace moo.common.Scripting
 
             if (verbosity > 3 && connection != null)
             {
-                await connection.sendOutput($"Words: ({words.Count})");
+                await connection.SendOutput($"Words: ({words.Count})");
                 foreach (var word in words)
-                    await connection.sendOutput($" {word.name}");
+                    await connection.SendOutput($" {word.name}");
             }
 
             if (words.Count == 0)

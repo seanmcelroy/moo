@@ -13,7 +13,7 @@ namespace moo.common.Models
     {
         public HashSet<string> aliases = new();
 
-        public Exit() => this.type = (int)Dbref.DbrefObjectType.Exit;
+        public Exit() => this.type = (int)DbrefObjectType.Exit;
 
         public static Exit Make(string name, Dbref owner)
         {
@@ -39,10 +39,10 @@ namespace moo.common.Models
                 if (exitLink == source.id)
                     return true;
 
-                var linkLookup = await ThingRepository.Instance.GetAsync<Thing>(exitLink, cancellationToken);
-                if (linkLookup.isSuccess && linkLookup.value != null && linkLookup.value.Type == DbrefObjectType.Exit)
+                var linkLookup = await exitLink.Get(cancellationToken);
+                if (linkLookup?.Type == DbrefObjectType.Exit)
                 {
-                    if (await ExitLoopCheck(source, linkLookup.value, cancellationToken))
+                    if (await ExitLoopCheck(source, linkLookup, cancellationToken))
                         return true;
                 }
             }
@@ -50,7 +50,7 @@ namespace moo.common.Models
             return false;
         }
 
-        public async static Task<List<Dbref>> ParseLinks(Player player, Exit exit, string destinations, bool dryRun, CancellationToken cancellationToken)
+        public async static Task<List<Dbref>> ParseLinks(Dbref player, Exit exit, string destinations, bool dryRun, CancellationToken cancellationToken)
         {
             var newLinks = new List<Dbref>();
             var newNonNullLinks = 0;
@@ -68,37 +68,36 @@ namespace moo.common.Models
 
                 if (targetDbref != NIL && targetDbref.Type == DbrefObjectType.Player)
                 {
-                    await Server.NotifyAsync(player.id, $"You can't link to players.  Destination {targetDbref} ignored.");
+                    await Server.NotifyAsync(player, $"You can't link to players.  Destination {targetDbref} ignored.");
                     continue;
                 }
 
-                if (!await Dbref.CanLink(player.id, targetDbref, cancellationToken))
+                if (!await CanLink(player, targetDbref, cancellationToken))
                 {
-                    await Server.NotifyAsync(player.id, "You can't link to that.");
+                    await Server.NotifyAsync(player, "You can't link to that.");
                     continue;
                 }
 
-                if (!await Dbref.CanLinkTo(player.id, DbrefObjectType.Exit, targetDbref, cancellationToken))
+                if (!await CanLinkTo(player, DbrefObjectType.Exit, targetDbref, cancellationToken))
                 {
-                    await Server.NotifyAsync(player.id, $"You can't link to {targetDbref}.");
+                    await Server.NotifyAsync(player, $"You can't link to {targetDbref}.");
                     continue;
                 }
 
                 if (targetDbref == NIL)
                 {
                     if (!dryRun)
-                        await Server.NotifyAsync(player.id, "Linked to NIL.");
+                        await Server.NotifyAsync(player, "Linked to NIL.");
                     newLinks.Add(NIL);
                     continue;
                 }
 
-                var targetLookup = await ThingRepository.Instance.GetAsync<Thing>(targetDbref, cancellationToken);
-                if (!targetLookup.isSuccess || targetLookup.value == null)
+                var target = await targetDbref.Get(cancellationToken);
+                if (target == null)
                 {
-                    await Server.NotifyAsync(player.id, $"UNABLE TO LOAD {targetDbref}!");
+                    await Server.NotifyAsync(player, $"UNABLE TO LOAD {targetDbref}!");
                     continue;
                 }
-                var target = targetLookup.value;
 
                 switch (target.Type)
                 {
@@ -107,7 +106,7 @@ namespace moo.common.Models
                     case DbrefObjectType.Program:
                         if (newNonNullLinks > 0)
                         {
-                            await Server.NotifyAsync(player.id, $"Only one player, room, or program destination allowed. Destination {target.UnparseObject()} ignored.");
+                            await Server.NotifyAsync(player, $"Only one player, room, or program destination allowed. Destination {target.UnparseObject()} ignored.");
                             continue;
                         }
 
@@ -120,22 +119,22 @@ namespace moo.common.Models
                     case DbrefObjectType.Exit:
                         if (await ExitLoopCheck(exit, target, cancellationToken))
                         {
-                            await Server.NotifyAsync(player.id, $"Destination {target.UnparseObject()}  would create a loop, ignored.");
+                            await Server.NotifyAsync(player, $"Destination {target.UnparseObject()}  would create a loop, ignored.");
                             continue;
                         }
                         newLinks.Add(targetDbref);
                         break;
                     default:
-                        await Server.NotifyAsync(player.id, "Internal error: weird object type.");
+                        await Server.NotifyAsync(player, "Internal error: weird object type.");
                         break;
                 }
 
                 if (!dryRun)
                 {
                     if (targetDbref == HOME)
-                        await Server.NotifyAsync(player.id, "Linked to HOME.");
+                        await Server.NotifyAsync(player, "Linked to HOME.");
                     else
-                        await Server.NotifyAsync(player.id, $"Linked to {target.UnparseObject()}.");
+                        await Server.NotifyAsync(player, $"Linked to {target.UnparseObject()}.");
                 }
 
             }
@@ -143,13 +142,13 @@ namespace moo.common.Models
             return newLinks;
         }
 
-        public virtual Tuple<bool, string?> CanProcess(PlayerConnection player, CommandResult command)
+        public virtual Tuple<bool, string?> CanProcess(Dbref player, CommandResult command)
         {
             // TODO: Test lock!
             return new Tuple<bool, string?>(true, null);
         }
 
-        public async Task<VerbResult> Process(PlayerConnection connection, CommandResult command, CancellationToken cancellationToken)
+        public async Task<VerbResult> Process(Dbref player, PlayerConnection? connection, CommandResult command, CancellationToken cancellationToken)
         {
             if (this == null || LinkTargets.Count == 0 || !LinkTargets.Any(l => l.IsValid()))
                 return new VerbResult(false, "Unlinked.");
@@ -173,13 +172,14 @@ namespace moo.common.Models
                     }
                 case DbrefObjectType.Program:
                     {
-                        var actionResult = await ((Script)linkTo).Process(connection, command, cancellationToken);
-                        if (!actionResult.isSuccess)
-                            await connection.sendOutput($"ERROR: {actionResult.reason}");
+                        var actionResult = await ((Script)linkTo).Process(player, connection, command, cancellationToken);
+                        if (!actionResult.isSuccess && connection != null)
+                            await connection.SendOutput($"ERROR: {actionResult.reason}");
                         return actionResult;
                     }
                 default:
-                    await connection.sendOutput($"Cannot process exit linked to {linkTo.UnparseObject()}");
+                    if (connection != null)
+                        await connection.SendOutput($"Cannot process exit linked to {linkTo.UnparseObject()}");
                     return new VerbResult(false, $"Cannot process exit linked to {linkTo.UnparseObject()}");
             }
         }

@@ -1,7 +1,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using moo.common;
 using moo.common.Connections;
 using moo.common.Models;
 
@@ -9,17 +8,17 @@ namespace moo.common.Actions.BuiltIn
 {
     public class ActionBuiltIn : IRunnable
     {
-        public Tuple<bool, string?> CanProcess(PlayerConnection connection, CommandResult command)
+        public Tuple<bool, string?> CanProcess(Dbref player, CommandResult command)
         {
-            var verb = command.getVerb().ToLowerInvariant();
-            if (string.Compare(verb, "@action", StringComparison.OrdinalIgnoreCase) == 0 && command.hasDirectObject())
+            var verb = command.GetVerb().ToLowerInvariant();
+            if (string.Compare(verb, "@action", StringComparison.OrdinalIgnoreCase) == 0 && command.HasDirectObject())
                 return new Tuple<bool, string?>(true, verb);
             return new Tuple<bool, string?>(false, null);
         }
 
-        public async Task<VerbResult> Process(PlayerConnection connection, CommandResult command, CancellationToken cancellationToken)
+        public async Task<VerbResult> Process(Dbref player, PlayerConnection? connection, CommandResult command, CancellationToken cancellationToken)
         {
-            var str = command.getNonVerbPhrase();
+            var str = command.GetNonVerbPhrase();
             if (str == null || str.Length < 3)
                 return new VerbResult(false, "@action name=source[=regname].\r\nCreates a new action and attaches it to the thing, room, or player specified. If a regname is specified, then the _reg/regname property on the player is set to the dbref of the new object. This lets players refer to the object as $regname (ie: $mybutton) in @locks, @sets, etc. You may only attach actions you control to things you control. Creating an action costs 1 penny. The action can then be linked with the command @LINK.");
 
@@ -37,26 +36,24 @@ namespace moo.common.Actions.BuiltIn
             if (sourceDbref.Equals(Dbref.AMBIGUOUS))
                 return new VerbResult(false, "Which one?");
 
-            var sourceLookup = await ThingRepository.Instance.GetAsync<Thing>(sourceDbref, cancellationToken);
-            if (!sourceLookup.isSuccess || sourceLookup.value == null)
+            var source = await sourceDbref.Get(cancellationToken);
+            if (source == null)
             {
-                await connection.sendOutput($"You can't seem to find that.  {sourceLookup.reason}");
+                await connection.SendOutput($"You can't seem to find that.");
                 return new VerbResult(false, "Target not found");
             }
-
-            var source = sourceLookup.value;
             if (source.Type == Dbref.DbrefObjectType.Exit)
                 return new VerbResult(false, $"An exit cannot be attached to another exit ({source.id})");
             if (source.Type == Dbref.DbrefObjectType.Program)
                 return new VerbResult(false, $"An exit cannot be attached to a program ({source.id})");
 
-            if (!await source.IsControlledBy(connection, cancellationToken))
+            if (!await source.IsControlledBy(player, cancellationToken))
                 return new VerbResult(false, $"You don't control {source.id}");
 
-            var exit = Exit.Make(name, connection.Dbref);
+            var exit = Exit.Make(name, player);
             var moveResult = await exit.MoveToAsync(source, cancellationToken);
             if (!moveResult.isSuccess)
-                await connection.sendOutput($"You can't seem to do that on {sourcePhrase}.  {moveResult.reason}");
+                await connection.SendOutput($"You can't seem to do that on {sourcePhrase}.  {moveResult.reason}");
 
             if (regname != null)
                 connection.SetPropertyPathValue($"_reg/{regname}", exit.id);

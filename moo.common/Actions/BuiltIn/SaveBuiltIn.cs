@@ -9,18 +9,18 @@ namespace moo.common.Actions.BuiltIn
 {
     public class SaveBuiltIn : IRunnable
     {
-        public Tuple<bool, string?> CanProcess(PlayerConnection connection, CommandResult command)
+        public Tuple<bool, string?> CanProcess(Dbref player, CommandResult command)
         {
-            var verb = command.getVerb().ToLowerInvariant();
-            if (string.Compare(verb, "@save", StringComparison.OrdinalIgnoreCase) == 0 && command.hasDirectObject())
+            var verb = command.GetVerb().ToLowerInvariant();
+            if (string.Compare(verb, "@save", StringComparison.OrdinalIgnoreCase) == 0 && command.HasDirectObject())
                 return new Tuple<bool, string?>(true, verb);
             return new Tuple<bool, string?>(false, null);
         }
 
-        public async Task<VerbResult> Process(PlayerConnection connection, CommandResult command, CancellationToken cancellationToken)
+        public async Task<VerbResult> Process(Dbref player, PlayerConnection? connection, CommandResult command, CancellationToken cancellationToken)
         {
             var targetDbref = await Matcher
-               .InitObjectSearch(connection.GetPlayer(), command.getDirectObject(), Dbref.DbrefObjectType.Unknown, cancellationToken)
+               .InitObjectSearch(player, command.GetDirectObject(), Dbref.DbrefObjectType.Unknown, cancellationToken)
                .MatchEverything()
                .NoisyResult();
 
@@ -37,22 +37,22 @@ namespace moo.common.Actions.BuiltIn
 
                 if (string.Compare(serialized, reserialized) != 0)
                 {
-                    await connection.sendOutput(">>> [CRITICAL] Serialization verification failed.  Object will be corrupted.");
-                    await connection.sendOutput("First serialization pass:");
-                    await connection.sendOutput(serialized);
-                    await connection.sendOutput("Second serialization pass:");
-                    await connection.sendOutput(reserialized);
+                    await connection.SendOutput(">>> [CRITICAL] Serialization verification failed.  Object will be corrupted.");
+                    await connection.SendOutput("First serialization pass:");
+                    await connection.SendOutput(serialized);
+                    await connection.SendOutput("Second serialization pass:");
+                    await connection.SendOutput(reserialized);
                 }
                 else
                 {
-                    await connection.sendOutput("Serialization check passed.");
+                    await connection.SendOutput("Serialization check passed.");
                     var success = await ThingRepository.Instance.FlushToDatabaseAsync(target, cancellationToken);
-                    await connection.sendOutput($"Save to database: {success}");
+                    await connection.SendOutput($"Save to database: {success}");
                 }
             }
             else
             {
-                await connection.sendOutput("You can't seem to find that.");
+                await connection.SendOutput("You can't seem to find that.");
                 return new VerbResult(false, "Target not found");
             }
 

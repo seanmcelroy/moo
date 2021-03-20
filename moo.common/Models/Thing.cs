@@ -1,17 +1,16 @@
 using System;
 using System.Collections;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Dynamic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using moo.common;
 using moo.common.Connections;
+using moo.common.Database;
 using moo.common.Scripting;
 using static moo.common.Models.Property;
 
@@ -54,13 +53,13 @@ namespace moo.common.Models
         public string? externalDescription;
         public int pennies;
         public int type;
-        public PropertyDirectory properties = new();
-        private readonly ConcurrentDictionary<Dbref, int> contents = new();
-        private readonly ConcurrentDictionary<Dbref, int> linkTargets = new();
+        public PropertyDirectory properties = new();// public for serialization
+        public ConcurrentDbrefSet contents = new();// public for serialization
+        public ConcurrentDbrefSet linkTargets = new(); // public for serialization
 
-        public ImmutableList<Dbref> Contents { get => contents.Keys.ToImmutableList(); }
-        public ImmutableList<Dbref> LinkTargets { get => linkTargets.Keys.ToImmutableList(); }
-        public bool Dirty { get; private set; }
+        public ImmutableList<Dbref> Contents { get => contents.ToImmutableList(); }
+        public ImmutableList<Dbref> LinkTargets { get => linkTargets.ToImmutableList(); }
+        public bool Dirty { get; protected set; }
 
         public Thing()
         {
@@ -87,7 +86,7 @@ namespace moo.common.Models
 
             // TODO: Where I'm going can't be inside of me.
 
-            if (this.contents.TryAdd(id, 0))
+            if (this.contents.TryAdd(id))
             {
                 Dirty = true;
                 return new VerbResult(true, "");
@@ -98,25 +97,25 @@ namespace moo.common.Models
 
         public VerbResult Add(Thing thing) => Add(thing.id);
 
-        public bool Contains(Dbref id) => contents.ContainsKey(id);
+        public bool Contains(Dbref id) => contents.Contains(id);
 
-        public bool Contains(Thing thing) => contents.ContainsKey(thing.id);
+        public bool Contains(Thing thing) => contents.Contains(thing.id);
 
         public Dbref FirstContent()
         {
-            return contents.Keys.Count == 0
+            return contents.Count == 0
                 ? Dbref.NOT_FOUND
-                : contents.Keys
+                : contents.ToImmutableList()
                     .OrderBy(d => d.ToInt32())
                     .First();
         }
 
         public Dbref NextContent(Dbref lastContent)
         {
-            if (this.contents.Keys.Count == 0)
+            if (this.contents.Count == 0)
                 return Dbref.NOT_FOUND;
 
-            return this.contents.Keys
+            return this.contents.ToImmutableList()
                 .OrderBy(k => k.ToInt32())
                 .SkipWhile(k => k <= lastContent)
                 .DefaultIfEmpty(Dbref.NOT_FOUND)
@@ -128,7 +127,7 @@ namespace moo.common.Models
             if (id == this.id)
                 return new VerbResult(false, "A thing cannot come from itself");
 
-            if (this.contents.TryRemove(id, out _))
+            if (this.contents.TryRemove(id))
             {
                 Dirty = true;
                 return new VerbResult(true, "");
@@ -200,11 +199,11 @@ namespace moo.common.Models
         {
             linkTargets.Clear();
             foreach (var linkTarget in targets)
-                while (!linkTargets.TryAdd(linkTarget, linkTarget.ToInt32())) { }
+                while (!linkTargets.TryAdd(linkTarget)) { }
             Dirty = true;
         }
 
-        public static T Deserialize<T>(string serialized) where T : Thing, new()
+        public static T? Deserialize<T>(string serialized) where T : Thing, new()
         {
             if (serialized == null)
                 throw new System.ArgumentNullException(nameof(serialized));
@@ -231,13 +230,17 @@ namespace moo.common.Models
                     ((IDictionary<string, object>)expando)[prop.Key] = prop.Value;
             }
 
-            string json = Newtonsoft.Json.JsonConvert.SerializeObject(expando);
-            var result = Newtonsoft.Json.JsonConvert.DeserializeObject<T>(json);
+            string json = Newtonsoft.Json.JsonConvert.SerializeObject(expando, new Newtonsoft.Json.JsonConverter[] {
+                new ConcurrentDbrefSetSerializer(),
+                 new DbrefSerializer()
+            });
+            var result = Newtonsoft.Json.JsonConvert.DeserializeObject<T>(json, new Newtonsoft.Json.JsonConverter[] {
+                new ConcurrentDbrefSetSerializer(),
+                new DbrefSerializer()
+            });
 
             return result;
         }
-
-
 
         public static IEnumerable<Tuple<object?, string>> DeserializePart(String serialized)
         {
@@ -327,6 +330,23 @@ namespace moo.common.Models
                         array.Add(valueResult.Item1);
                 }
                 yield return Tuple.Create<object?, string>(array, serialized[inner.endOfClosingTag..]);
+            }
+            else if (serialized.StartsWith("<refs/>"))
+                yield return Tuple.Create<object?, string>(null, serialized[7..]); // "<refs/>".Length = 7
+            else if (serialized.StartsWith("<refs>"))
+            {
+                var inner = serialized.FindInnerXml("refs");
+                var cds = new ConcurrentDbrefSet();
+                string substring = inner.inner;
+
+                while (!substring.StartsWith("</refs>") && substring.Length > 0)
+                {
+                    var valueResult = DeserializePart(substring).Single();
+                    substring = valueResult.Item2;
+                    if (valueResult.Item1 != null && valueResult.Item1 is Dbref dbref)
+                        cds.TryAdd(dbref);
+                }
+                yield return Tuple.Create<object?, string>(cds, serialized[inner.endOfClosingTag..]);
             }
             else if (serialized.StartsWith("<propdir>"))
             {
@@ -519,11 +539,11 @@ namespace moo.common.Models
 
         protected virtual Dictionary<string, object?> GetSerializedElements() => new()
         {
-            { "id", id },
-            { "name", name },
+            { nameof(id), id },
+            { nameof(name), name },
             { "location", Location },
             { "contents", contents },
-            { "link", linkTargets.Keys.ToArray() },
+            { "linkTargets", linkTargets },
             { "templates", templates },
             { "flags", flags },
             { "externalDescription", externalDescription },
@@ -553,6 +573,21 @@ namespace moo.common.Models
                 }
             }
             sb.Append("</dict>");
+            return sb.ToString();
+        }
+
+        public static string Serialize(ConcurrentDbrefSet? value)
+        {
+            if (value == null)
+                return "<refs/>";
+
+            var sb = new StringBuilder();
+            sb.Append("<refs>");
+            foreach (var dbref in value.ToImmutableArray().OrderBy(v => v))
+            {
+                sb.Append(Serialize(dbref));
+            }
+            sb.Append("</refs>");
             return sb.ToString();
         }
 
@@ -593,6 +628,8 @@ namespace moo.common.Models
                 return Serialize((PropertyDirectory)value);
             if (typeof(Dictionary<string, object?>).IsAssignableFrom(valueType))
                 return Serialize((Dictionary<string, object?>)value);
+            if (typeof(ConcurrentDbrefSet).IsAssignableFrom(valueType))
+                return Serialize((ConcurrentDbrefSet)value);
             if (typeof(IEnumerable).IsAssignableFrom(valueType))
             {
                 var array = ((IEnumerable)value).Cast<object>().ToArray();

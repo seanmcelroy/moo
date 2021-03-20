@@ -8,17 +8,17 @@ namespace moo.common.Actions.BuiltIn
 {
     public class PropSetBuiltIn : IRunnable
     {
-        public Tuple<bool, string?> CanProcess(PlayerConnection connection, CommandResult command)
+        public Tuple<bool, string?> CanProcess(Dbref player, CommandResult command)
         {
-            var verb = command.getVerb().ToLowerInvariant();
-            if (string.Compare(verb, "@propset", StringComparison.OrdinalIgnoreCase) == 0 && command.hasDirectObject())
+            var verb = command.GetVerb().ToLowerInvariant();
+            if (string.Compare(verb, "@propset", StringComparison.OrdinalIgnoreCase) == 0 && command.HasDirectObject())
                 return new Tuple<bool, string?>(true, verb);
             return new Tuple<bool, string?>(false, null);
         }
 
-        public async Task<VerbResult> Process(PlayerConnection connection, CommandResult command, CancellationToken cancellationToken)
+        public async Task<VerbResult> Process(Dbref player, PlayerConnection? connection, CommandResult command, CancellationToken cancellationToken)
         {
-            var str = command.getNonVerbPhrase();
+            var str = command.GetNonVerbPhrase();
             if (str == null || str.Length < 3)
                 return new VerbResult(false, "@PROPSET <object>=<type>:<property>:<value> -or-\r\n@PROPSET <object>=erase:<property>\r\n\r\n@propset can set and clear properties from an object.\r\n\r\nIf the first format above is specified, the @propset command sets <property> on <object> to <value>, where <value> is of type <type>. <type> can be one of 'string', 'integer', 'float, 'dbref', or 'lock'. A string can be any set of characters the MUCK recognizes. An integer must be composed solely of numerals with the possible exception of a leading sign indicator (+ or -). A float must be a valid floating point number. A dbref must be of the form # followed by a positive integer, and it must be a valid dbref (i.e., the object must exist). A lock value must be a key that would be accepted by @lock or a similar command (see the help for @lock for more details).\r\n\r\nThe second format removes <property> on object. Note that if <property> is a propdir, it removes all properties below <property> as well. If you wish to clear the value of a propdir without removing the properties below it, use '@propset <object> = integer:<property>:0'.");
 
@@ -35,14 +35,12 @@ namespace moo.common.Actions.BuiltIn
             if (targetDbref.Equals(Dbref.AMBIGUOUS))
                 return new VerbResult(false, "Which one?");
 
-            var targetLookup = await ThingRepository.Instance.GetAsync<Thing>(targetDbref, cancellationToken);
-            if (!targetLookup.isSuccess || targetLookup.value == null)
+            var target = await targetDbref.Get(cancellationToken);
+            if (target == null)
             {
-                await connection.sendOutput($"You can't seem to find that.  {targetLookup.reason}");
+                await connection.SendOutput("You can't seem to find that.");
                 return new VerbResult(false, "Target not found");
             }
-
-            var target = targetLookup.value;
             var predicateParts = predicate.Split(':');
             if (predicateParts.Length < 2 || (predicateParts.Length == 2 && string.Compare("erase", predicateParts[0], true) != 0) || predicateParts.Length > 3)
                 return new VerbResult(false, "@PROPSET <object>=<type>:<property>:<value> -or-\r\n@PROPSET <object>=erase:<property>\r\n\r\n@propset can set and clear properties from an object.\r\n\r\nIf the first format above is specified, the @propset command sets <property> on <object> to <value>, where <value> is of type <type>. <type> can be one of 'string', 'integer', 'float, 'dbref', or 'lock'. A string can be any set of characters the MUCK recognizes. An integer must be composed solely of numerals with the possible exception of a leading sign indicator (+ or -). A float must be a valid floating point number. A dbref must be of the form # followed by a positive integer, and it must be a valid dbref (i.e., the object must exist). A lock value must be a key that would be accepted by @lock or a similar command (see the help for @lock for more details).\r\n\r\nThe second format removes <property> on object. Note that if <property> is a propdir, it removes all properties below <property> as well. If you wish to clear the value of a propdir without removing the properties below it, use '@propset <object> = integer:<property>:0'.");

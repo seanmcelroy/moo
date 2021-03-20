@@ -8,7 +8,7 @@ namespace moo.common.Database
 {
     public static class Matcher
     {
-        public static MatchResult InitObjectSearch(Player player, string name, DbrefObjectType preferredType, CancellationToken cancellationToken) => MatchResult.InitObjectSearch(player, name, preferredType, cancellationToken);
+        public static MatchResult InitObjectSearch(Dbref player, string name, DbrefObjectType preferredType, CancellationToken cancellationToken) => MatchResult.InitObjectSearch(player, name, preferredType, cancellationToken);
 
         public static MatchResult CheckKeys(this MatchResult match)
         {
@@ -16,15 +16,15 @@ namespace moo.common.Database
             return match;
         }
 
-        public static async Task<Dbref> MatchControlled(Player player, string name, CancellationToken cancellationToken)
+        public static async Task<Dbref> MatchControlled(Dbref player, string name, CancellationToken cancellationToken)
         {
             var match = await InitObjectSearch(player, name, DbrefObjectType.Unknown, cancellationToken)
                 .MatchEverything()
                 .NoisyResult();
 
-            if (match != NOT_FOUND && !await player.id.Controls(match, cancellationToken))
+            if (match != NOT_FOUND && !await player.Controls(match, cancellationToken))
             {
-                await Server.NotifyAsync(player.id, "Permission denied. (You don't control what was matched)");
+                await Server.NotifyAsync(player, "Permission denied. (You don't control what was matched)");
                 return NOT_FOUND;
             }
 
@@ -70,15 +70,15 @@ namespace moo.common.Database
         public static async Task<Dbref> NoisyResult(this MatchResult match)
         {
             var result = match.Result();
-            if (result.Equals(Dbref.NOT_FOUND))
+            if (result.Equals(NOT_FOUND))
             {
-                await Server.NotifyAsync(match.Player.id, $"I don't understand '{match.MatchName}'.");
+                await Server.NotifyAsync(match.Player, $"I don't understand '{match.MatchName}'.");
                 return NOT_FOUND;
             }
 
-            if (result.Equals(Dbref.AMBIGUOUS))
+            if (result.Equals(AMBIGUOUS))
             {
-                await Server.NotifyAsync(match.Player.id, $"I don't know which '{match.MatchName}' you mean!");
+                await Server.NotifyAsync(match.Player, $"I don't know which '{match.MatchName}' you mean!");
                 return NOT_FOUND;
             }
             return result;
@@ -87,7 +87,7 @@ namespace moo.common.Database
         public static async Task<MatchResult> MatchAllExits(this MatchResult match)
         {
             var result = match;
-            var loc = match.MatchFrom.Location;
+            var loc = await match.MatchFrom.GetLocation(match.CancellationToken);
             if (loc.IsValid())
             {
                 result = await match.MatchRoomExits(loc);
@@ -106,7 +106,7 @@ namespace moo.common.Database
 
         private static async Task<MatchResult> MatchPlayerActions(this MatchResult match) => match.MatchFrom.Type switch
         {
-            DbrefObjectType.Player or DbrefObjectType.Room or DbrefObjectType.Thing => await match.MatchExits(match.MatchFrom.id),
+            DbrefObjectType.Player or DbrefObjectType.Room or DbrefObjectType.Thing => await match.MatchExits(match.MatchFrom),
             _ => match,
         };
 
@@ -119,12 +119,13 @@ namespace moo.common.Database
             if (obj.value.Contents == null || obj.value.Contents.Count == 0)
                 return match; // Easy fail match
 
-            if (match.MatchFrom.Location == NOT_FOUND)
+            if (await match.MatchFrom.GetLocation(match.CancellationToken) == NOT_FOUND)
                 return match;
 
             Dbref absolute = await match.AbsoluteName();
             // If the owner of the match-from doesn't control the resolved absolute-name, then don't match it.
-            if (!await match.MatchFrom.Owner.Controls(absolute, match.CancellationToken))
+            var matchFromOwner = await match.MatchFrom.GetOwner(match.CancellationToken);
+            if (!await matchFromOwner.Controls(absolute, match.CancellationToken))
                 absolute = NOT_FOUND;
 
             foreach (var exitDbref in obj.value.Contents)
@@ -166,7 +167,7 @@ namespace moo.common.Database
 
         public static async Task<MatchResult> MatchRegistered(this MatchResult match)
         {
-            var dbref = await FindRegisteredObject(match.Player.id, match.MatchName, match.CancellationToken);
+            var dbref = await FindRegisteredObject(match.Player, match.MatchName, match.CancellationToken);
             if (dbref != NOT_FOUND)
                 match.ExactMatch = dbref;
             return match;
@@ -216,17 +217,21 @@ namespace moo.common.Database
 
         public static async Task<MatchResult> MatchNeighbor(this Task<MatchResult> match) => await (await match).MatchNeighbor();
 
-        public static async Task<MatchResult> MatchNeighbor(this MatchResult match) => match.MatchFrom.Location != NOT_FOUND ? await match.MatchContents(match.MatchFrom.Location) : match;
+        public static async Task<MatchResult> MatchNeighbor(this MatchResult match)
+        {
+            var matchFromLocation = await match.MatchFrom.GetLocation(match.CancellationToken);
+            return matchFromLocation != NOT_FOUND ? await match.MatchContents(matchFromLocation) : match;
+        }
 
         public static async Task<MatchResult> MatchPossession(this Task<MatchResult> match) => await (await match).MatchPossession();
 
-        private static async Task<MatchResult> MatchPossession(this MatchResult match) => await match.MatchContents(match.MatchFrom.id);
+        private static async Task<MatchResult> MatchPossession(this MatchResult match) => await match.MatchContents(match.MatchFrom);
 
         private static async Task<MatchResult> MatchContents(this MatchResult match, Dbref objectDbref)
         {
             var absolute = await match.AbsoluteName();
             // If the owner of the match-from doesn't control the resolved absolute-name, then don't match it.
-            if (!await match.MatchFrom.Owner.Controls(absolute, match.CancellationToken))
+            if (!await (await match.MatchFrom.GetOwner(match.CancellationToken)).Controls(absolute, match.CancellationToken))
                 absolute = NOT_FOUND;
 
             var objectlookup = await ThingRepository.Instance.GetAsync<Thing>(objectDbref, match.CancellationToken);
@@ -269,16 +274,20 @@ namespace moo.common.Database
         private static MatchResult MatchMe(this MatchResult match)
         {
             if (string.Compare("me", match.MatchName, true) == 0)
-                match.ExactMatch = match.Player.id;
+                match.ExactMatch = match.Player;
             return match;
         }
 
-        public static async Task<MatchResult> MatchHere(this Task<MatchResult> match) => (await match).MatchHere();
+        public static async Task<MatchResult> MatchHere(this Task<MatchResult> match) => await (await match).MatchHere();
 
-        private static MatchResult MatchHere(this MatchResult match)
+        private static async Task<MatchResult> MatchHere(this MatchResult match)
         {
-            if (string.Compare("here", match.MatchName, true) == 0 && match.Player.Location != NOT_FOUND)
-                match.ExactMatch = match.Player.Location;
+            if (string.Compare("here", match.MatchName, true) != 0)
+                return match;
+
+            var playerLocation = await match.Player.GetLocation(match.CancellationToken);
+            if (playerLocation != NOT_FOUND)
+                match.ExactMatch = playerLocation;
             return match;
         }
 
@@ -312,7 +321,7 @@ namespace moo.common.Database
 
         public static async Task<MatchResult> MatchPlayer(this Task<MatchResult> matchTask) => await (await matchTask).MatchPlayer();
 
-        private static async Task<MatchResult> MatchPlayer(this MatchResult match)
+        public static async Task<MatchResult> MatchPlayer(this MatchResult match)
         {
             var p = await ThingRepository.Instance.FindOnePlayerByName(match.MatchName, match.CancellationToken);
             if (p.isSuccess && p.value != null)

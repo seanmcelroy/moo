@@ -19,7 +19,7 @@ namespace moo.common.Scripting.ForthPrimatives
             var n1 = parameters.Stack.Pop();
             var n2 = parameters.Stack.Pop();
 
-            parameters.Stack.Push(new ForthDatum(n1.isTrue() && n2.isTrue() ? 1 : 0));
+            parameters.Stack.Push(new ForthDatum(n1.IsTrue() && n2.IsTrue() ? 1 : 0));
             return ForthPrimativeResult.SUCCESS;
         }
     }

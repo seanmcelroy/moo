@@ -10,17 +10,17 @@ namespace moo.common.Actions.BuiltIn
 {
     public class LinkBuiltIn : IRunnable
     {
-        public Tuple<bool, string?> CanProcess(PlayerConnection connection, CommandResult command)
+        public Tuple<bool, string?> CanProcess(Dbref player, CommandResult command)
         {
-            var verb = command.getVerb().ToLowerInvariant();
-            if (string.Compare(verb, "@link", StringComparison.OrdinalIgnoreCase) == 0 && command.hasDirectObject())
+            var verb = command.GetVerb().ToLowerInvariant();
+            if (string.Compare(verb, "@link", StringComparison.OrdinalIgnoreCase) == 0 && command.HasDirectObject())
                 return new Tuple<bool, string?>(true, verb);
             return new Tuple<bool, string?>(false, null);
         }
 
-        public async Task<VerbResult> Process(PlayerConnection connection, CommandResult command, CancellationToken cancellationToken)
+        public async Task<VerbResult> Process(Dbref player, PlayerConnection? connection, CommandResult command, CancellationToken cancellationToken)
         {
-            var str = command.getNonVerbPhrase();
+            var str = command.GetNonVerbPhrase();
             if (str == null || str.Length < 3)
                 return new VerbResult(false, "@link object1=object2 [; object3; ... objectn ]..\r\nLinks object1 to object2, provided you control object1, and object2 is either controlled by you or linkable. Actions may be linked to more than one thing, specified in a list separated by semi-colons.");
 
@@ -31,7 +31,7 @@ namespace moo.common.Actions.BuiltIn
             var thingName = parts[0];
             var destNames = parts[1].TrimEnd('\r', '\n', ' ', '\t');
 
-            var thingDbref = await Matcher.InitObjectSearch(connection.GetPlayer(), thingName, Dbref.DbrefObjectType.Exit, cancellationToken)
+            var thingDbref = await Matcher.InitObjectSearch(player, thingName, Dbref.DbrefObjectType.Exit, cancellationToken)
                 .MatchEverything()
                 .NoisyResult();
 
@@ -52,7 +52,7 @@ namespace moo.common.Actions.BuiltIn
                         var exit = exitLookup.value;
                         if (exit.LinkTargets.Count > 0)
                         {
-                            if (await exit.IsControlledBy(connection, cancellationToken))
+                            if (await exit.IsControlledBy(player, cancellationToken))
                                 return new VerbResult(false, "That exit is already linked.");
                             else
                                 return new VerbResult(false, "Permission denied. (you don't control the exit to relink)");
@@ -61,8 +61,8 @@ namespace moo.common.Actions.BuiltIn
                         // TODO: Handle costs https://github.com/fuzzball-muck/fuzzball/blob/b0ea12f4d40a724a16ef105f599cb8b6a037a77a/src/create.c#L171
 
                         // Do it.
-                        exit.owner = connection.GetPlayer().owner;
-                        var newLinks = await Exit.ParseLinks(connection.GetPlayer(), exit, destNames, false, cancellationToken);
+                        exit.owner = await player.GetOwner(cancellationToken);
+                        var newLinks = await Exit.ParseLinks(player, exit, destNames, false, cancellationToken);
                         exit.SetLinkTargets(newLinks);
                         break;
                     }

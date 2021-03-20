@@ -13,14 +13,11 @@ namespace moo.common.Models
 
         private ForthTokenizerResult tokenized;
 
-        public Script()
-        {
-            this.type = (int)Dbref.DbrefObjectType.Program;
-        }
+        public Script() => type = (int)Dbref.DbrefObjectType.Program;
 
-        public virtual Tuple<bool, string?> CanProcess(PlayerConnection player, CommandResult command)
+        public virtual Tuple<bool, string?> CanProcess(Dbref player, CommandResult command)
         {
-            string verb = command.getVerb().ToLowerInvariant();
+            string verb = command.GetVerb().ToLowerInvariant();
 
             foreach (var key in new[] { this.id.ToString(), name })
             {
@@ -74,17 +71,18 @@ namespace moo.common.Models
         }
 
         public async Task<VerbResult> Process(
-            PlayerConnection connection,
+            Dbref player,
+             PlayerConnection? connection,
             CommandResult command,
             CancellationToken cancellationToken)
         {
             // TODO: Right now we block on programs
 
             byte effectiveMuckerLevel =
-                this.HasFlag(Flag.WIZARD) ? 4
-                : this.HasFlag(Flag.LEVEL_3) ? 3
-                : this.HasFlag(Flag.LEVEL_2) ? 2
-                : this.HasFlag(Flag.LEVEL_1) ? 1
+                HasFlag(Flag.WIZARD) ? 4
+                : HasFlag(Flag.LEVEL_3) ? 3
+                : HasFlag(Flag.LEVEL_2) ? 2
+                : HasFlag(Flag.LEVEL_1) ? 1
                 : 0;
 
             var process = new ForthProcess(id, effectiveMuckerLevel, connection)
@@ -105,8 +103,8 @@ namespace moo.common.Models
                     process.SetProgramLocalVariable(v.Key, v.Value);
 
             var result = await Server.ExecuteAsync(process, tokenized.Words, connection.Dbref,
-                command.getVerb(),
-                new[] { command.getNonVerbPhrase() },
+                command.GetVerb(),
+                new[] { command.GetNonVerbPhrase() },
                 cancellationToken);
             var scriptResult = new VerbResult(result.IsSuccessful, result.Reason?.ToString());
 

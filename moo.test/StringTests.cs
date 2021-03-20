@@ -76,10 +76,10 @@ namespace Tests
         [Test]
         public void FindInnerTextDeepPractical2()
         {
-            var test = "<propdir><key>deep</key><value><prop><name>deep</name><propdir><key>string</key><value><prop><name>string</name><string>STRING TEST &lt; WOO &gt;</string></prop></value><key>int</key><value><prop><name>int</name><float>321</float></prop></value><key>dbref</key><value><prop><name>dbref</name><dbref>#2468G</dbref></prop></value><key>float</key><value><prop><name>float</name><float>12.34</float></prop></value></propdir>";
+            var test = "<propdir><key>deep</key><value><prop><name>deep</name><propdir><key>string</key><value><prop><name>string</name><string>STRING TEST &lt; WOO &gt;</string></prop></value><key>int</key><value><prop><name>int</name><float>321</float></prop></value><key>dbref</key><value><prop><name>dbref</name><dbref>#2468G</dbref></prop></value><key>float</key><value><prop><name>float</name><float>12.34</float></prop></value></propdir></prop></value></propdir>";
             var (inner, endOfClosingTag) = test.FindInnerXml("propdir");
             Assert.AreEqual(test.Length, endOfClosingTag);
-            Assert.AreEqual("<key>deep</key><value><prop><name>deep</name><propdir><key>string</key><value><prop><name>string</name><string>STRING TEST &lt; WOO &gt;</string></prop></value><key>int</key><value><prop><name>int</name><float>321</float></prop></value><key>dbref</key><value><prop><name>dbref</name><dbref>#2468G</dbref></prop></value><key>float</key><value><prop><name>float</name><float>12.34</float></prop></value>", inner);
+            Assert.AreEqual("<key>deep</key><value><prop><name>deep</name><propdir><key>string</key><value><prop><name>string</name><string>STRING TEST &lt; WOO &gt;</string></prop></value><key>int</key><value><prop><name>int</name><float>321</float></prop></value><key>dbref</key><value><prop><name>dbref</name><dbref>#2468G</dbref></prop></value><key>float</key><value><prop><name>float</name><float>12.34</float></prop></value></propdir></prop></value>", inner);
         }
 
         [Test]

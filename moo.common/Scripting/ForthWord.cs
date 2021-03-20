@@ -333,7 +333,7 @@ namespace moo.common.Scripting
                         }
 
                         var eval = stack.Pop();
-                        if (eval.isTrue())
+                        if (eval.IsTrue())
                             controlFlow.Push(new ControlFlowMarker(ControlFlowElement.InIfAndContinue, x));
                         else
                             controlFlow.Push(new ControlFlowMarker(ControlFlowElement.InIfAndSkip, x));
@@ -477,7 +477,7 @@ namespace moo.common.Scripting
                         }
 
                         var eval = stack.Pop();
-                        if (eval.isFalse())
+                        if (eval.IsFalse())
                         {
                             controlFlow.Push(new ControlFlowMarker(ControlFlowElement.SkipToAfterNextUntilOrRepeat, x));
                             continue;
@@ -591,7 +591,7 @@ namespace moo.common.Scripting
                         }
 
                         var eval = stack.Pop();
-                        if (eval.isTrue())
+                        if (eval.IsTrue())
                             continue;
 
                         // Go back to previous BEGIN or FOR
@@ -756,9 +756,9 @@ namespace moo.common.Scripting
         {
             // Debug, print stack
             if (stack.Count == 0)
-                await connection.sendOutput($"DEBUG ({lineCount}): () {extra}");
+                await connection.SendOutput($"DEBUG ({lineCount}): () {extra}");
             else
-                await connection.sendOutput($"DEBUG ({lineCount}): (" +
+                await connection.SendOutput($"DEBUG ({lineCount}): (" +
                 stack.Reverse().Select(s =>
                 {
                     return (s.Type == DatumType.String) ? $"\"{s.Value}\"" : s.Value.ToString();
@@ -769,12 +769,12 @@ namespace moo.common.Scripting
         {
             foreach (var lvar in process.GetProgramLocalVariables())
             {
-                await connection.sendOutput($"LVAR {lvar.Key}={lvar.Value}");
+                await connection.SendOutput($"LVAR {lvar.Key}={lvar.Value}");
             }
 
             foreach (var local in functionScopedVariables)
             {
-                await connection.sendOutput($"VAR {local.Key}={local.Value}");
+                await connection.SendOutput($"VAR {local.Key}={local.Value}");
             }
         }
     }
