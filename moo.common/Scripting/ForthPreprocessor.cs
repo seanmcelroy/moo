@@ -72,7 +72,8 @@ namespace moo.common.Scripting
             { "SORTTYPE_CASE_DESCEND", "2" },
             { "SORTTYPE_NOCASE_DESCEND", "3" },
             { "ARRAY_INTERSECT", "2 array_nintersect" },
-            { "STRIP", "striplead striptail" }
+            { "STRIP", "striplead striptail" },
+            { "strip", "striplead striptail" }
         };
             var controlFlow = new Stack<ControlFlowMarker>();
             var verbosity = script.name == "MOSS1.1.muf" ? 5 : 0;
@@ -587,6 +588,8 @@ namespace moo.common.Scripting
                     // Strip comments
                     if (line2.IndexOf('(') > -1 && !line2.StartsWith('\"') && !line2.EndsWith('\"'))
                         line2 = Regex.Replace(line2, @"^\([^\)]*\)|\([^\r\n]*$|\([^\)]*\)", "");
+                    if (line2.StartsWith(':') && line2.IndexOf('[') > -1 && line2.EndsWith(']'))
+                        line2 = line2.Substring(0, line2.IndexOf('['));
 
                     if (line2.Length > 0)
                         foreach (var define in defines.Where(d => d.Value != null))

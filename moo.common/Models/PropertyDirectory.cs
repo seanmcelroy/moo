@@ -189,9 +189,9 @@ namespace moo.common.Models
                     }
                 case PropertyType.Lock:
                     {
-                        if (Lock.TryParse(value, out Lock result))
+                        if (Lock.TryParse(value, out Lock? result))
                         {
-                            SetPropertyPathValue(path, type, result);
+                            SetPropertyPathValue(path, type, result!);
                             return true;
                         }
                         return false;

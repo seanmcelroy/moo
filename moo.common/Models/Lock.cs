@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace moo.common.Models
 {
@@ -8,8 +9,16 @@ namespace moo.common.Models
 
         public Lock(string raw) => this.raw = raw;
 
-        public static bool TryParse(string s, out Lock result)
+        public static bool TryParse([NotNullWhen(true)] string s, out Lock? result)
         {
+            result = null;
+            if (string.IsNullOrWhiteSpace(s))
+                return false;
+
+            var lev = LockExpressionValue.Parse(s);
+            if (lev.inners == null && string.IsNullOrWhiteSpace(lev.terminal))
+                return false;
+
             result = new Lock
             {
                 raw = s
