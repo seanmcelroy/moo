@@ -137,5 +137,15 @@ namespace Tests
             Assert.IsTrue(prep.IsSuccessful);
             Assert.AreEqual("5 5", prep.ProcessedProgram?.TrimEnd(new char[] { '\r', '\n' }));
         }
+
+        [Test]
+        public async Task DefineExpansion()
+        {
+            var programText = "$def stripspaces strip\n: getprepend (playerdbref -- string)\n     \"_whisp/prepend\" getpropstr dup not if\n        me @ \"_whisp/prepend\" \"W>>>\" setprop \n     else stripspaces \" \" strcat\n     then\n;";
+            var prep = await ForthPreprocessor.Preprocess(null, null, programText, CancellationToken.None);
+            Assert.IsTrue(prep.IsSuccessful);
+            Assert.NotNull(prep.ProcessedProgram);
+            Assert.IsFalse(prep.ProcessedProgram!.Contains(" strip ", System.StringComparison.OrdinalIgnoreCase));
+        }
     }
 }

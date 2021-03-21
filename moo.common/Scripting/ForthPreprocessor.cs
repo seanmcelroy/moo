@@ -76,12 +76,13 @@ namespace moo.common.Scripting
             { "SORTTYPE_CASE_DESCEND", "2" },
             { "SORTTYPE_NOCASE_DESCEND", "3" },
             { "ARRAY_INTERSECT", "2 array_nintersect" },
-            { "STRIP", "striplead striptail" }
+            { "STRIP", "striplead striptail" },
+            { "[]", "array_getitem" }
         };
             var controlFlow = new Stack<ControlFlowMarker>();
             var verbosity = 0;
 
-            var publicFunctionNames = new List<String>(20);
+            var publicFunctionNames = new List<string>(20);
 
             var x = -1;
             var inMultiLineComment = false;
@@ -251,10 +252,16 @@ namespace moo.common.Scripting
                                 }
                                 else
                                 {
+                                    var defValue = defMatch.Groups["defValue"].Value;
+
+                                    // The define value could be a primitive with an inserver definition, so replace here.
+                                    foreach (var define in defines.Where(d => d.Value != null))
+                                        defValue = Regex.Replace(defValue, $@"(?<=\s|^){Regex.Escape(define.Key)}(?=\s|$)", define.Value ?? string.Empty, RegexOptions.IgnoreCase);
+
                                     if (defines.ContainsKey(key))
-                                        defines[key] = defMatch.Groups["defValue"].Value;
+                                        defines[key] = defValue;
                                     else
-                                        defines.Add(key, defMatch.Groups["defValue"].Value);
+                                        defines.Add(key, defValue);
                                 }
 
                                 tokenHandled = true;
@@ -464,10 +471,10 @@ namespace moo.common.Scripting
 
                                 var target = targetLookup.value;
                                 var defsProperty = await target.GetPropertyPathValueAsync("_defs/", cancellationToken);
-                                var defsDirectory = (PropertyDirectory?)defsProperty.Value;
 
-                                if (defsDirectory == null)
+                                if (defsProperty.Value == null)
                                     continue;
+                                var defsDirectory = (PropertyDirectory?)defsProperty.Value!;
 
                                 foreach (var kvp in defsDirectory)
                                 {
@@ -584,7 +591,11 @@ namespace moo.common.Scripting
                     while (quotedStringPreRegex.IsMatch(line2))
                     {
                         var match = quotedStringPreRegex.Match(line2);
-                        var key = RandomString(match.Length);
+                        string key;
+                        do
+                        {
+                            key = RandomString(match.Length);
+                        } while (holdingPen.ContainsKey(key));
                         holdingPen.Add(key, match.Value);
                         line2 = line2.Remove(match.Index, match.Length).Insert(match.Index, key);
                     }
@@ -592,12 +603,10 @@ namespace moo.common.Scripting
                     // Strip comments
                     if (line2.IndexOf('(') > -1 && !line2.StartsWith('\"') && !line2.EndsWith('\"'))
                         line2 = Regex.Replace(line2, @"^\([^\)]*\)|\([^\r\n]*$|\([^\)]*\)", "");
-                    if (line2.StartsWith(':') && line2.IndexOf('[') > -1 && line2.EndsWith(']'))
-                        line2 = line2.Substring(0, line2.IndexOf('['));
 
                     if (line2.Length > 0)
                         foreach (var define in defines.Where(d => d.Value != null))
-                            line2 = Regex.Replace(line2, @"(?<=\s|^)" + Regex.Escape(define.Key) + @"(?=\s|$)", define.Value ?? string.Empty, RegexOptions.IgnoreCase);
+                            line2 = Regex.Replace(line2, $@"(?<=\s|^){Regex.Escape(define.Key)}(?=\s|$)", define.Value ?? string.Empty, RegexOptions.IgnoreCase);
 
                     if (line2.Length > 0)
                         foreach (var hold in holdingPen)

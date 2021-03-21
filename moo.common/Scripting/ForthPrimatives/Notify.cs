@@ -32,6 +32,8 @@ namespace moo.common.Scripting.ForthPrimatives
             if (message == null || string.IsNullOrWhiteSpace(message))
                 return ForthPrimativeResult.SUCCESS;
 
+            // Remove escape sequences from message, some MUF programs add them in.
+            message = message.Replace("\\\"", "\"");
             await Server.NotifyAsync(sTarget.UnwrapDbref(), message);
 
             return ForthPrimativeResult.SUCCESS;

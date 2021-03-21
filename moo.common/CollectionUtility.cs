@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Tests
+namespace moo.common
 {
     public static class CollectionUtility
     {

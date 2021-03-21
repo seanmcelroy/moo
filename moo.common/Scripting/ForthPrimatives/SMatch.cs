@@ -76,10 +76,10 @@ namespace moo.common.Scripting.ForthPrimatives
             var pattern = (string?)n2.Value ?? string.Empty;
 
             // Non-negation version
-            var regex = Regex.Replace(pattern, @"(?<=^|\?|\*|\s)(\{(?:(?:(?:[^|\^|\s][^|\s]*\|){1,20}[^}\s]+)|[^|\^|\s}]+[^|\s}]+)\})(?=\?|\*|\s|$)", "=~~~~~$1~~~~~=");
+            var regex = Regex.Replace(pattern, @"(?<=^|\?|\*|\s)(\{(?:(?:(?:[^|\^|\s][^|\s]*\|){1,20}[^}\s]+)|[^|\^|\s}]+[^|\s}]+)\})(?=\?|\*|\s|$)", "=~~~~~$1~~~~~=", RegexOptions.Compiled);
 
             // Negation version
-            regex = Regex.Replace(regex, @"(?<=^|\?|\*|\s)(\{\^(?:(?:(?:[^|\^|\s][^|\s]*\|){1,20}[^}\s]+)|[^|\^|\s}]+[^|\s}]+)\})(?=\?|\*|\s|$)", "!~~~~~$1~~~~~!");
+            regex = Regex.Replace(regex, @"(?<=^|\?|\*|\s)(\{\^(?:(?:(?:[^|\^|\s][^|\s]*\|){1,20}[^}\s]+)|[^|\^|\s}]+[^|\s}]+)\})(?=\?|\*|\s|$)", "!~~~~~$1~~~~~!", RegexOptions.Compiled);
 
             regex = regex.Replace(".", "\\.");
 

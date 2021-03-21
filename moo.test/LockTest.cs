@@ -1,4 +1,3 @@
-using System.Threading.Tasks;
 using moo.common.Models;
 using NUnit.Framework;
 

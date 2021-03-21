@@ -392,7 +392,7 @@ namespace Tests
             var deserialized = deserializedResultArray[0].Item1;
             Assert.NotNull(deserialized);
             Assert.IsInstanceOf<PropertyDirectory>(deserialized);
-            Assert.AreEqual(propdir.ElementAt(0), ((PropertyDirectory)deserialized).ElementAt(0));
+            Assert.AreEqual(propdir.ElementAt(0), ((PropertyDirectory)deserialized!).ElementAt(0));
             Assert.AreEqual(propdir, deserialized);
         }
 
@@ -414,7 +414,7 @@ namespace Tests
 
             var deserialized = Thing.Deserialize<Thing>(serialized);
             Assert.NotNull(deserialized);
-            Assert.NotNull(deserialized.properties);
+            Assert.NotNull(deserialized!.properties);
             Assert.AreEqual(testObj.properties.Count, deserialized.properties.Count);
             Assert.AreEqual(testObj.properties, deserialized.properties);
             Assert.AreEqual(testObj.externalDescription, deserialized.externalDescription);
@@ -441,7 +441,7 @@ namespace Tests
                 new DbrefSerializer()
             });
             Assert.NotNull(result);
-            Assert.NotNull(result.contents);
+            Assert.NotNull(result!.contents);
             Assert.AreEqual(1, result.contents.Count);
         }
 
@@ -465,7 +465,7 @@ namespace Tests
 
             var deserialized = Thing.Deserialize<Exit>(serialized);
             Assert.NotNull(deserialized);
-            Assert.NotNull(deserialized.properties);
+            Assert.NotNull(deserialized!.properties);
             Assert.AreEqual(testExit.aliases, deserialized.aliases);
             Assert.NotNull(deserialized.contents);
             Assert.AreEqual(testExit.contents.Count, deserialized.contents.Count);
@@ -508,7 +508,7 @@ namespace Tests
 
             var deserialized = Thing.Deserialize<HumanPlayer>(serialized);
             Assert.NotNull(deserialized);
-            Assert.NotNull(deserialized.properties);
+            Assert.NotNull(deserialized!.properties);
             Assert.AreEqual(player.properties.Count, deserialized.properties.Count);
             Assert.AreEqual(player.properties, deserialized.properties);
 

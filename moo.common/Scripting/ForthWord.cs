@@ -17,7 +17,7 @@ namespace moo.common.Scripting
         private static readonly Dictionary<string, Func<ForthPrimativeParameters, ForthPrimativeResult>> callTable = new();
         public readonly string name;
         public readonly ImmutableList<ForthDatum> programData;
-        private readonly Dictionary<string, ForthVariable> functionScopedVariables;
+        public readonly ImmutableList<(string type, string name)> inputs;
 
         static ForthWord()
         {
@@ -80,6 +80,7 @@ namespace moo.common.Scripting
             callTable.Add("int?", (p) => OpIsInt.Execute(p));
             callTable.Add("float?", (p) => OpIsFloat.Execute(p));
             callTable.Add("dbref?", (p) => OpIsDbRef.Execute(p));
+            callTable.Add("array?", (p) => OpIsArray.Execute(p));
 
             // TODO ARRAY?
             callTable.Add("array_count", (p) => ArrayCount.Execute(p));
@@ -210,11 +211,11 @@ namespace moo.common.Scripting
             callTable.Add("version", (p) => ForthPrimatives.Version.Execute(p));
         }
 
-        public ForthWord(string name, List<ForthDatum> programData)
+        public ForthWord(string name, List<ForthDatum> programData, List<(string type, string name)> inputs)
         {
             this.name = name ?? throw new ArgumentNullException(nameof(name));
             this.programData = programData.ToImmutableList();
-            functionScopedVariables = new Dictionary<string, ForthVariable>();
+            this.inputs = inputs.ToImmutableList();
         }
 
         public static ICollection<string> GetPrimatives() => callTable.Keys;
@@ -232,6 +233,15 @@ namespace moo.common.Scripting
             var verbosity = 0;
             var lineCount = 0;
             var controlFlow = new Stack<ControlFlowMarker>();
+            Dictionary<string, ForthVariable> functionScopedVariables = new();
+            string? lastPrimative = null;
+
+            // Prepopulate inputs on stack per prototype, if defined.
+            foreach (var input in inputs.Reverse())
+            {
+                var value = stack.Pop();
+                functionScopedVariables.Add(input.name, new ForthVariable(value));
+            }
 
             int x = -1;
             while (x < programData.Count - 1)
@@ -259,7 +269,12 @@ namespace moo.common.Scripting
                 }
 
                 if (verbosity > 5)
-                    Console.WriteLine($"DATUM: {datum.Value} \tSTACK: {stack.Reverse().Select(x => x.Value?.ToString() ?? string.Empty).Aggregate((c, n) => c + "," + n)}");
+                {
+                    if (stack.Count == 0)
+                        Console.WriteLine($"DATUM: {datum.Value}");
+                    else
+                        Console.WriteLine($"DATUM: {datum.Value} \tSTACK: {stack.Reverse().Select(x => x.Value?.ToString() ?? string.Empty).Aggregate((c, n) => c + "," + n)}");
+                }
 
                 // If I'm pre-empted, then spin until 
                 if (Server.GetInstance().PreemptProcessId != 0 && Server.GetInstance().PreemptProcessId != process.ProcessId)
@@ -311,7 +326,16 @@ namespace moo.common.Scripting
                 // Execution Control
                 if (datum.Type == DatumType.Unknown)
                 {
-                    // IF
+                    // VAR
+                    if (string.Compare("var", datumLiteral, true) == 0)
+                    {
+                        var functionScopedVariableName = programData[x + 1];
+                        functionScopedVariables.Add(functionScopedVariableName.Value.ToString(), ForthVariable.UNINITIALIZED);
+                        x++; // Advance past the variable name since it's ahead.
+                        continue;
+                    }
+
+                    // VAR!
                     if (string.Compare("var!", datumLiteral, true) == 0)
                     {
                         var functionScopedVariableName = programData[x + 1];
@@ -347,7 +371,7 @@ namespace moo.common.Scripting
                         if (stack.Count == 0)
                         {
                             if (verbosity >= 2)
-                                await DumpVariablesToDebugAsync(process, connection);
+                                await DumpVariablesToDebugAsync(process, connection, functionScopedVariables);
                             return new ForthWordResult(ForthErrorResult.STACK_UNDERFLOW, "IF had no value on the stack to evaluate");
                         }
 
@@ -658,10 +682,11 @@ namespace moo.common.Scripting
                 // Function calls
                 if ((datum.Type == DatumType.Primitive || datum.Type == DatumType.Unknown)
                      && datum != default
-                     && process.HasWord(datum.Value?.ToString()))
+                     && datum.Value != null
+                     && process.HasWord(datum.Value.ToString()))
                 {
                     // Yield to other word.
-                    var wordResult = await process.RunWordAsync(datum.Value.ToString(), trigger, command, lastListItem, process.EffectiveMuckerLevel, cancellationToken);
+                    var wordResult = await process.RunWordAsync(datum.Value.ToString()!, trigger, command, lastListItem, process.EffectiveMuckerLevel, cancellationToken);
                     if (!wordResult.IsSuccessful)
                         return wordResult;
                     continue;
@@ -717,13 +742,18 @@ namespace moo.common.Scripting
                 {
                     if (callTable.Keys.Contains(datumLiteral, StringComparer.InvariantCultureIgnoreCase))
                     {
+                        var stackCopy = stack.ClonePreservingOrder();
                         var p = new ForthPrimativeParameters(process, stack, variables, connection, trigger, command,
                             async (d, s) => await Server.NotifyAsync(d, s),
                             async (d, s, e) => await Server.NotifyRoomAsync(d, s, e),
                             lastListItem,
                             cancellationToken);
 
-                        var result = callTable.Single(c => string.Compare(c.Key, datumLiteral, true) == 0).Value.Invoke(p);
+                        var matchingPrimative = callTable.Single(c => string.Compare(c.Key, datumLiteral, true) == 0);
+                        var result = matchingPrimative.Value.Invoke(p);
+
+                        lastPrimative = matchingPrimative.Key;
+
                         if (result.LastListItem.HasValue)
                             lastListItem = result.LastListItem.Value;
 
@@ -774,7 +804,8 @@ namespace moo.common.Scripting
                 await DumpStackToDebugAsync(stack, connection, lineCount);
 
             if (verbosity > 5)
-                Console.WriteLine($"Word {name} completed. \tSTACK: {stack.Reverse().Select(x => x.Value?.ToString() ?? string.Empty).Aggregate((c, n) => c + "," + n)}");
+                Console.WriteLine($"Word {name} completed.");
+
             return new ForthWordResult($"Word {name} completed");
         }
 
@@ -787,11 +818,13 @@ namespace moo.common.Scripting
                 await connection.SendOutput($"DEBUG ({lineCount}): (" +
                 stack.Reverse().Select(s =>
                 {
-                    return (s.Type == DatumType.String) ? $"\"{s.Value}\"" : s.Value.ToString();
+                    return (s.Type == DatumType.String) ? $"\"{s.Value}\"" : (s.Value?.ToString() ?? "(null)");
                 }).Aggregate((c, n) => c + " " + n) + ") " + (default(ForthDatum).Equals(currentDatum) ? "" : ((currentDatum.Type == DatumType.String) ? $"\"{currentDatum.Value}\"" : currentDatum.Value.ToString())) + " " + extra);
         }
-
-        private async Task DumpVariablesToDebugAsync(ForthProcess process, PlayerConnection connection)
+        private static async Task DumpVariablesToDebugAsync(
+            ForthProcess process,
+            PlayerConnection connection,
+            Dictionary<string, ForthVariable> functionScopedVariables)
         {
             foreach (var lvar in process.GetProgramLocalVariables())
             {

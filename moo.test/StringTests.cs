@@ -731,5 +731,38 @@ namespace Tests
 
             Assert.AreEqual(0, local.Count);
         }
+
+        [Test]
+        public void SubstTest()
+        {
+            /*
+            SUBST ( s1 s2 s3 -- s )
+            s1 is the string to operate on, s2 is the string to change all occurrences of s3 into, and s is resultant string. For example:
+
+                "HEY_YOU_THIS_IS" " " "_" subst
+
+            results in
+
+                "HEY YOU THIS IS"
+
+            s2 and s3 may be of any length. 
+             */
+            var stack = new Stack<ForthDatum>();
+            stack.Push(new ForthDatum("HEY_YOU_THIS_IS"));
+            stack.Push(new ForthDatum(" "));
+            stack.Push(new ForthDatum("_"));
+            var local = stack.ClonePreservingOrder();
+            var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
+            var result = Subst.Execute(parameters);
+            Assert.NotNull(result);
+            Assert.IsTrue(result.IsSuccessful, result.Reason);
+
+            Assert.AreEqual(1, local.Count);
+            var s1 = local.Pop();
+            Assert.AreEqual(ForthDatum.DatumType.String, s1.Type);
+            Assert.AreEqual("HEY YOU THIS IS", s1.Value);
+
+            Assert.AreEqual(0, local.Count);
+        }
     }
 }

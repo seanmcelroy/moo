@@ -18,5 +18,96 @@ namespace Tests
             var result = await ForthTokenizer.Tokenzie(null, preproc.ProcessedProgram!, new System.Collections.Generic.Dictionary<string, ForthVariable>());
             Assert.NotNull(result);
         }
+
+        [Test]
+        public async Task ParseQuotedStringEmpty()
+        {
+            var programText = $": w\n\"\";";
+            var preproc = await ForthPreprocessor.Preprocess(null, null, programText, CancellationToken.None);
+            Assert.IsTrue(preproc.IsSuccessful);
+            var result = await ForthTokenizer.Tokenzie(null, preproc.ProcessedProgram!, new System.Collections.Generic.Dictionary<string, ForthVariable>());
+            Assert.NotNull(result);
+            Assert.NotNull(result.Words);
+            Assert.AreEqual(1, result.Words.Count);
+            var word = result.Words[0];
+            Assert.NotNull(word);
+            Assert.NotNull(word.programData);
+            Assert.AreEqual(1, word.programData.Count);
+            Assert.AreEqual(ForthDatum.DatumType.String, word.programData[0].Type);
+            Assert.AreEqual("", word.programData[0].Value);
+        }
+
+        [Test]
+        public async Task ParseQuotedStringSpace()
+        {
+            var programText = $": w\n\" \";";
+            var preproc = await ForthPreprocessor.Preprocess(null, null, programText, CancellationToken.None);
+            Assert.IsTrue(preproc.IsSuccessful);
+            var result = await ForthTokenizer.Tokenzie(null, preproc.ProcessedProgram!, new System.Collections.Generic.Dictionary<string, ForthVariable>());
+            Assert.NotNull(result);
+            Assert.NotNull(result.Words);
+            Assert.AreEqual(1, result.Words.Count);
+            var word = result.Words[0];
+            Assert.NotNull(word);
+            Assert.NotNull(word.programData);
+            Assert.AreEqual(1, word.programData.Count);
+            Assert.AreEqual(ForthDatum.DatumType.String, word.programData[0].Type);
+            Assert.AreEqual(" ", word.programData[0].Value);
+        }
+
+        [Test]
+        public async Task ParseQuotedStringQuotedQuote()
+        {
+            var programText = $": w\n\"\\\"\";"; // "\""
+            var preproc = await ForthPreprocessor.Preprocess(null, null, programText, CancellationToken.None);
+            Assert.IsTrue(preproc.IsSuccessful);
+            var result = await ForthTokenizer.Tokenzie(null, preproc.ProcessedProgram!, new System.Collections.Generic.Dictionary<string, ForthVariable>());
+            Assert.NotNull(result);
+            Assert.NotNull(result.Words);
+            Assert.AreEqual(1, result.Words.Count);
+            var word = result.Words[0];
+            Assert.NotNull(word);
+            Assert.NotNull(word.programData);
+            Assert.AreEqual(1, word.programData.Count);
+            Assert.AreEqual(ForthDatum.DatumType.String, word.programData[0].Type);
+            Assert.AreEqual("\\\"", word.programData[0].Value);
+        }
+
+        [Test]
+        public async Task ParseQuotedStringQuotedQuoteMultiple()
+        {
+            var programText = $": w\n\"\\\"\" \"\\\" \";"; // "\"" "\" "
+            var preproc = await ForthPreprocessor.Preprocess(null, null, programText, CancellationToken.None);
+            Assert.IsTrue(preproc.IsSuccessful);
+            var result = await ForthTokenizer.Tokenzie(null, preproc.ProcessedProgram!, new System.Collections.Generic.Dictionary<string, ForthVariable>());
+            Assert.NotNull(result);
+            Assert.NotNull(result.Words);
+            Assert.AreEqual(1, result.Words.Count);
+            var word = result.Words[0];
+            Assert.NotNull(word);
+            Assert.NotNull(word.programData);
+            Assert.AreEqual(2, word.programData.Count);
+            Assert.AreEqual(ForthDatum.DatumType.String, word.programData[0].Type);
+            Assert.AreEqual("\\\"", word.programData[0].Value);
+            Assert.AreEqual(ForthDatum.DatumType.String, word.programData[1].Type);
+            Assert.AreEqual("\\\" ", word.programData[1].Value);
+        }
+
+        [Test]
+        public async Task ParseQuotedStrings()
+        {
+            var programText = $": get-playerdbrefs  (playersstr -- dbref_range unrecstr)\n    0 \" \" \"\" 4 rotate\n    begin\n        dup while\n        \" \" split swap\n        dup not if pop continue then\n        dup \"(\" 1 strncmp not if\n            \" \" strcat swap strcat\n            \")\" split swap pop strip\n            continue\n        then\n        dup \"#\" 1 strncmp not if\n            dup 1 strcut swap pop\n            dup number? if\n                atoi dbref dup ok? if\n                    dup player? if\n                        swap pop 5 rotate 1 +\n                        -5 rotate -5 rotate\n                        continue\n                    else pop\n                    then\n                else pop\n                then\n            else pop\n            then\n        then\n        dup \"*\" 1 strncmp not if\n            1 strcut swap pop\n            4 pick \" \" 3 pick over tolower strcat strcat instr if\n                pop continue\n            then\n            4 rotate over tolower strcat \" \" strcat -4 rotate\n            dup me @ get-alias dup not if\n                pop \"\\\" *\" swap strcat\n                \"\\\" \" strcat rot\n                swap strcat swap continue\n            then\n            swap pop \" \" strcat\n            swap strcat single-space\n            continue\n        then\n        dup player-match? dup -1 = if\n            pop pop pop pop\n            strip exit\n        then\n        0 > if\n            swap pop 5 rotate\n            1 + -5 rotate -5 rotate\n        else\n            dup me @ get-alias dup if\n                tolower\n                5 pick \" \" 4 pick over strcat strcat instr if\n                    pop pop continue\n                then\n                5 rotate rot strcat \" \" strcat -4 rotate\n                \" \" strcat swap strcat single-space\n            else pop\n  \n                dup partial-match\n  \n                if\n                    swap pop 5 rotate 1 +\n                    -5 rotate -5 rotate\n                else\n                    \"\\\"\" swap strcat\n                    \"\\\" \" strcat rot\n                    swap strcat swap\n                then\n            then\n        then\n    repeat pop swap pop sort-stringwords\n;";
+            var preproc = await ForthPreprocessor.Preprocess(null, null, programText, CancellationToken.None);
+            Assert.IsTrue(preproc.IsSuccessful);
+            Assert.NotNull(preproc.ProcessedProgram);
+
+            var result = await ForthTokenizer.Tokenzie(null, preproc.ProcessedProgram!, new System.Collections.Generic.Dictionary<string, ForthVariable>());
+            Assert.NotNull(result);
+            Assert.NotNull(result.Words);
+            Assert.AreEqual(1, result.Words.Count);
+            var word = result.Words[0];
+            Assert.NotNull(word);
+            Assert.NotNull(word.programData);
+        }
     }
 }

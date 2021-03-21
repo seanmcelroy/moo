@@ -7,6 +7,7 @@ namespace moo.common.Scripting
 {
     public struct ForthVariable
     {
+        public static readonly ForthVariable UNINITIALIZED = new(null, VariableType.Unknown, true);
         public enum VariableType
         {
             Unknown,
@@ -36,7 +37,7 @@ namespace moo.common.Scripting
             Value = value.Value;
         }
 
-        public ForthVariable(object value, VariableType type, bool isConstant)
+        public ForthVariable(object? value, VariableType type, bool isConstant)
         {
             IsConstant = isConstant;
             Type = type;
@@ -91,7 +92,7 @@ namespace moo.common.Scripting
                 return true;
             }
 
-            if (Regex.IsMatch(value, @"#(\-?\d+|\d+[A-Z]?)"))
+            if (Regex.IsMatch(value, @"#(\-?\d+|\d+[A-Z]?)", RegexOptions.Compiled))
             {
                 result = new Tuple<VariableType, object?>(VariableType.DbRef, new Dbref(value));
                 return true;

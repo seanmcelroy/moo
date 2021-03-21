@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using moo.common.Models;
 using static moo.common.Models.Dbref;
@@ -158,7 +157,7 @@ namespace moo.common.Scripting
                 return true;
             }
 
-            if (Regex.IsMatch(value, @"#(\-?\d+|\d+[A-Z]?)"))
+            if (Regex.IsMatch(value, @"#(\-?\d+|\d+[A-Z]?)", RegexOptions.Compiled))
             {
                 result = new Tuple<DatumType, object>(DatumType.DbRef, new Dbref(value));
                 return true;

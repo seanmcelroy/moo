@@ -19,7 +19,8 @@ namespace moo.common.Scripting
             SkipUntilEndComment,
             SkipUntilNonWhitespace,
             SkipUntilWhitespace,
-            SkipUntilNonLineBreak
+            SkipUntilNonLineBreak,
+            ReadingWordArgList,
         }
 
 
@@ -37,11 +38,12 @@ namespace moo.common.Scripting
             var whitespaceCharacters = new char[] { ' ', '\t' };
             var currentWordNameBuilder = new StringBuilder();
             string? currentWordName = null;
+            var currentWordArgListBuilder = new StringBuilder();
             int? currentWordLineNumber = null;
             List<ForthDatum>? currentWordData = null;
             var currentDatum = new StringBuilder();
             var currentNonDatum = new StringBuilder();
-            var verbosity = 5;
+            var verbosity = 0;
 
             foreach (var c in program)
             {
@@ -71,10 +73,17 @@ namespace moo.common.Scripting
                             forwardOperation = ForwardOperation.None;
                             continue;
                         }
+                    case ForwardOperation.ReadingWordArgList:
+                        currentWordArgListBuilder.Append(c);
+                        if (c == ']')
+                            forwardOperation = ForwardOperation.None;
+                        continue;
                     case ForwardOperation.ReadingWordName:
                         if (whitespaceCharacters.Contains(c) && currentWordNameBuilder.Length == 0)
                             continue;
-                        else if (!whitespaceCharacters.Contains(c) && !linebreakCharacters.Contains(c))
+                        else if (!whitespaceCharacters.Contains(c)
+                            && !linebreakCharacters.Contains(c)
+                            && c != '[')
                         {
                             currentWordNameBuilder.Append(c);
                             continue;
@@ -90,7 +99,16 @@ namespace moo.common.Scripting
                                 else
                                     Console.WriteLine($"WORD({lineNumber},{columnNumber - currentWordName.Length}): {currentWordName}");
                             }
-                            forwardOperation = ForwardOperation.None;
+
+                            if (c == '[')
+                            {
+                                currentWordArgListBuilder.Clear();
+                                currentWordArgListBuilder.Append(c);
+                                forwardOperation = ForwardOperation.ReadingWordArgList;
+                            }
+                            else
+                                forwardOperation = ForwardOperation.None;
+
                             if (linebreakCharacters.Contains(c))
                             {
                                 lineNumber++;
@@ -267,9 +285,31 @@ namespace moo.common.Scripting
 
                 if (c == ';' && currentWordNameBuilder.Length > 0)
                 {
-                    words.Add(new ForthWord(currentWordNameBuilder.ToString(), currentWordData));
+                    var wordName = currentWordNameBuilder.ToString();
+
+                    // Parse input list
+                    List<(string type, string name)> inputs = new();
+                    if (currentWordArgListBuilder.Length > 0)
+                    {
+                        var argList = currentWordArgListBuilder.ToString();
+                        var argMatches = Regex.Match(argList, @"^\[(\s*(?<input>\w+:\w+))+\s*(--|]$)", RegexOptions.Compiled);
+                        if (argMatches.Success)
+                        {
+                            foreach (Capture cap in argMatches.Groups["input"].Captures)
+                            {
+                                var type = cap.Value.Split(':')[0];
+                                var name = cap.Value.Split(':')[1];
+                                inputs.Add((type, name));
+                            }
+                        }
+                    }
+
+                    words.Add(new ForthWord(wordName, currentWordData, inputs));
+
+                    // Clean up for next word
                     currentWordName = null;
                     currentWordNameBuilder.Clear();
+                    currentWordArgListBuilder.Clear();
                     currentWordLineNumber = 0;
                     currentWordData = null;
                 }
