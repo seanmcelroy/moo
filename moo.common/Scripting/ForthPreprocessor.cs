@@ -39,7 +39,11 @@ namespace moo.common.Scripting
         private static readonly Regex versionRegex = new(@"^\s*(?:\$version\s+(?<value>\d+(?:.\d*)?))$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static readonly Regex quotedStringPreRegex = new(@"\""[^\r\n]*?(?<!\\)\""(?=\s)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-        public static async Task<ForthPreprocessingResult> Preprocess(PlayerConnection? connection, Script script, string program, CancellationToken cancellationToken)
+        public static async Task<ForthPreprocessingResult> Preprocess(
+            PlayerConnection? connection,
+            Script? script,
+            string program,
+            CancellationToken cancellationToken)
         {
             var sb = new StringBuilder();
             var defines = new Dictionary<string, string?>() {
@@ -72,11 +76,10 @@ namespace moo.common.Scripting
             { "SORTTYPE_CASE_DESCEND", "2" },
             { "SORTTYPE_NOCASE_DESCEND", "3" },
             { "ARRAY_INTERSECT", "2 array_nintersect" },
-            { "STRIP", "striplead striptail" },
-            { "strip", "striplead striptail" }
+            { "STRIP", "striplead striptail" }
         };
             var controlFlow = new Stack<ControlFlowMarker>();
-            var verbosity = script.name == "MOSS1.1.muf" ? 5 : 0;
+            var verbosity = 0;
 
             var publicFunctionNames = new List<String>(20);
 
@@ -181,7 +184,7 @@ namespace moo.common.Scripting
                             var match = authorRegex.Match(token);
                             if (match.Success)
                             {
-                                script.SetPropertyPathValue("_author", Property.PropertyType.String, match.Groups["value"].Value);
+                                script?.SetPropertyPathValue("_author", Property.PropertyType.String, match.Groups["value"].Value);
                                 tokenHandled = true;
                                 line = line.Remove(match.Captures[0].Index, match.Captures[0].Length).Trim();
                                 if (line.Length == 0)
@@ -198,7 +201,7 @@ namespace moo.common.Scripting
                                 if (pubdefMatch.Groups["clear"].Success)
                                 {
                                     // Clears the _defs/ propdir on the program.
-                                    script.ClearPropertyPath($"_defs/");
+                                    script?.ClearPropertyPath($"_defs/");
                                     tokenHandled = true;
                                     continue;
                                 }
@@ -208,7 +211,7 @@ namespace moo.common.Scripting
                                 if (!pubdefMatch.Groups["defValue"].Success)
                                 {
                                     // Clears the _defs/<defname> prop on the prog.
-                                    script.ClearPropertyPath($"_defs/{key}");
+                                    script?.ClearPropertyPath($"_defs/{key}");
                                     tokenHandled = true;
                                     continue;
                                 }
@@ -218,7 +221,7 @@ namespace moo.common.Scripting
                                 if (key.StartsWith('\\'))
                                 {
                                     // Sets _defs/<defname> if not already set.
-                                    if ((await script.GetPropertyPathValueAsync($"_defs/{key}", cancellationToken)).Equals(default(Property)))
+                                    if (script != null && (await script.GetPropertyPathValueAsync($"_defs/{key}", cancellationToken)).Equals(default(Property)))
                                     {
                                         script.SetPropertyPathValue($"_defs/{key}", Property.PropertyType.String, value);
                                     }
@@ -228,7 +231,7 @@ namespace moo.common.Scripting
                                 }
 
                                 // Sets _defs/<defname> prop to <rest_of_line>.
-                                script.SetPropertyPathValue($"_defs/{key}", Property.PropertyType.String, value);
+                                script?.SetPropertyPathValue($"_defs/{key}", Property.PropertyType.String, value);
                                 tokenHandled = true;
                                 continue;
                             }
@@ -468,10 +471,11 @@ namespace moo.common.Scripting
 
                                 foreach (var kvp in defsDirectory)
                                 {
-                                    if (defines.ContainsKey(kvp.Key))
-                                        defines[kvp.Key] = kvp.Value.value.ToString();
+                                    var key = kvp.Key.ToUpperInvariant();
+                                    if (defines.ContainsKey(key))
+                                        defines[key] = kvp.Value.value?.ToString();
                                     else
-                                        defines.Add(kvp.Key, kvp.Value.value.ToString());
+                                        defines.Add(key, kvp.Value.value?.ToString());
                                 }
 
                                 tokenHandled = true;
@@ -486,7 +490,7 @@ namespace moo.common.Scripting
                             if (libDefMatch.Success)
                             {
                                 var function = libDefMatch.Groups["function"].Value;
-                                script.SetPropertyPathValue($"_defs/{function}", Property.PropertyType.String, $"{script.id} \"{function}\" call");
+                                script?.SetPropertyPathValue($"_defs/{function}", Property.PropertyType.String, $"{script.id} \"{function}\" call");
                                 tokenHandled = true;
                                 continue;
                             }
@@ -497,7 +501,7 @@ namespace moo.common.Scripting
                             var libVersionMatch = libVersionRegex.Match(token);
                             if (libVersionMatch.Success)
                             {
-                                if (float.TryParse(libVersionMatch.Groups["value"].Value, out float version))
+                                if (script != null && float.TryParse(libVersionMatch.Groups["value"].Value, out float version))
                                     script.SetPropertyPathValue("_lib-version", version);
                                 tokenHandled = true;
                                 continue;
@@ -509,7 +513,7 @@ namespace moo.common.Scripting
                             var noteMatch = noteRegex.Match(token);
                             if (noteMatch.Success)
                             {
-                                script.SetPropertyPathValue("_note", Property.PropertyType.String, noteMatch.Groups["value"].Value);
+                                script?.SetPropertyPathValue("_note", Property.PropertyType.String, noteMatch.Groups["value"].Value);
                                 tokenHandled = true;
                                 continue;
                             }
@@ -532,7 +536,7 @@ namespace moo.common.Scripting
                             var versionMatch = versionRegex.Match(token);
                             if (versionMatch.Success)
                             {
-                                if (float.TryParse(versionMatch.Groups["value"].Value, out float version))
+                                if (script != null && float.TryParse(versionMatch.Groups["value"].Value, out float version))
                                     script.SetPropertyPathValue("_version", version);
                                 tokenHandled = true;
                                 continue;
@@ -609,7 +613,7 @@ namespace moo.common.Scripting
             }
 
             if (controlFlow.Count != 0 && connection != null)
-                await connection.SendOutput($"UNCLOSED CONTROL FLOW! in {script.name}!");
+                await connection.SendOutput($"UNCLOSED CONTROL FLOW! in {script?.name ?? "Unknown program"}!");
 
             return new ForthPreprocessingResult(sb.ToString(), publicFunctionNames, null);
         }

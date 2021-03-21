@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,7 +16,7 @@ namespace moo.common.Scripting
     {
         private static readonly Dictionary<string, Func<ForthPrimativeParameters, ForthPrimativeResult>> callTable = new();
         public readonly string name;
-        public readonly List<ForthDatum> programData;
+        public readonly ImmutableList<ForthDatum> programData;
         private readonly Dictionary<string, ForthVariable> functionScopedVariables;
 
         static ForthWord()
@@ -54,14 +55,14 @@ namespace moo.common.Scripting
                 // DEPTH ( -- i ) 
                 // Returns the number of items currently on the stack.
                 p.Stack.Push(new ForthDatum(p.Stack.Count));
-                return default;
+                return ForthPrimativeResult.SUCCESS;
             });
             callTable.Add("{", (p) =>
             {
                 // { ( -- marker) 
                 // Pushes a marker onto the stack, to be used with } or }list or }dict.
                 p.Stack.Push(new ForthDatum("{", DatumType.Marker));
-                return default;
+                return ForthPrimativeResult.SUCCESS;
             });
             callTable.Add("}", (p) => MarkerEnd.Execute(p));
             callTable.Add("@", (p) => At.Execute(p));
@@ -79,8 +80,16 @@ namespace moo.common.Scripting
             callTable.Add("int?", (p) => OpIsInt.Execute(p));
             callTable.Add("float?", (p) => OpIsFloat.Execute(p));
             callTable.Add("dbref?", (p) => OpIsDbRef.Execute(p));
+
             // TODO ARRAY?
-            // TODO DICTIONARY/
+            callTable.Add("array_count", (p) => ArrayCount.Execute(p));
+            callTable.Add("array_keys", (p) => ArrayKeys.Execute(p));
+            callTable.Add("array_make", (p) => ArrayMake.Execute(p));
+            callTable.Add("array_make_dict", (p) => ArrayMakeDict.Execute(p));
+            callTable.Add("array_reverse", (p) => ArrayReverse.Execute(p));
+            callTable.Add("array_vals", (p) => ArrayVals.Execute(p));
+
+            // TODO DICTIONARY
             // TODO ADDRESS?
             // TODO LOCK?
 
@@ -204,7 +213,7 @@ namespace moo.common.Scripting
         public ForthWord(string name, List<ForthDatum> programData)
         {
             this.name = name ?? throw new ArgumentNullException(nameof(name));
-            this.programData = programData ?? throw new ArgumentNullException(nameof(programData));
+            this.programData = programData.ToImmutableList();
             functionScopedVariables = new Dictionary<string, ForthVariable>();
         }
 
@@ -266,7 +275,7 @@ namespace moo.common.Scripting
 
                 // Line-level items
 
-                /*/
+                /*
                 // VAR
                 if (line.Length == 2 && string.Compare(line[0].Value.ToString(), "VAR", true) == 0)
                 {
@@ -289,8 +298,7 @@ namespace moo.common.Scripting
                     functionScopedVariables.Add(varKey, stack.Count > 0 ? (object)stack.Pop() : null);
                     await connection.sendOutput(line.Select(d => d.Value.ToString()).Aggregate((c, n) => c + " " + n));
                     continue;
-                }
-                */
+                }*/
 
                 // For each element in line
                 var datumLiteral = datum.Value?.ToString();
@@ -303,6 +311,17 @@ namespace moo.common.Scripting
                 // Execution Control
                 if (datum.Type == DatumType.Unknown)
                 {
+                    // IF
+                    if (string.Compare("var!", datumLiteral, true) == 0)
+                    {
+                        var functionScopedVariableName = programData[x + 1];
+                        var functionScopedVariableValue = stack.Pop();
+                        functionScopedVariables.Add(functionScopedVariableName.Value.ToString(),
+                            new ForthVariable(functionScopedVariableValue));
+                        x++; // Advance past the variable name since it's ahead.
+                        continue;
+                    }
+
                     // IF
                     if (string.Compare("if", datumLiteral, true) == 0)
                     {
@@ -637,8 +656,9 @@ namespace moo.common.Scripting
                     await DumpStackToDebugAsync(stack, connection, lineCount, datum);
 
                 // Function calls
-                if ((datum.Type == DatumType.Primitive || datum.Type == ForthDatum.DatumType.Unknown) &&
-                    process.HasWord(datum.Value.ToString()))
+                if ((datum.Type == DatumType.Primitive || datum.Type == DatumType.Unknown)
+                     && datum != default
+                     && process.HasWord(datum.Value?.ToString()))
                 {
                     // Yield to other word.
                     var wordResult = await process.RunWordAsync(datum.Value.ToString(), trigger, command, lastListItem, process.EffectiveMuckerLevel, cancellationToken);
@@ -730,7 +750,13 @@ namespace moo.common.Scripting
                         if (ForthPrimativeResult.SUCCESS.Equals(result))
                             continue;
                         if (!result.IsSuccessful)
-                            return new ForthWordResult((ForthErrorResult)result.Result, result.Reason);
+                        {
+                            var fer = result.Result as ForthErrorResult?;
+                            if (fer != null)
+                                return new ForthWordResult((ForthErrorResult)fer!, result.Reason ?? "UNKNOWN ERROR");
+                            else
+                                return new ForthWordResult("UNKNOWN ERROR");
+                        }
 
                         continue;
                     }

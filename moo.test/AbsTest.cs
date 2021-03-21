@@ -18,7 +18,7 @@ namespace Tests
             var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
             var result = Abs.Execute(parameters);
             Assert.NotNull(result);
-            Assert.IsTrue(result.IsSuccessful);
+            Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             var n = local.Pop();
             Assert.AreEqual(ForthDatum.DatumType.Integer, n.Type);
@@ -37,7 +37,7 @@ namespace Tests
             var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
             var result = Abs.Execute(parameters);
             Assert.NotNull(result);
-            Assert.IsTrue(result.IsSuccessful);
+            Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             var n = local.Pop();
             Assert.AreEqual(ForthDatum.DatumType.Integer, n.Type);

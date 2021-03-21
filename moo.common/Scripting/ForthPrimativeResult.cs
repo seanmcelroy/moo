@@ -6,7 +6,7 @@ namespace moo.common.Scripting
 {
     public struct ForthPrimativeResult
     {
-        public static ForthPrimativeResult SUCCESS = new()
+        public static readonly ForthPrimativeResult SUCCESS = new()
         {
             isSuccessful = true
         };

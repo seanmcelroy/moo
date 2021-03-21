@@ -36,7 +36,7 @@ namespace Tests
 
             var result = await AddProp.ExecuteAsync(parameters);
             Assert.NotNull(result);
-            Assert.IsTrue(result.IsSuccessful);
+            Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.NotNull(testObj.properties);
             Assert.AreEqual(1, testObj.properties.Count);
@@ -73,7 +73,7 @@ namespace Tests
 
             var result = await AddProp.ExecuteAsync(parameters);
             Assert.NotNull(result);
-            Assert.IsTrue(result.IsSuccessful);
+            Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.NotNull(testObj.properties);
             Assert.AreEqual(1, testObj.properties.Count);

@@ -60,7 +60,7 @@ namespace Tests
                 var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
                 var result = await GetProp.ExecuteAsync(parameters);
                 Assert.NotNull(result);
-                Assert.IsTrue(result.IsSuccessful);
+                Assert.IsTrue(result.IsSuccessful, result.Reason);
 
                 Assert.AreEqual(1, local.Count);
                 var pop = local.Pop();
@@ -115,7 +115,7 @@ namespace Tests
                 var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
                 var result = await GetPropStr.ExecuteAsync(parameters);
                 Assert.NotNull(result);
-                Assert.IsTrue(result.IsSuccessful);
+                Assert.IsTrue(result.IsSuccessful, result.Reason);
 
                 Assert.AreEqual(1, local.Count);
                 var pop = local.Pop();
@@ -147,7 +147,7 @@ namespace Tests
                 var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
                 var result = await GetPropStr.ExecuteAsync(parameters);
                 Assert.NotNull(result);
-                Assert.IsTrue(result.IsSuccessful);
+                Assert.IsTrue(result.IsSuccessful, result.Reason);
 
                 Assert.AreEqual(1, local.Count);
                 var pop = local.Pop();

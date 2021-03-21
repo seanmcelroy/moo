@@ -16,7 +16,7 @@ namespace Tests
             var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
             var result = RandomMethods.Random(parameters);
             Assert.NotNull(result);
-            Assert.IsTrue(result.IsSuccessful);
+            Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(1, local.Count);
 
@@ -34,7 +34,7 @@ namespace Tests
             var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
             var result = RandomMethods.SRand(parameters);
             Assert.NotNull(result);
-            Assert.IsTrue(result.IsSuccessful);
+            Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(1, local.Count);
 
@@ -52,7 +52,7 @@ namespace Tests
             var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
             var result = RandomMethods.GetSeed(parameters);
             Assert.NotNull(result);
-            Assert.IsTrue(result.IsSuccessful);
+            Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(1, local.Count);
 

@@ -13,7 +13,8 @@ namespace moo.common.Scripting
             String,
             Integer,
             DbRef,
-            Float
+            Float,
+            Array
         }
 
         public bool IsConstant;
@@ -22,51 +23,52 @@ namespace moo.common.Scripting
 
         public ForthVariable(ForthDatum value, bool isConstant = false)
         {
-            this.IsConstant = isConstant;
-            this.Type = value.Type switch
+            IsConstant = isConstant;
+            Type = value.Type switch
             {
                 ForthDatum.DatumType.DbRef => VariableType.DbRef,
                 ForthDatum.DatumType.Float => VariableType.Float,
                 ForthDatum.DatumType.Integer => VariableType.Integer,
                 ForthDatum.DatumType.String => VariableType.String,
+                ForthDatum.DatumType.Array => VariableType.Array,
                 _ => throw new System.ArgumentException($"Unhandled variable type: {value.Type}", nameof(value)),
             };
-            this.Value = value.Value;
+            Value = value.Value;
         }
 
         public ForthVariable(object value, VariableType type, bool isConstant)
         {
-            this.IsConstant = isConstant;
-            this.Type = type;
-            this.Value = value;
+            IsConstant = isConstant;
+            Type = type;
+            Value = value;
         }
 
         public ForthVariable(Dbref value, byte dud, int? lineNumber = null, bool isConstant = false)
         {
-            this.IsConstant = isConstant;
-            this.Value = value;
-            this.Type = VariableType.DbRef;
+            IsConstant = isConstant;
+            Value = value;
+            Type = VariableType.DbRef;
         }
 
         public ForthVariable(string value, int? lineNumber = null, int? columnNumber = null, bool isConstant = false)
         {
-            this.IsConstant = isConstant;
-            this.Value = value;
-            this.Type = VariableType.String;
+            IsConstant = isConstant;
+            Value = value;
+            Type = VariableType.String;
         }
 
         public ForthVariable(int? value, int? lineNumber = null, int? columnNumber = null, bool isConstant = false)
         {
-            this.IsConstant = isConstant;
-            this.Value = value;
-            this.Type = VariableType.Integer;
+            IsConstant = isConstant;
+            Value = value;
+            Type = VariableType.Integer;
         }
 
         public ForthVariable(float? value, int? lineNumber = null, int? columnNumber = null, bool isConstant = false)
         {
-            this.IsConstant = isConstant;
-            this.Value = value;
-            this.Type = VariableType.Float;
+            IsConstant = isConstant;
+            Value = value;
+            Type = VariableType.Float;
         }
 
         public static bool TryInferType([NotNullWhen(true)] string? value, out Tuple<VariableType, object?>? result)

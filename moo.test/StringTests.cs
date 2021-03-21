@@ -97,7 +97,7 @@ namespace Tests
             var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
             var result = StripLead.Execute(parameters);
             Assert.NotNull(result);
-            Assert.IsTrue(result.IsSuccessful);
+            Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(1, local.Count);
             var res = local.Pop();
@@ -121,7 +121,7 @@ namespace Tests
             var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
             var result = StripTail.Execute(parameters);
             Assert.NotNull(result);
-            Assert.IsTrue(result.IsSuccessful);
+            Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(1, local.Count);
             var res = local.Pop();
@@ -145,7 +145,7 @@ namespace Tests
             var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
             var result = Split.Execute(parameters);
             Assert.NotNull(result);
-            Assert.IsTrue(result.IsSuccessful);
+            Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(2, local.Count);
             var s2 = local.Pop();
@@ -174,7 +174,7 @@ namespace Tests
             var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
             var result = Split.Execute(parameters);
             Assert.NotNull(result);
-            Assert.IsTrue(result.IsSuccessful);
+            Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(2, local.Count);
             var s2 = local.Pop();
@@ -203,7 +203,7 @@ namespace Tests
             var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
             var result = Split.Execute(parameters);
             Assert.NotNull(result);
-            Assert.IsTrue(result.IsSuccessful);
+            Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(2, local.Count);
             var s2 = local.Pop();
@@ -233,7 +233,7 @@ namespace Tests
             var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
             var result = RSplit.Execute(parameters);
             Assert.NotNull(result);
-            Assert.IsTrue(result.IsSuccessful);
+            Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(2, local.Count);
             var s2 = local.Pop();
@@ -262,7 +262,7 @@ namespace Tests
             var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
             var result = RSplit.Execute(parameters);
             Assert.NotNull(result);
-            Assert.IsTrue(result.IsSuccessful);
+            Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(2, local.Count);
             var s2 = local.Pop();
@@ -291,7 +291,7 @@ namespace Tests
             var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
             var result = RSplit.Execute(parameters);
             Assert.NotNull(result);
-            Assert.IsTrue(result.IsSuccessful);
+            Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(2, local.Count);
             var s2 = local.Pop();
@@ -322,7 +322,7 @@ namespace Tests
             var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
             var result = StrCut.Execute(parameters);
             Assert.NotNull(result);
-            Assert.IsTrue(result.IsSuccessful);
+            Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(2, local.Count);
             var s2 = local.Pop();
@@ -353,7 +353,7 @@ namespace Tests
             var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
             var result = StrCut.Execute(parameters);
             Assert.NotNull(result);
-            Assert.IsTrue(result.IsSuccessful);
+            Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(2, local.Count);
             var s2 = local.Pop();
@@ -384,7 +384,7 @@ namespace Tests
             var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
             var result = StrCut.Execute(parameters);
             Assert.NotNull(result);
-            Assert.IsTrue(result.IsSuccessful);
+            Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(2, local.Count);
             var s2 = local.Pop();
@@ -415,7 +415,7 @@ namespace Tests
             var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
             var result = MidStr.Execute(parameters);
             Assert.NotNull(result);
-            Assert.IsTrue(result.IsSuccessful);
+            Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(1, local.Count);
             var s1 = local.Pop();
@@ -450,7 +450,7 @@ namespace Tests
             var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
             var result = SMatch.Execute(parameters);
             Assert.NotNull(result);
-            Assert.IsTrue(result.IsSuccessful);
+            Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(1, local.Count);
             var n1 = local.Pop();
@@ -481,7 +481,7 @@ namespace Tests
             var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
             var result = SMatch.Execute(parameters);
             Assert.NotNull(result);
-            Assert.IsTrue(result.IsSuccessful);
+            Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(1, local.Count);
             var n1 = local.Pop();
@@ -511,7 +511,7 @@ namespace Tests
             var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
             var result = SMatch.Execute(parameters);
             Assert.NotNull(result);
-            Assert.IsTrue(result.IsSuccessful);
+            Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(1, local.Count);
             var n1 = local.Pop();
@@ -541,7 +541,7 @@ namespace Tests
             var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
             var result = SMatch.Execute(parameters);
             Assert.NotNull(result);
-            Assert.IsTrue(result.IsSuccessful);
+            Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(1, local.Count);
             var n1 = local.Pop();
@@ -571,7 +571,7 @@ namespace Tests
             var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
             var result = SMatch.Execute(parameters);
             Assert.NotNull(result);
-            Assert.IsTrue(result.IsSuccessful);
+            Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(1, local.Count);
             var n1 = local.Pop();
@@ -601,7 +601,7 @@ namespace Tests
             var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
             var result = SMatch.Execute(parameters);
             Assert.NotNull(result);
-            Assert.IsTrue(result.IsSuccessful);
+            Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(1, local.Count);
             var n1 = local.Pop();
@@ -630,7 +630,7 @@ namespace Tests
             var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
             var result = SMatch.Execute(parameters);
             Assert.NotNull(result);
-            Assert.IsTrue(result.IsSuccessful);
+            Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(1, local.Count);
             var n1 = local.Pop();
@@ -662,7 +662,7 @@ namespace Tests
             var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
             var result = SMatch.Execute(parameters);
             Assert.NotNull(result);
-            Assert.IsTrue(result.IsSuccessful);
+            Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(1, local.Count);
             var n1 = local.Pop();
@@ -692,7 +692,7 @@ namespace Tests
             var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
             var result = SMatch.Execute(parameters);
             Assert.NotNull(result);
-            Assert.IsTrue(result.IsSuccessful);
+            Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(1, local.Count);
             var n1 = local.Pop();
@@ -722,7 +722,7 @@ namespace Tests
             var parameters = new ForthPrimativeParameters(null, local, null, null, Dbref.NOT_FOUND, null, null, null, null, default);
             var result = SMatch.Execute(parameters);
             Assert.NotNull(result);
-            Assert.IsTrue(result.IsSuccessful);
+            Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(1, local.Count);
             var n1 = local.Pop();

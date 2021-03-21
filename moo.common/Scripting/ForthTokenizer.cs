@@ -83,8 +83,13 @@ namespace moo.common.Scripting
                         {
                             currentWordName = currentWordNameBuilder.ToString();
                             currentWordLineNumber = 0;
-                            if (verbosity >= 1 && connection != null)
-                                await connection.SendOutput($"WORD({lineNumber},{columnNumber - currentWordName.Length}): {currentWordName}");
+                            if (verbosity >= 1)
+                            {
+                                if (connection != null)
+                                    await connection.SendOutput($"WORD({lineNumber},{columnNumber - currentWordName.Length}): {currentWordName}");
+                                else
+                                    Console.WriteLine($"WORD({lineNumber},{columnNumber - currentWordName.Length}): {currentWordName}");
+                            }
                             forwardOperation = ForwardOperation.None;
                             if (linebreakCharacters.Contains(c))
                             {
@@ -140,23 +145,29 @@ namespace moo.common.Scripting
                     // Handle word datum
                     if (currentWordNameBuilder.Length > 0 && currentDatum.Length > 0 && currentWordData != null)
                     {
-                        if (verbosity > 3 && connection != null)
-                            await connection.SendOutput($"DATUM({lineNumber},{columnNumber - currentDatum.ToString().Length}): {currentDatum}");
+                        if (verbosity > 3)
+                        {
+                            if (connection != null)
+                                await connection.SendOutput($"DATUM({lineNumber},{columnNumber - currentDatum.ToString().Length}): {currentDatum}");
+                            else
+                                Console.WriteLine($"DATUM({lineNumber},{columnNumber - currentDatum.ToString().Length}): {currentDatum}");
+                        }
 
                         if (ForthWord.GetPrimatives().Contains(currentDatum.ToString()))
                         {
                             if (currentDatum.ToString().Length == 1 &&
                                 (new[] { '@', '!' }.Contains(currentDatum.ToString()[0])))
                             {
-                                var last = currentWordData.Last();
-                                currentWordData.Remove(last);
+                                var idx = currentWordData.Count - 1;
+                                var last = currentWordData[idx];
+                                currentWordData.RemoveAt(idx);
                                 last.Type = DatumType.Variable;
-                                currentWordData.Add(last);
+                                currentWordData.Insert(idx, last);
                             }
 
                             currentWordData.Add(new ForthDatum(currentDatum.ToString(), DatumType.Primitive, lineNumber, columnNumber - currentDatum.ToString().Length, currentWordName, currentWordLineNumber));
                         }
-                        else if (ForthDatum.TryInferType(currentDatum.ToString(), out Tuple<DatumType, object>? result))
+                        else if (TryInferType(currentDatum.ToString(), out Tuple<DatumType, object>? result))
                             currentWordData.Add(new ForthDatum(result.Item2, result.Item1, lineNumber, columnNumber - currentDatum.ToString().Length, currentWordName, currentWordLineNumber));
                         else
                             currentWordData.Add(new ForthDatum(currentDatum.ToString(), DatumType.Unknown, lineNumber, columnNumber - currentDatum.ToString().Length, currentWordName, currentWordLineNumber));
@@ -166,11 +177,11 @@ namespace moo.common.Scripting
                     {
                         // Handle out-of-word primative
                         var directive = currentNonDatum.ToString().Trim();
-                        if (directive.Length > 0)
+                        if (directive.Length > 5)
                         {
                             // LVAR
                             {
-                                var lvarMatch = Regex.Match(directive, @"(?:lvar\s+(?<lvar>\w{1,20}))");
+                                var lvarMatch = Regex.Match(directive, @"(?:lvar\s+(?<lvar>\w{1,20}))", RegexOptions.Compiled | RegexOptions.IgnoreCase);
                                 if (lvarMatch.Success)
                                     programLocalVariables.Add(lvarMatch.Groups["lvar"].Value, default);
                             }
@@ -208,14 +219,15 @@ namespace moo.common.Scripting
                         {
                             if (currentDatum.ToString().Length == 1 && (new[] { '@', '!' }.Contains(currentDatum.ToString()[0])))
                             {
-                                var last = currentWordData.Last();
-                                currentWordData.Remove(last);
+                                var idx = currentWordData.Count - 1;
+                                var last = currentWordData[idx];
+                                currentWordData.RemoveAt(idx);
                                 last.Type = DatumType.Variable;
-                                currentWordData.Add(last);
+                                currentWordData.Insert(idx, last);
                             }
                             currentWordData.Add(new ForthDatum(currentDatum.ToString(), DatumType.Primitive, lineNumber, columnNumber - currentDatum.ToString().Length, currentWordName, currentWordLineNumber));
                         }
-                        else if (ForthDatum.TryInferType(currentDatum.ToString(), out Tuple<DatumType, object> result))
+                        else if (TryInferType(currentDatum.ToString(), out Tuple<DatumType, object>? result))
                             currentWordData.Add(new ForthDatum(result.Item2, result.Item1, lineNumber, columnNumber - currentDatum.ToString().Length, currentWordName, currentWordLineNumber));
                         else
                             currentWordData.Add(new ForthDatum(currentDatum.ToString(), DatumType.Unknown, lineNumber, columnNumber - currentDatum.ToString().Length, currentWordName, currentWordLineNumber));

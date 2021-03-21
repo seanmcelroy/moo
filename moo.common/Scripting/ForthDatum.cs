@@ -1,5 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using moo.common.Models;
 using static moo.common.Models.Dbref;
@@ -18,9 +21,11 @@ namespace moo.common.Scripting
             DbRef = 5,
             Float = 6,
             Variable = 7,
-            Lock = 8
+            Lock = 8,
+            Array = 9
         }
 
+        public readonly string? Key;
         public readonly object? Value;
         public DatumType Type;
         public readonly string? WordName;
@@ -30,8 +35,9 @@ namespace moo.common.Scripting
 
         public ForthDatum(Property property, int? fileLineNumber = null, int? columnNumber = null, string? wordName = null, int? wordLineNumber = null)
         {
-            this.Value = property.Value;
-            this.Type = property.Type switch
+            Key = null;
+            Value = property.Value;
+            Type = property.Type switch
             {
                 Property.PropertyType.DbRef => DatumType.DbRef,
                 Property.PropertyType.Float => DatumType.Float,
@@ -49,8 +55,9 @@ namespace moo.common.Scripting
 
         public ForthDatum(ForthVariable variable, int? fileLineNumber = null, int? columnNumber = null, string? wordName = null, int? wordLineNumber = null)
         {
-            this.Value = variable.Value;
-            this.Type = variable.Type switch
+            Key = null;
+            Value = variable.Value;
+            Type = variable.Type switch
             {
                 ForthVariable.VariableType.DbRef => DatumType.DbRef,
                 ForthVariable.VariableType.Float => DatumType.Float,
@@ -59,24 +66,26 @@ namespace moo.common.Scripting
                 ForthVariable.VariableType.Unknown => DatumType.Unknown,
                 _ => throw new System.ArgumentException($"Unhandled variable type: {variable.Type}", nameof(variable)),
             };
-            this.FileLineNumber = fileLineNumber;
-            this.ColumnNumber = columnNumber;
-            this.WordName = wordName;
-            this.WordLineNumber = wordLineNumber;
+            FileLineNumber = fileLineNumber;
+            ColumnNumber = columnNumber;
+            WordName = wordName;
+            WordLineNumber = wordLineNumber;
         }
 
-        public ForthDatum(object value, DatumType type, int? fileLineNumber = null, int? columnNumber = null, string? wordName = null, int? wordLineNumber = null)
+        public ForthDatum(object value, DatumType type, int? fileLineNumber = null, int? columnNumber = null, string? wordName = null, int? wordLineNumber = null, string? key = null)
         {
-            this.Value = value;
-            this.Type = type;
-            this.FileLineNumber = fileLineNumber;
-            this.ColumnNumber = columnNumber;
-            this.WordName = wordName;
-            this.WordLineNumber = wordLineNumber;
+            Key = key;
+            Value = value;
+            Type = type;
+            FileLineNumber = fileLineNumber;
+            ColumnNumber = columnNumber;
+            WordName = wordName;
+            WordLineNumber = wordLineNumber;
         }
 
-        public ForthDatum(Dbref value, int? fileLineNumber = null, int? columnNumber = null, string? wordName = null, int? wordLineNumber = null)
+        public ForthDatum(Dbref value, int? fileLineNumber = null, int? columnNumber = null, string? wordName = null, int? wordLineNumber = null, string? key = null)
         {
+            Key = key;
             Value = value;
             Type = DatumType.DbRef;
             FileLineNumber = fileLineNumber;
@@ -85,8 +94,9 @@ namespace moo.common.Scripting
             WordLineNumber = wordLineNumber;
         }
 
-        public ForthDatum(string? value, int? fileLineNumber = null, int? columnNumber = null, string? wordName = null, int? wordLineNumber = null)
+        public ForthDatum(string? value, int? fileLineNumber = null, int? columnNumber = null, string? wordName = null, int? wordLineNumber = null, string? key = null)
         {
+            Key = key;
             Value = value;
             Type = DatumType.String;
             FileLineNumber = fileLineNumber;
@@ -95,24 +105,37 @@ namespace moo.common.Scripting
             WordLineNumber = wordLineNumber;
         }
 
-        public ForthDatum(int? value, int? fileLineNumber = null, int? columnNumber = null, string? wordName = null, int? wordLineNumber = null)
+        public ForthDatum(int? value, int? fileLineNumber = null, int? columnNumber = null, string? wordName = null, int? wordLineNumber = null, string? key = null)
         {
-            this.Value = value;
-            this.Type = DatumType.Integer;
-            this.FileLineNumber = fileLineNumber;
-            this.ColumnNumber = columnNumber;
-            this.WordName = wordName;
-            this.WordLineNumber = wordLineNumber;
+            Key = key;
+            Value = value;
+            Type = DatumType.Integer;
+            FileLineNumber = fileLineNumber;
+            ColumnNumber = columnNumber;
+            WordName = wordName;
+            WordLineNumber = wordLineNumber;
         }
 
-        public ForthDatum(float? value, int? fileLineNumber = null, int? columnNumber = null, string? wordName = null, int? wordLineNumber = null)
+        public ForthDatum(float? value, int? fileLineNumber = null, int? columnNumber = null, string? wordName = null, int? wordLineNumber = null, string? key = null)
         {
-            this.Value = value;
-            this.Type = DatumType.Float;
-            this.FileLineNumber = fileLineNumber;
-            this.ColumnNumber = columnNumber;
-            this.WordName = wordName;
-            this.WordLineNumber = wordLineNumber;
+            Key = key;
+            Value = value;
+            Type = DatumType.Float;
+            FileLineNumber = fileLineNumber;
+            ColumnNumber = columnNumber;
+            WordName = wordName;
+            WordLineNumber = wordLineNumber;
+        }
+
+        public ForthDatum(ForthDatum[] elements, int? fileLineNumber = null, int? columnNumber = null, string? wordName = null, int? wordLineNumber = null)
+        {
+            Key = null;
+            Value = $"{elements.Select(e => $"{e.Key}\x7{e.SerializeString()}").Aggregate((c, n) => $"{c}\0{n}")}";
+            Type = DatumType.Array;
+            FileLineNumber = fileLineNumber;
+            ColumnNumber = columnNumber;
+            WordName = wordName;
+            WordLineNumber = wordLineNumber;
         }
 
         public static bool TryInferType([NotNullWhen(true)] string? value, out Tuple<DatumType, object>? result)
@@ -162,6 +185,26 @@ namespace moo.common.Scripting
 
         public bool IsTrue() => !IsFalse();
 
+        public string? SerializeString()
+        {
+            switch (Type)
+            {
+                case DatumType.DbRef:
+                    return $"{UnwrapDbref()}";
+                case DatumType.String:
+                    return $"\"{Value as string ?? string.Empty}\"";
+                case DatumType.Integer:
+                    return $"{UnwrapInt()}";
+                case DatumType.Float:
+                    var f1 = $"{(float?)Value ?? 0F}";
+                    if (!f1.Contains('.'))
+                        return $"{f1}.0";
+                    return f1;
+                default:
+                    throw new InvalidOperationException();
+            }
+        }
+
         public ForthDatum ToInteger() => Type switch
         {
             DatumType.Float => new ForthDatum(Value == null ? (int?)null : (int?)Convert.ToInt32((float)Value), DatumType.Integer),
@@ -178,7 +221,7 @@ namespace moo.common.Scripting
                 throw new InvalidCastException($"Cannot unwrap property as dbref, since it is of type: {Type}");
 
             if (Value == null)
-                return Dbref.NOT_FOUND;
+                return NOT_FOUND;
 
             if (Value.GetType() == typeof(Dbref))
             {
@@ -198,6 +241,37 @@ namespace moo.common.Scripting
             throw new InvalidCastException($"Cannot unwrap property as dbref, underlying type is: {Value.GetType().Name}");
         }
 
+        public ForthDatum[] UnwrapArray()
+        {
+            if (Type != DatumType.Array)
+                throw new InvalidCastException($"Cannot unwrap property as array, since it is of type: {Type}");
+
+            if (Value == null || Value as string == null)
+                return Array.Empty<ForthDatum>();
+
+            List<ForthDatum> ret = new();
+            foreach (var part in ((string)Value).Split('\0'))
+            {
+                var kvps = part.Split('\x7');
+                var key = kvps[0];
+                var val = kvps[1];
+                if (TryInferType(val, out Tuple<DatumType, object>? result))
+                {
+                    if (result!.Item1 == DatumType.String
+                        && result.Item2 != null
+                        && ((string)result.Item2).StartsWith('\"')
+                        && ((string)result.Item2).EndsWith('\"'))
+                        ret.Add(new ForthDatum(((string)result.Item2)[1..^1], DatumType.String, key: !string.IsNullOrWhiteSpace(key) ? key : null));
+                    else
+                        ret.Add(new ForthDatum(result!.Item2, result.Item1, key: !string.IsNullOrWhiteSpace(key) ? key : null));
+                }
+                else
+                    throw new InvalidOperationException($"CANNOT PARSE? {part} as array element");
+            }
+
+            return ret.ToArray();
+        }
+
         public int UnwrapInt()
         {
             if (Type != DatumType.Integer)
@@ -207,9 +281,7 @@ namespace moo.common.Scripting
                 return 0;
 
             if (Value.GetType() == typeof(int))
-            {
                 return (int)Value;
-            }
 
             if (Value.GetType() == typeof(string))
             {
@@ -221,5 +293,16 @@ namespace moo.common.Scripting
 
             throw new InvalidCastException($"Cannot unwrap property as dbref, underlying type is: {Value.GetType().Name}");
         }
+
+        public override bool Equals(object? obj) => obj is ForthDatum datum &&
+                   EqualityComparer<object?>.Default.Equals(Value, datum.Value) &&
+                   Type == datum.Type &&
+                   string.CompareOrdinal(WordName, datum.WordName) == 0;
+
+        public override int GetHashCode() => HashCode.Combine(Value, Type, WordName);
+
+        public static bool operator ==(ForthDatum left, ForthDatum right) => left.Equals(right);
+
+        public static bool operator !=(ForthDatum left, ForthDatum right) => !(left == right);
     }
 }

@@ -110,7 +110,7 @@ namespace moo.common.Scripting
             }
         }
 
-        public bool HasWord(string wordName) => this.words.Any(w => string.Compare(w.name, wordName, true) == 0);
+        public bool HasWord(string? wordName) => !string.IsNullOrWhiteSpace(wordName) && words.Any(w => string.Compare(w.name, wordName, true) == 0);
 
         public async Task<ForthWordResult> RunWordAsync(string wordName, Dbref trigger,
             string command, Dbref? lastListItem,
