@@ -47,7 +47,7 @@ namespace moo.common.Scripting
                     case 'c':
                         {
                             // Compile
-                            var compileResult = await Script.CompileAsync(script, ProgramText, connection, cancellationToken);
+                            var compileResult = await Script.CompileAsync(script, ProgramText, connection.Dbref, cancellationToken);
                             if (!compileResult.Item1)
                                 return new EditorResult(EditorErrorResult.COMPILE_ERROR, compileResult.Item2);
 

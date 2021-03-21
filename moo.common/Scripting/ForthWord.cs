@@ -223,9 +223,10 @@ namespace moo.common.Scripting
         public async Task<ForthWordResult> RunAsync(
             ForthProcess process,
             Stack<ForthDatum> stack,
-            PlayerConnection connection,
+            Dbref player,
+            Dbref location,
             Dbref trigger,
-            string command,
+            string? command,
             Dbref? lastListItem,
             CancellationToken cancellationToken)
         {
@@ -359,19 +360,19 @@ namespace moo.common.Scripting
                              || controlCurrent.Element == ControlFlowElement.SkipToAfterNextUntilOrRepeat)
                             {
                                 if (verbosity >= 2)
-                                    await DumpStackToDebugAsync(stack, connection, lineCount, datum, "(skipped)");
+                                    await DumpStackToDebugAsync(stack, player, lineCount, datum, "(skipped)");
                                 controlFlow.Push(new ControlFlowMarker(ControlFlowElement.SkippedBranch, x));
                                 continue;
                             }
                         }
 
                         // Debug, print stack
-                        if (verbosity >= 2) await DumpStackToDebugAsync(stack, connection, lineCount, datum);
+                        if (verbosity >= 2) await DumpStackToDebugAsync(stack, player, lineCount, datum);
 
                         if (stack.Count == 0)
                         {
                             if (verbosity >= 2)
-                                await DumpVariablesToDebugAsync(process, connection, functionScopedVariables);
+                                await DumpVariablesToDebugAsync(process, player, functionScopedVariables);
                             return new ForthWordResult(ForthErrorResult.STACK_UNDERFLOW, "IF had no value on the stack to evaluate");
                         }
 
@@ -394,14 +395,14 @@ namespace moo.common.Scripting
                              || controlCurrent.Element == ControlFlowElement.SkipToAfterNextUntilOrRepeat)
                             {
                                 if (verbosity >= 2)
-                                    await DumpStackToDebugAsync(stack, connection, lineCount, datum, "(skipped)");
+                                    await DumpStackToDebugAsync(stack, player, lineCount, datum, "(skipped)");
                                 continue;
                             }
                         }
 
                         // Debug, print stack
                         if (verbosity >= 2)
-                            await DumpStackToDebugAsync(stack, connection, lineCount, datum);
+                            await DumpStackToDebugAsync(stack, player, lineCount, datum);
 
                         if (controlFlow.Count == 0)
                             return new ForthWordResult(ForthErrorResult.STACK_UNDERFLOW, "ELSE encountered without preceding IF");
@@ -426,7 +427,7 @@ namespace moo.common.Scripting
                              || controlCurrent.Element == ControlFlowElement.SkipToAfterNextUntilOrRepeat)
                             {
                                 if (verbosity >= 2)
-                                    await DumpStackToDebugAsync(stack, connection, lineCount, datum, "(skipped)");
+                                    await DumpStackToDebugAsync(stack, player, lineCount, datum, "(skipped)");
                                 // A skipped if will push a SkippedBranch, so we should pop it.
                                 controlFlow.Pop();
                                 continue;
@@ -434,7 +435,7 @@ namespace moo.common.Scripting
                         }
 
                         // Debug, print stack
-                        if (verbosity >= 2) await DumpStackToDebugAsync(stack, connection, lineCount, datum);
+                        if (verbosity >= 2) await DumpStackToDebugAsync(stack, player, lineCount, datum);
 
                         if (controlFlow.Count == 0)
                             return new ForthWordResult(ForthErrorResult.STACK_UNDERFLOW, "THEN encountered without preceding IF");
@@ -455,14 +456,14 @@ namespace moo.common.Scripting
                              || controlCurrent.Element == ControlFlowElement.SkipToAfterNextUntilOrRepeat)
                             {
                                 if (verbosity >= 2)
-                                    await DumpStackToDebugAsync(stack, connection, lineCount, datum, "(skipped)");
+                                    await DumpStackToDebugAsync(stack, player, lineCount, datum, "(skipped)");
                                 continue;
                             }
                         }
 
                         // Debug, print stack
                         if (verbosity >= 2)
-                            await DumpStackToDebugAsync(stack, connection, lineCount, datum);
+                            await DumpStackToDebugAsync(stack, player, lineCount, datum);
 
                         return new ForthWordResult($"Word {name} completed via exit");
                     }
@@ -480,14 +481,14 @@ namespace moo.common.Scripting
                              || controlCurrent.Element == ControlFlowElement.SkipToAfterNextUntilOrRepeat)
                             {
                                 if (verbosity >= 2)
-                                    await DumpStackToDebugAsync(stack, connection, lineCount, datum, "(skipped)");
+                                    await DumpStackToDebugAsync(stack, player, lineCount, datum, "(skipped)");
                                 continue;
                             }
                         }
 
                         // Debug, print stack
                         if (verbosity >= 2)
-                            await DumpStackToDebugAsync(stack, connection, lineCount, datum);
+                            await DumpStackToDebugAsync(stack, player, lineCount, datum);
 
                         controlFlow.Push(new ControlFlowMarker(ControlFlowElement.BeginMarker, x));
                         continue;
@@ -506,13 +507,13 @@ namespace moo.common.Scripting
                              || controlCurrent.Element == ControlFlowElement.SkipToAfterNextUntilOrRepeat)
                             {
                                 if (verbosity >= 2)
-                                    await DumpStackToDebugAsync(stack, connection, lineCount, datum, "(skipped)");
+                                    await DumpStackToDebugAsync(stack, player, lineCount, datum, "(skipped)");
                                 continue;
                             }
                         }
 
                         if (verbosity >= 2)
-                            await DumpStackToDebugAsync(stack, connection, lineCount, datum);
+                            await DumpStackToDebugAsync(stack, player, lineCount, datum);
 
                         if (stack.Count == 0)
                         {
@@ -541,7 +542,7 @@ namespace moo.common.Scripting
                              || controlCurrent.Element == ControlFlowElement.SkipToAfterNextUntilOrRepeat)
                             {
                                 if (verbosity >= 2)
-                                    await DumpStackToDebugAsync(stack, connection, lineCount, datum, "(skipped)");
+                                    await DumpStackToDebugAsync(stack, player, lineCount, datum, "(skipped)");
                                 continue;
                             }
                         }
@@ -555,7 +556,7 @@ namespace moo.common.Scripting
                     if (string.Compare("repeat", datumLiteral, true) == 0)
                     {
                         if (verbosity >= 2)
-                            await DumpStackToDebugAsync(stack, connection, lineCount, datum);
+                            await DumpStackToDebugAsync(stack, player, lineCount, datum);
 
                         if (controlFlow.Count == 0)
                             return new ForthWordResult(ForthErrorResult.STACK_UNDERFLOW, "REPEAT but no previous BEGIN, FOR, or FOREACH on the stack");
@@ -567,7 +568,7 @@ namespace moo.common.Scripting
                          || controlCurrent.Element == ControlFlowElement.SkippedBranch)
                         {
                             if (verbosity >= 2)
-                                await DumpStackToDebugAsync(stack, connection, lineCount, datum, "(skipped)");
+                                await DumpStackToDebugAsync(stack, player, lineCount, datum, "(skipped)");
                             continue;
                         }
 
@@ -610,7 +611,7 @@ namespace moo.common.Scripting
 
                         if (controlCurrent.Element == ControlFlowElement.SkipToAfterNextUntilOrRepeat)
                         {
-                            await DumpStackToDebugAsync(stack, connection, lineCount, datum);
+                            await DumpStackToDebugAsync(stack, player, lineCount, datum);
                             controlFlow.Pop(); // Pop the skip
                             controlFlow.Pop(); // Pop the opening begin
                             continue;
@@ -619,17 +620,17 @@ namespace moo.common.Scripting
                         if (controlCurrent.Element == ControlFlowElement.InIfAndSkip || controlCurrent.Element == ControlFlowElement.InElseAndSkip || controlCurrent.Element == ControlFlowElement.SkippedBranch)
                         {
                             if (verbosity >= 2)
-                                await DumpStackToDebugAsync(stack, connection, lineCount, datum, "(skipped)");
+                                await DumpStackToDebugAsync(stack, player, lineCount, datum, "(skipped)");
                             continue;
                         }
 
                         // Debug, print stack
-                        await DumpStackToDebugAsync(stack, connection, lineCount, datum);
+                        await DumpStackToDebugAsync(stack, player, lineCount, datum);
 
                         if (stack.Count == 0)
                         {
                             if (verbosity >= 2)
-                                await DumpStackToDebugAsync(stack, connection, lineCount, datum);
+                                await DumpStackToDebugAsync(stack, player, lineCount, datum);
                             return new ForthWordResult(ForthErrorResult.STACK_UNDERFLOW, "UNTIL had no value on the stack to evaluate");
                         }
 
@@ -655,7 +656,7 @@ namespace moo.common.Scripting
                             continue;
 
                         if (verbosity >= 2)
-                            await DumpStackToDebugAsync(stack, connection, lineCount, datum);
+                            await DumpStackToDebugAsync(stack, player, lineCount, datum);
                         return new ForthWordResult(ForthErrorResult.STACK_UNDERFLOW, "UNTIL but no previous BEGIN or FOR");
                     }
                 }
@@ -670,14 +671,14 @@ namespace moo.common.Scripting
                     {
                         // Debug, print stack
                         if (verbosity >= 2)
-                            await DumpStackToDebugAsync(stack, connection, lineCount, datum, "(skipped)");
+                            await DumpStackToDebugAsync(stack, player, lineCount, datum, "(skipped)");
                         continue;
                     }
                 }
 
                 // Debug, print stack
                 if (verbosity >= 2)
-                    await DumpStackToDebugAsync(stack, connection, lineCount, datum);
+                    await DumpStackToDebugAsync(stack, player, lineCount, datum);
 
                 // Function calls
                 if ((datum.Type == DatumType.Primitive || datum.Type == DatumType.Unknown)
@@ -686,7 +687,7 @@ namespace moo.common.Scripting
                      && process.HasWord(datum.Value.ToString()))
                 {
                     // Yield to other word.
-                    var wordResult = await process.RunWordAsync(datum.Value.ToString()!, trigger, command, lastListItem, process.EffectiveMuckerLevel, cancellationToken);
+                    var wordResult = await process.RunWordAsync(datum.Value.ToString()!, lastListItem, process.EffectiveMuckerLevel, cancellationToken);
                     if (!wordResult.IsSuccessful)
                         return wordResult;
                     continue;
@@ -743,7 +744,7 @@ namespace moo.common.Scripting
                     if (callTable.Keys.Contains(datumLiteral, StringComparer.InvariantCultureIgnoreCase))
                     {
                         var stackCopy = stack.ClonePreservingOrder();
-                        var p = new ForthPrimativeParameters(process, stack, variables, connection, trigger, command,
+                        var p = new ForthPrimativeParameters(process, stack, variables, player, location, trigger, command,
                             async (d, s) => await Server.NotifyAsync(d, s),
                             async (d, s, e) => await Server.NotifyRoomAsync(d, s, e),
                             lastListItem,
@@ -801,7 +802,7 @@ namespace moo.common.Scripting
 
             // Debug, print stack at end of program
             if (verbosity >= 1)
-                await DumpStackToDebugAsync(stack, connection, lineCount);
+                await DumpStackToDebugAsync(stack, player, lineCount);
 
             if (verbosity > 5)
                 Console.WriteLine($"Word {name} completed.");
@@ -809,13 +810,13 @@ namespace moo.common.Scripting
             return new ForthWordResult($"Word {name} completed");
         }
 
-        private static async Task DumpStackToDebugAsync(Stack<ForthDatum> stack, PlayerConnection connection, int lineCount, ForthDatum currentDatum = default, string? extra = null)
+        private static async Task DumpStackToDebugAsync(Stack<ForthDatum> stack, Dbref player, int lineCount, ForthDatum currentDatum = default, string? extra = null)
         {
             // Debug, print stack
             if (stack.Count == 0)
-                await connection.SendOutput($"DEBUG ({lineCount}): () {extra}");
+                await Server.NotifyAsync(player, $"DEBUG ({lineCount}): () {extra}");
             else
-                await connection.SendOutput($"DEBUG ({lineCount}): (" +
+                await Server.NotifyAsync(player, $"DEBUG ({lineCount}): (" +
                 stack.Reverse().Select(s =>
                 {
                     return (s.Type == DatumType.String) ? $"\"{s.Value}\"" : (s.Value?.ToString() ?? "(null)");
@@ -823,17 +824,17 @@ namespace moo.common.Scripting
         }
         private static async Task DumpVariablesToDebugAsync(
             ForthProcess process,
-            PlayerConnection connection,
+           Dbref player,
             Dictionary<string, ForthVariable> functionScopedVariables)
         {
             foreach (var lvar in process.GetProgramLocalVariables())
             {
-                await connection.SendOutput($"LVAR {lvar.Key}={lvar.Value}");
+                await Server.NotifyAsync(player, $"LVAR {lvar.Key}={lvar.Value}");
             }
 
             foreach (var local in functionScopedVariables)
             {
-                await connection.SendOutput($"VAR {local.Key}={local.Value}");
+                await Server.NotifyAsync(player, $"VAR {local.Key}={local.Value}");
             }
         }
     }

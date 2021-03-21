@@ -17,15 +17,15 @@ namespace moo.common.Actions.BuiltIn
             return new Tuple<bool, string?>(false, null);
         }
 
-        public async Task<VerbResult> Process(Dbref player, PlayerConnection? connection, CommandResult command, CancellationToken cancellationToken)
+        public async Task<VerbResult> Process(
+            Dbref player,
+            PlayerConnection? connection,
+            CommandResult command,
+            CancellationToken cancellationToken)
         {
-            if (connection == null)
-                throw new InvalidOperationException("Missing connection for interactive command!"); // TODO gracefully
-
             var str = command.GetNonVerbPhrase();
             if (str == null || str.Trim().Length == 0)
                 return new VerbResult(false, "@edit <program>\r\nSearches for a program and if a match is found, puts the player into edit mode. Programs must be created with @PROGRAM.");
-
 
             var sourceDbref = await Matcher
                         .InitObjectSearch(player, str, Dbref.DbrefObjectType.Program, cancellationToken)
@@ -40,8 +40,7 @@ namespace moo.common.Actions.BuiltIn
             var sourceLookup = await ThingRepository.Instance.GetAsync<Script>(sourceDbref, cancellationToken);
             if (!sourceLookup.isSuccess)
             {
-                if (connection != null)
-                    await connection.SendOutput($"You can't seem to find that.  {sourceLookup.reason}");
+                await Server.NotifyAsync(player, $"You can't seem to find that.  {sourceLookup.reason}");
                 return new VerbResult(false, "Target not found");
             }
 
@@ -61,7 +60,7 @@ namespace moo.common.Actions.BuiltIn
             {
                 program.programText += $"\n{t}";
                 program.Uncompile();
-                await program.CompileAsync(connection, cancellationToken);
+                await program.CompileAsync(player, cancellationToken);
             });
 
             return new VerbResult(true, "Editor initiated");

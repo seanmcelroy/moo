@@ -23,9 +23,7 @@ namespace moo.common.Actions.BuiltIn
             if (str == null || string.IsNullOrWhiteSpace(str) || string.Compare("here", str, StringComparison.OrdinalIgnoreCase) == 0)
             {
                 // Look at a room
-                if (connection != null)
-                    return await LookRoom(player, connection, cancellationToken);
-                return new VerbResult(false, $"No connection for look result");
+                return await LookRoom(player, cancellationToken);
             }
 
             // Look at a thing
@@ -43,7 +41,7 @@ namespace moo.common.Actions.BuiltIn
             return new VerbResult(true, $"Object {targetDbref} looked at");
         }
 
-        private static async Task<VerbResult> LookRoom(Dbref player, PlayerConnection connection, CancellationToken cancellationToken)
+        private static async Task<VerbResult> LookRoom(Dbref player, CancellationToken cancellationToken)
         {
             var locationDbref = await player.GetLocation(cancellationToken);
             if (locationDbref == Dbref.NOT_FOUND)
@@ -51,13 +49,13 @@ namespace moo.common.Actions.BuiltIn
 
             // Room name
             var (unparsed, loc) = await locationDbref.UnparseObject(player, cancellationToken);
-            await connection.SendOutput(unparsed);
+            await Server.NotifyAsync(player, unparsed);
 
             // Room description
             if (loc?.Type == Dbref.DbrefObjectType.Room)
             {
                 if (!string.IsNullOrWhiteSpace(loc.externalDescription))
-                    await connection.SendOutput(loc.externalDescription);
+                    await Server.NotifyAsync(player, loc.externalDescription);
             }
 
             // Room contents
@@ -69,7 +67,7 @@ namespace moo.common.Actions.BuiltIn
                         continue;
 
                     // TODO look_contents logic
-                    await connection.SendOutput(await contentLookup.value.UnparseObject(player, cancellationToken));
+                    await Server.NotifyAsync(player, await contentLookup.value.UnparseObject(player, cancellationToken));
                 }
 
             return new VerbResult(true, $"Room {unparsed} looked at");

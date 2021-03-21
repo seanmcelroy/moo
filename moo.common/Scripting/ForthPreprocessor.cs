@@ -40,7 +40,7 @@ namespace moo.common.Scripting
         private static readonly Regex quotedStringPreRegex = new(@"\""[^\r\n]*?(?<!\\)\""(?=\s)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         public static async Task<ForthPreprocessingResult> Preprocess(
-            PlayerConnection? connection,
+            Dbref player,
             Script? script,
             string program,
             CancellationToken cancellationToken)
@@ -283,8 +283,8 @@ namespace moo.common.Scripting
                                      || controlCurrent.Element == ControlFlowElement.SkippedBranch
                                      || controlCurrent.Element == ControlFlowElement.SkipToAfterNextUntilOrRepeat)
                                     {
-                                        if (verbosity >= 2 && verbosity <= 3 && connection != null)
-                                            await connection.SendOutput($"SKIPPED LINE: {line}");
+                                        if (verbosity >= 2 && verbosity <= 3)
+                                            await Server.NotifyAsync(player, $"SKIPPED LINE: {line}");
                                         controlFlow.Push(new ControlFlowMarker(ControlFlowElement.SkippedBranch, x));
                                         tokenHandled = true;
                                         continue;
@@ -320,8 +320,8 @@ namespace moo.common.Scripting
                                      || controlCurrent.Element == ControlFlowElement.SkippedBranch
                                      || controlCurrent.Element == ControlFlowElement.SkipToAfterNextUntilOrRepeat)
                                     {
-                                        if (verbosity >= 2 && verbosity <= 3 && connection != null)
-                                            await connection.SendOutput($"SKIPPED LINE: {line}");
+                                        if (verbosity >= 2 && verbosity <= 3)
+                                            await Server.NotifyAsync(player, $"SKIPPED LINE: {line}");
                                         controlFlow.Push(new ControlFlowMarker(ControlFlowElement.SkippedBranch, x));
                                         tokenHandled = true;
                                         continue;
@@ -356,8 +356,8 @@ namespace moo.common.Scripting
                                     if (controlCurrent.Element == ControlFlowElement.SkippedBranch
                                      || controlCurrent.Element == ControlFlowElement.SkipToAfterNextUntilOrRepeat)
                                     {
-                                        if (verbosity >= 2 && verbosity <= 3 && connection != null)
-                                            await connection.SendOutput($"SKIPPED LINE: {line}");
+                                        if (verbosity >= 2 && verbosity <= 3)
+                                            await Server.NotifyAsync(player, $"SKIPPED LINE: {line}");
                                         tokenHandled = true;
                                         continue;
                                     }
@@ -392,8 +392,8 @@ namespace moo.common.Scripting
                                     if (controlCurrent.Element == ControlFlowElement.SkippedBranch
                                      || controlCurrent.Element == ControlFlowElement.SkipToAfterNextUntilOrRepeat)
                                     {
-                                        if (verbosity >= 2 && verbosity <= 3 && connection != null)
-                                            await connection.SendOutput($"SKIPPED LINE: {line}");
+                                        if (verbosity >= 2 && verbosity <= 3)
+                                            await Server.NotifyAsync(player, $"SKIPPED LINE: {line}");
                                         // A skipped if will push a SkippedBranch, so we should pop it.
                                         controlFlow.Pop();
                                         continue;
@@ -421,8 +421,8 @@ namespace moo.common.Scripting
                              || controlCurrent.Element == ControlFlowElement.SkipToAfterNextUntilOrRepeat)
                             {
                                 // Debug, print stack
-                                if (verbosity >= 2 && verbosity <= 3 && connection != null)
-                                    await connection.SendOutput($"SKIPPED LINE: {line}");
+                                if (verbosity >= 2 && verbosity <= 3)
+                                    await Server.NotifyAsync(player, $"SKIPPED LINE: {line}");
                                 tokenHandled = true;
                                 continue;
                             }
@@ -433,8 +433,7 @@ namespace moo.common.Scripting
                             var echoMatch = echoRegex.Match(token);
                             if (echoMatch.Success)
                             {
-                                if (connection != null)
-                                    await connection.SendOutput(echoMatch.Groups["value"].Value);
+                                await Server.NotifyAsync(player, echoMatch.Groups["value"].Value);
                                 tokenHandled = true;
                                 continue;
                             }
@@ -549,16 +548,13 @@ namespace moo.common.Scripting
                                 continue;
                             }
                         }
-
-                        if (connection != null)
-                            await connection.SendOutput($"UNHANDLED PREPROCESSOR TOKEN: {token}");
+                        await Server.NotifyAsync(player, $"UNHANDLED PREPROCESSOR TOKEN: {token}");
                     }
 
                     if (tokenHandled)
                         continue;
 
-                    if (connection != null)
-                        await connection.SendOutput($"UNHANDLED PREPROCESSOR LINE: {line}");
+                    await Server.NotifyAsync(player, $"UNHANDLED PREPROCESSOR LINE: {line}");
                 }
                 else
                 {
@@ -612,17 +608,17 @@ namespace moo.common.Scripting
                         foreach (var hold in holdingPen)
                             line2 = line2.Replace(hold.Key, hold.Value);
 
-                    if (verbosity > 0 && verbosity <= 3 && line.CompareTo(line2) != 0 && connection != null)
-                        await connection.SendOutput($"XFORM \"{line}\" into \"{line2}\"");
-                    else if (verbosity >= 4 && connection != null)
-                        await connection.SendOutput($"PRE: {line2}");
+                    if (verbosity > 0 && verbosity <= 3 && line.CompareTo(line2) != 0)
+                        await Server.NotifyAsync(player, $"XFORM \"{line}\" into \"{line2}\"");
+                    else if (verbosity >= 4)
+                        await Server.NotifyAsync(player, $"PRE: {line2}");
 
                     sb.AppendLine(line2);
                 }
             }
 
-            if (controlFlow.Count != 0 && connection != null)
-                await connection.SendOutput($"UNCLOSED CONTROL FLOW! in {script?.name ?? "Unknown program"}!");
+            if (controlFlow.Count != 0)
+                await Server.NotifyAsync(player, $"UNCLOSED CONTROL FLOW! in {script?.name ?? "Unknown program"}!");
 
             return new ForthPreprocessingResult(sb.ToString(), publicFunctionNames, null);
         }

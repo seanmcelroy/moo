@@ -57,9 +57,6 @@ namespace moo.common.Connections
 
         //public async Task<Dbref> MatchAsync(string name, CancellationToken cancellationToken) => await this.player.MatchAsync(name, cancellationToken);
 
-        public async Task MoveToAsync(Thing target, CancellationToken cancellationToken) => await this.player.MoveToAsync(target, cancellationToken);
-        public async Task MoveToAsync(Dbref targetId, CancellationToken cancellationToken) => await this.player.MoveToAsync(targetId, cancellationToken);
-
         public void ReceiveInput(string line)
         {
             lastInput = DateTime.Now;
@@ -142,8 +139,6 @@ namespace moo.common.Connections
         }
 
         public Player GetPlayer() => this.player;
-
-        public void SetPropertyPathValue(string path, Dbref value) => this.player.SetPropertyPathValue(path, value);
 
         public async Task RunNextCommand(CancellationToken cancellationToken)
         {

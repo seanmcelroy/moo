@@ -31,13 +31,11 @@ namespace moo.common.Actions.BuiltIn
             if (lookup.isSuccess && lookup.value != null)
             {
                 var loadResult = await ThingRepository.Instance.LoadFromDatabaseAsync<Thing>(targetDbref, cancellationToken);
-                if (connection != null)
-                    await connection.SendOutput($"Load from database: {loadResult.isSuccess}");
+                await Server.NotifyAsync(player, $"Load from database: {loadResult.isSuccess}");
             }
             else
             {
-                if (connection != null)
-                    await connection.SendOutput("You can't seem to find that.");
+                await Server.NotifyAsync(player, "You can't seem to find that.");
                 return new VerbResult(false, "Target not found");
             }
 

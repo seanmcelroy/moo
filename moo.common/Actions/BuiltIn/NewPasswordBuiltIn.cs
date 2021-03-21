@@ -51,9 +51,9 @@ namespace moo.common.Actions.BuiltIn
             var victimObj = victimLookup.value;
             victimObj.SetPassword(newPassword);
 
-            await Server.NotifyAsync(player, "Password changed.");
-            await Server.NotifyAsync(victimDbref, $"Your password has been changed by {connection?.GetPlayer().name}");
-            return new VerbResult(true, $"NEWPASS'ED: {victimObj.name}({victimObj.id}) by {connection?.GetPlayer().name}({player})");
+            var playerObj = await Server.NotifyAsync(player, "Password changed.");
+            await Server.NotifyAsync(victimDbref, $"Your password has been changed by {playerObj?.name}");
+            return new VerbResult(true, $"NEWPASS'ED: {victimObj.name}({victimObj.id}) by {playerObj?.name}({player})");
         }
     }
 }

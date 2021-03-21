@@ -190,10 +190,15 @@ namespace moo.common
 
         public static IEnumerable<Tuple<Dbref, string>> GetConnectionPlayers() => _players.Select(conn => new Tuple<Dbref, string>(conn.Dbref, conn.Name));
 
-        public static async Task NotifyAsync(Dbref player, string message)
+        public static async Task<Player?> NotifyAsync(Dbref player, string message)
         {
+            Player? ret = null;
             foreach (var connection in _players.Where(p => p.Dbref == player))
+            {
+                ret = connection.GetPlayer();
                 await connection.SendOutput(message);
+            }
+            return ret;
         }
 
         public static async Task NotifyRoomAsync(Dbref room, string message, List<Dbref>? exclude = null)

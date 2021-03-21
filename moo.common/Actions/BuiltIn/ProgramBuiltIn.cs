@@ -23,9 +23,6 @@ namespace moo.common.Actions.BuiltIn
 
         public Task<VerbResult> Process(Dbref player, PlayerConnection? connection, CommandResult command, CancellationToken cancellationToken)
         {
-            if (connection == null)
-                throw new InvalidOperationException("Missing connection for interactive command!"); // TODO gracefully
-
             var script = Server.RegisterScript(command.GetDirectObject(), connection.GetPlayer());
             connection.EnterEditMode(script, command.GetDirectObject(), async t =>
             {

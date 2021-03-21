@@ -39,7 +39,7 @@ namespace moo.common.Actions.BuiltIn
             var targetLookup = await ThingRepository.Instance.GetAsync<Thing>(targetDbref, cancellationToken);
             if (!targetLookup.isSuccess || targetLookup.value == null)
             {
-                await connection.SendOutput($"You can't seem to find that.  {targetLookup.reason}");
+                await Server.NotifyAsync(player, $"You can't seem to find that.  {targetLookup.reason}");
                 return new VerbResult(false, "Target not found");
             }
 

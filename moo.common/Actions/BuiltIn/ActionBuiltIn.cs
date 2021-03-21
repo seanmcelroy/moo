@@ -48,8 +48,7 @@ namespace moo.common.Actions.BuiltIn
             var source = await sourceDbref.Get(cancellationToken);
             if (source == null)
             {
-                if (connection != null)
-                    await connection.SendOutput($"You can't seem to find that.");
+                await Server.NotifyAsync(player, $"You can't seem to find that.");
                 return new VerbResult(false, "Target not found");
             }
             if (source.Type == Dbref.DbrefObjectType.Exit)
@@ -63,11 +62,20 @@ namespace moo.common.Actions.BuiltIn
 
             var exit = Exit.Make(name, player);
             var moveResult = await exit.MoveToAsync(source, cancellationToken);
-            if (!moveResult.isSuccess && connection != null)
-                await connection.SendOutput($"You can't seem to do that on {sourcePhrase}.  {moveResult.reason}");
+            if (!moveResult.isSuccess)
+                await Server.NotifyAsync(player, $"You can't seem to do that on {sourcePhrase}.  {moveResult.reason}");
 
             if (regname != null)
-                connection.SetPropertyPathValue($"_reg/{regname}", exit.id);
+            {
+                var playerObj = await player.Get(cancellationToken);
+                if (playerObj == null)
+                {
+                    await Server.NotifyAsync(player, $"You cannot seem to find the player {player}...");
+                    return new VerbResult(false, $"You cannot seem to find the player {player}...");
+                }
+
+                playerObj.SetPropertyPathValue($"_reg/{regname}", exit.id);
+            }
 
             return new VerbResult(true, $"Exit {exit.id} created");
         }

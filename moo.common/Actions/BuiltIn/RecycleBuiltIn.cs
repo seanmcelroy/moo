@@ -37,22 +37,22 @@ namespace moo.common.Actions.BuiltIn
 
                 if (string.Compare(serialized, reserialized) != 0)
                 {
-                    await connection.SendOutput(">>> [CRITICAL] Serialization verification failed.  Object will be corrupted.");
-                    await connection.SendOutput("First serialization pass:");
-                    await connection.SendOutput(serialized);
-                    await connection.SendOutput("Second serialization pass:");
-                    await connection.SendOutput(reserialized);
+                    await Server.NotifyAsync(player, ">>> [CRITICAL] Serialization verification failed.  Object will be corrupted.");
+                    await Server.NotifyAsync(player, "First serialization pass:");
+                    await Server.NotifyAsync(player, serialized);
+                    await Server.NotifyAsync(player, "Second serialization pass:");
+                    await Server.NotifyAsync(player, reserialized);
                 }
                 else
                 {
-                    await connection.SendOutput("Serialization check passed.");
+                    await Server.NotifyAsync(player, "Serialization check passed.");
                     var success = await ThingRepository.Instance.FlushToDatabaseAsync(target, cancellationToken);
-                    await connection.SendOutput($"Save to database: {success}");
+                    await Server.NotifyAsync(player, $"Save to database: {success}");
                 }
             }
             else
             {
-                await connection.SendOutput("You can't seem to find that.");
+                await Server.NotifyAsync(player, "You can't seem to find that.");
                 return new VerbResult(false, "Target not found");
             }
 

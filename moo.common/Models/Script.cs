@@ -28,10 +28,10 @@ namespace moo.common.Models
             return new Tuple<bool, string?>(false, null);
         }
 
-        public static async Task<Tuple<bool, string, ForthTokenizerResult>> CompileAsync(Script script, string programText, PlayerConnection connection, CancellationToken cancellationToken)
+        public static async Task<Tuple<bool, string, ForthTokenizerResult>> CompileAsync(Script script, string programText, Dbref player, CancellationToken cancellationToken)
         {
             // Set 1: Preprocessing directives
-            var preprocessed = await ForthPreprocessor.Preprocess(connection, script, programText, cancellationToken);
+            var preprocessed = await ForthPreprocessor.Preprocess(player, script, programText, cancellationToken);
             if (!preprocessed.IsSuccessful)
                 return new Tuple<bool, string, ForthTokenizerResult>(false, preprocessed.Reason, default);
 
@@ -43,14 +43,14 @@ namespace moo.common.Models
             return new Tuple<bool, string, ForthTokenizerResult>(true, "Compiled", tokenized);
         }
 
-        public async Task<Tuple<bool, string>> CompileAsync(PlayerConnection connection, CancellationToken cancellationToken)
+        public async Task<Tuple<bool, string>> CompileAsync(Dbref player, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(programText))
                 return new Tuple<bool, string>(true, "No program text provided");
 
             if (default(ForthTokenizerResult).Equals(tokenized))
             {
-                var result = await CompileAsync(this, programText, connection, cancellationToken);
+                var result = await CompileAsync(this, programText, player, cancellationToken);
                 if (!result.Item1)
                     return new Tuple<bool, string>(false, result.Item2);
 
@@ -72,7 +72,7 @@ namespace moo.common.Models
 
         public async Task<VerbResult> Process(
             Dbref player,
-             PlayerConnection? connection,
+            PlayerConnection? connection,
             CommandResult command,
             CancellationToken cancellationToken)
         {
@@ -85,12 +85,16 @@ namespace moo.common.Models
                 : HasFlag(Flag.LEVEL_1) ? 1
                 : 0;
 
-            var process = new ForthProcess(id, effectiveMuckerLevel, connection)
+            var playerObj = await player.Get(cancellationToken);
+            if (playerObj == null)
+                return new VerbResult(false, $"Unable to load player {player}");
+
+            var process = new ForthProcess(player, playerObj.Location, id, command.GetVerb(), effectiveMuckerLevel)
             {
                 State = ForthProcess.ProcessState.Parsing
             };
 
-            var compileResult = await CompileAsync(connection, cancellationToken);
+            var compileResult = await CompileAsync(player, cancellationToken);
 
             if (!compileResult.Item1)
             {
@@ -102,7 +106,8 @@ namespace moo.common.Models
                 foreach (var v in tokenized.ProgramLocalVariables)
                     process.SetProgramLocalVariable(v.Key, v.Value);
 
-            var result = await Server.ExecuteAsync(process, tokenized.Words, connection.Dbref,
+            var result = await Server.ExecuteAsync(process, tokenized.Words,
+                id,
                 command.GetVerb(),
                 new[] { command.GetNonVerbPhrase() },
                 cancellationToken);

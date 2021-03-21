@@ -46,6 +46,10 @@ namespace moo.common.Scripting
         // Variables local to my process context, which I could pass on to programs I call and all my words can see ($DEF, LVAR)
         private readonly ConcurrentDictionary<string, ForthVariable> programLocalVariables = new();
 
+        private readonly Dbref player;
+        private readonly Dbref location;
+        private readonly Dbref trigger;
+        private readonly string? command;
         private readonly Dbref scriptId;
         private readonly byte effectiveMuckerLevel;
         private readonly PlayerConnection connection;
@@ -59,19 +63,24 @@ namespace moo.common.Scripting
         public byte EffectiveMuckerLevel => effectiveMuckerLevel;
 
         public ForthProcess(
-            Dbref scriptId,
+            Dbref player,
+            Dbref location,
+            Dbref trigger,
+            string? command,
             byte effectiveMuckerLevel,
-            PlayerConnection connection,
             string? outerScopeId = null,
             Dictionary<string, ForthVariable>? outerScopeVariables = null)
         {
-            this.processId = GetNextPid();
-            this.State = ProcessState.Initializing;
-            this.mode = MultitaskingMode.Foreground;
-            this.scriptId = scriptId;
+            this.player = player;
+            this.location = location;
+            this.trigger = trigger;
+            this.command = command;
+            processId = GetNextPid();
+            State = ProcessState.Initializing;
+            mode = MultitaskingMode.Foreground;
             this.effectiveMuckerLevel = effectiveMuckerLevel;
             this.connection = connection;
-            this.scopeId = Guid.NewGuid().ToString();
+            scopeId = Guid.NewGuid().ToString();
 
             if (outerScopeId != null)
             {
@@ -90,7 +99,7 @@ namespace moo.common.Scripting
             lock (nextPidLock)
             {
                 var pid = Interlocked.Increment(ref nextPid);
-                if (pid < Int32.MaxValue)
+                if (pid < int.MaxValue)
                     return pid;
                 Interlocked.Exchange(ref nextPid, 1);
                 return 1;
@@ -112,14 +121,15 @@ namespace moo.common.Scripting
 
         public bool HasWord(string? wordName) => !string.IsNullOrWhiteSpace(wordName) && words.Any(w => string.Compare(w.name, wordName, true) == 0);
 
-        public async Task<ForthWordResult> RunWordAsync(string wordName, Dbref trigger,
-            string command, Dbref? lastListItem,
+        public async Task<ForthWordResult> RunWordAsync(
+            string wordName,
+            Dbref? lastListItem,
             byte effectiveMuckerLevel,
              CancellationToken cancellationToken)
         {
             return await this.words
                 .Single(w => string.Compare(w.name, wordName, true) == 0)
-                .RunAsync(this, stack, connection, trigger, command, lastListItem, cancellationToken);
+                .RunAsync(this, stack, player, location, trigger, command, lastListItem, cancellationToken);
         }
 
         public void Pause()
@@ -179,7 +189,7 @@ namespace moo.common.Scripting
             }
 
             State = ProcessState.Running;
-            var result = await words.Last().RunAsync(this, stack, connection, trigger, command, null, cancellationToken);
+            var result = await words.Last().RunAsync(this, stack, player, location, trigger, command, null, cancellationToken);
             State = ProcessState.Complete;
 
             if (Server.GetInstance().PreemptProcessId == this.processId)

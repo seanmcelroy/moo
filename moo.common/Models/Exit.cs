@@ -167,20 +167,20 @@ namespace moo.common.Models
             {
                 case DbrefObjectType.Room:
                     {
-                        if (connection != null)
-                            await connection.MoveToAsync(linkTo, cancellationToken);
+                        var playerObj = await player.Get(cancellationToken);
+                        if (playerObj != null)
+                            await playerObj.MoveToAsync(linkTo, cancellationToken);
                         return new VerbResult(true, "Moved.");
                     }
                 case DbrefObjectType.Program:
                     {
                         var actionResult = await ((Script)linkTo).Process(player, connection, command, cancellationToken);
-                        if (!actionResult.isSuccess && connection != null)
-                            await connection.SendOutput($"ERROR: {actionResult.reason}");
+                        if (!actionResult.isSuccess)
+                            await Server.NotifyAsync(player, $"ERROR: {actionResult.reason}");
                         return actionResult;
                     }
                 default:
-                    if (connection != null)
-                        await connection.SendOutput($"Cannot process exit linked to {await linkTo.UnparseObject(player, cancellationToken)}");
+                    await Server.NotifyAsync(player, $"Cannot process exit linked to {await linkTo.UnparseObject(player, cancellationToken)}");
                     return new VerbResult(false, $"Cannot process exit linked to {linkTo.UnparseObjectInternal()}");
             }
         }

@@ -36,7 +36,7 @@ namespace moo.common.Actions.BuiltIn
             var target = await targetDbref.Get(cancellationToken);
             if (target == null)
             {
-                await connection.SendOutput("You can't seem to find that.");
+                await Server.NotifyAsync(player, "You can't seem to find that.");
                 return new VerbResult(false, "Target not found");
             }
 

@@ -22,8 +22,6 @@ namespace moo.common.Scripting
 
         public readonly Dbref Location;
 
-        public readonly PlayerConnection? Connection;
-
         public readonly Dbref Trigger;
 
         public readonly string? Command;
@@ -38,7 +36,8 @@ namespace moo.common.Scripting
             ForthProcess? process,
             Stack<ForthDatum> stack,
             Dictionary<string, ForthVariable>? variables,
-            PlayerConnection? connection,
+            Dbref player,
+            Dbref location,
             Dbref trigger,
             string? command,
             Func<Dbref, string, Task>? notify,
@@ -49,9 +48,8 @@ namespace moo.common.Scripting
             Process = process;
             Stack = stack;
             this.variables = variables;
-            Connection = connection;
-            Player = connection?.Dbref ?? Dbref.NOT_FOUND;
-            Location = connection?.GetPlayer().Location ?? Dbref.NOT_FOUND;
+            Player = player;
+            Location = location;
             Trigger = trigger;
             Command = command;
             this.lastListItem = lastListItem;
