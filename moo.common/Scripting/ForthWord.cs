@@ -274,7 +274,7 @@ namespace moo.common.Scripting
                     if (stack.Count == 0)
                         Console.WriteLine($"DATUM: {datum.Value}");
                     else
-                        Console.WriteLine($"DATUM: {datum.Value} \tSTACK: {stack.Reverse().Select(x => x.Value?.ToString() ?? string.Empty).Aggregate((c, n) => c + "," + n)}");
+                        Console.WriteLine($"DATUM: {datum.Value} \tSTACK: {stack.Reverse().Select(x => x.Value?.ToString() ?? string.Empty).Aggregate((c, n) => $"{c},{n}")}");
                 }
 
                 // If I'm pre-empted, then spin until 
@@ -290,31 +290,6 @@ namespace moo.common.Scripting
                 }
 
                 // Line-level items
-
-                /*
-                // VAR
-                if (line.Length == 2 && string.Compare(line[0].Value.ToString(), "VAR", true) == 0)
-                {
-                    var varKey = line[1].Value.ToString().ToLowerInvariant();
-                    if (functionScopedVariables.ContainsKey(varKey))
-                        return new ForthProgramResult(ForthErrorResult.VARIABLE_ALREADY_DEFINED, $"Variable '{varKey}' is already defined.");
-
-                    functionScopedVariables.Add(varKey, null);
-                    await connection.sendOutput(line.Select(d => d.Value.ToString()).Aggregate((c, n) => c + " " + n));
-                    continue;
-                }
-
-                // VAR!
-                if (line.Length == 2 && string.Compare(line[0].Value.ToString(), "VAR!", true) == 0)
-                {
-                    var varKey = line[1].Value.ToString().ToLowerInvariant();
-                    if (functionScopedVariables.ContainsKey(varKey))
-                        return new ForthProgramResult(ForthErrorResult.VARIABLE_ALREADY_DEFINED, $"Variable '{varKey}' is already defined.");
-
-                    functionScopedVariables.Add(varKey, stack.Count > 0 ? (object)stack.Pop() : null);
-                    await connection.sendOutput(line.Select(d => d.Value.ToString()).Aggregate((c, n) => c + " " + n));
-                    continue;
-                }*/
 
                 // For each element in line
                 var datumLiteral = datum.Value?.ToString();
@@ -741,7 +716,8 @@ namespace moo.common.Scripting
                 // Primatives
                 if (datum.Type == DatumType.Primitive)
                 {
-                    if (callTable.Keys.Contains(datumLiteral, StringComparer.InvariantCultureIgnoreCase))
+                    var callTableKey = callTable.Keys.FirstOrDefault(k => string.Compare(k, datumLiteral, StringComparison.InvariantCultureIgnoreCase) == 0);
+                    if (callTableKey != null)
                     {
                         var stackCopy = stack.ClonePreservingOrder();
                         var p = new ForthPrimativeParameters(process, stack, variables, player, location, trigger, command,
@@ -750,10 +726,10 @@ namespace moo.common.Scripting
                             lastListItem,
                             cancellationToken);
 
-                        var matchingPrimative = callTable.Single(c => string.Compare(c.Key, datumLiteral, true) == 0);
-                        var result = matchingPrimative.Value.Invoke(p);
+                        var matchingPrimative = callTable[callTableKey];
+                        var result = matchingPrimative.Invoke(p);
 
-                        lastPrimative = matchingPrimative.Key;
+                        lastPrimative = callTableKey;
 
                         if (result.LastListItem.HasValue)
                             lastListItem = result.LastListItem.Value;
@@ -820,7 +796,7 @@ namespace moo.common.Scripting
                 stack.Reverse().Select(s =>
                 {
                     return (s.Type == DatumType.String) ? $"\"{s.Value}\"" : (s.Value?.ToString() ?? "(null)");
-                }).Aggregate((c, n) => c + " " + n) + ") " + (default(ForthDatum).Equals(currentDatum) ? "" : ((currentDatum.Type == DatumType.String) ? $"\"{currentDatum.Value}\"" : currentDatum.Value.ToString())) + " " + extra);
+                }).Aggregate((c, n) => $"{c} {n}") + ") " + (default(ForthDatum).Equals(currentDatum) ? "" : ((currentDatum.Type == DatumType.String) ? $"\"{currentDatum.Value}\"" : currentDatum.Value.ToString())) + " " + extra);
         }
         private static async Task DumpVariablesToDebugAsync(
             ForthProcess process,

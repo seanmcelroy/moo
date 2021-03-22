@@ -24,6 +24,9 @@ namespace moo.common.Scripting
             Array = 9
         }
 
+
+        internal static readonly Regex DBREF_REGEX = new(@"#(\-?\d+|\d+[A-Z]?)", RegexOptions.Compiled);
+
         public readonly string? Key;
         public readonly object? Value;
         public DatumType Type;
@@ -157,7 +160,7 @@ namespace moo.common.Scripting
                 return true;
             }
 
-            if (Regex.IsMatch(value, @"#(\-?\d+|\d+[A-Z]?)", RegexOptions.Compiled))
+            if (DBREF_REGEX.IsMatch(value))
             {
                 result = new Tuple<DatumType, object>(DatumType.DbRef, new Dbref(value));
                 return true;

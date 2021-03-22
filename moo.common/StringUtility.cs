@@ -10,7 +10,7 @@ namespace moo.common
             {
                 for (int i = 0; i < src.Length; i++)
                 {
-                    if (src.IndexOf(sub, i, System.StringComparison.OrdinalIgnoreCase) > -1)
+                    if (src[i..].Contains(sub, System.StringComparison.OrdinalIgnoreCase))
                         return i;
 
                     /* else scan to beginning of next word */

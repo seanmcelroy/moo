@@ -78,8 +78,9 @@ namespace moo.common.Actions.BuiltIn
             }
             else if (predicate.Contains(':'))
             {
-                var propertyPath = predicate.Substring(0, predicate.IndexOf(':') - 1);
-                var propertyValue = predicate[(predicate.IndexOf(':') + 1)..];
+                var predicateColonIndex = predicate.IndexOf(':');
+                var propertyPath = predicate.Substring(0, predicateColonIndex - 1);
+                var propertyValue = predicate[(predicateColonIndex + 1)..];
 
                 // Add property at directory
                 if (Property.TryInferType(propertyValue, out Tuple<Property.PropertyType, object>? result))

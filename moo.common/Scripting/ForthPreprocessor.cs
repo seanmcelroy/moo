@@ -5,7 +5,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using moo.common.Connections;
 using moo.common.Models;
 
 namespace moo.common.Scripting
@@ -13,10 +12,7 @@ namespace moo.common.Scripting
     public static class ForthPreprocessor
     {
         private static readonly Random random = new(Environment.TickCount);
-
-        //   private static readonly Regex preTokensRegex = new Regex(@"\s*(?<token>(?:\$(?!\s)|PUBLIC)[^\$]+)(?!\$)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        //private static readonly Regex preTokensRegex = new Regex(@"(?<token>(?:lvar|public|\$(?:abort|author|def|define|echo|else|endif|ifdef|ifndef|include|libdef|lib-version|note|pubdef|endif|undef|version))(?:(?: +|\$lib\/|[\w\d\-\/\<\@\>\.\?\#\*\)\'\{\}])[\w\d\-\/\<\@\>\.\?\#\*\(\)\'\=\{\}_]+|\""[\w\d\-\/\<\@\>\.\?\#\*\(\)\'\$ \{\}_]*\"")*)+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
+        private static readonly Regex stripCommentsRegex = new(@"^\([^\)]*\)|\([^\r\n]*$|\([^\)]*\)", RegexOptions.Compiled);
         private static readonly Regex commentOnDefineLineRegex = new(@"\([^\)]*\)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static readonly Regex abortRegex = new(@"^\s*(?:\$abort\s+(?<value>.*))$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static readonly Regex authorRegex = new(@"^\s*(?:\$author\s+(?<value>.*))$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -256,7 +252,8 @@ namespace moo.common.Scripting
 
                                     // The define value could be a primitive with an inserver definition, so replace here.
                                     foreach (var define in defines.Where(d => d.Value != null))
-                                        defValue = Regex.Replace(defValue, $@"(?<=\s|^){Regex.Escape(define.Key)}(?=\s|$)", define.Value ?? string.Empty, RegexOptions.IgnoreCase);
+                                        if (defValue.Contains(define.Key, StringComparison.OrdinalIgnoreCase))
+                                            defValue = Regex.Replace(defValue, $@"(?<=\s|^){Regex.Escape(define.Key)}(?=\s|$)", define.Value ?? string.Empty, RegexOptions.IgnoreCase);
 
                                     if (defines.ContainsKey(key))
                                         defines[key] = defValue;
@@ -571,10 +568,11 @@ namespace moo.common.Scripting
                     var line2 = line;
 
                     // If we open a multi-line comment, then continue until we close it.
-                    if (inMultiLineComment && line2.IndexOf(')') != -1)
+                    var line2RightParenIndex = line2.IndexOf(')');
+                    if (inMultiLineComment && line2RightParenIndex != -1)
                     {
                         inMultiLineComment = false;
-                        line2 = line2[line2.IndexOf(')')..];
+                        line2 = line2[line2RightParenIndex..];
                     }
                     else if (inMultiLineComment || line2.TrimStart().StartsWith('(') && !line2.Contains(')'))
                     {
@@ -597,12 +595,13 @@ namespace moo.common.Scripting
                     }
 
                     // Strip comments
-                    if (line2.IndexOf('(') > -1 && !line2.StartsWith('\"') && !line2.EndsWith('\"'))
-                        line2 = Regex.Replace(line2, @"^\([^\)]*\)|\([^\r\n]*$|\([^\)]*\)", "");
+                    if (line2.Contains('(') && !line2.StartsWith('\"') && !line2.EndsWith('\"'))
+                        line2 = stripCommentsRegex.Replace(line2, "");
 
                     if (line2.Length > 0)
                         foreach (var define in defines.Where(d => d.Value != null))
-                            line2 = Regex.Replace(line2, $@"(?<=\s|^){Regex.Escape(define.Key)}(?=\s|$)", define.Value ?? string.Empty, RegexOptions.IgnoreCase);
+                            if (line2.Contains(define.Key, StringComparison.OrdinalIgnoreCase))
+                                line2 = Regex.Replace(line2, $@"(?<=\s|^){Regex.Escape(define.Key)}(?=\s|$)", define.Value ?? string.Empty, RegexOptions.IgnoreCase);
 
                     if (line2.Length > 0)
                         foreach (var hold in holdingPen)

@@ -17,17 +17,17 @@ namespace moo.common.Scripting
 
         public ForthPreprocessingResult(string failureReason)
         {
-            this.isSuccessful = false;
-            this.reason = failureReason;
-            this.processedProgram = null;
-            this.publicFunctionNames = null;
-            this.programLocalVariables = null;
+            isSuccessful = false;
+            reason = failureReason;
+            processedProgram = null;
+            publicFunctionNames = null;
+            programLocalVariables = null;
         }
 
         public ForthPreprocessingResult(string processedProgram, List<string> publicFunctionNames, Dictionary<string, ForthVariable>? programLocalVariables)
         {
-            this.isSuccessful = true;
-            this.reason = null;
+            isSuccessful = true;
+            reason = null;
             this.processedProgram = processedProgram;
             this.publicFunctionNames = publicFunctionNames;
             this.programLocalVariables = programLocalVariables;

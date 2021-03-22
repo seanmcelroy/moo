@@ -92,7 +92,7 @@ namespace moo.common.Scripting
                 return true;
             }
 
-            if (Regex.IsMatch(value, @"#(\-?\d+|\d+[A-Z]?)", RegexOptions.Compiled))
+            if (ForthDatum.DBREF_REGEX.IsMatch(value))
             {
                 result = new Tuple<VariableType, object?>(VariableType.DbRef, new Dbref(value));
                 return true;

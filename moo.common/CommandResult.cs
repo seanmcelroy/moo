@@ -22,14 +22,12 @@ namespace moo.common
         {
             var text = Raw;
             var search = GetVerb();
-            var replace = "";
-
             int pos = text.IndexOf(search);
             if (pos < 0)
             {
                 return text;
             }
-            return (text.Substring(0, pos) + replace + text[(pos + search.Length)..]).TrimStart();
+            return (text.Substring(0, pos) + text[(pos + search.Length)..]).TrimStart();
         }
 
         public bool HasIndirectObject() => !string.IsNullOrWhiteSpace(match.Groups["io"].Value);

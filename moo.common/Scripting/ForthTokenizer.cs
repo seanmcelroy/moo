@@ -23,6 +23,8 @@ namespace moo.common.Scripting
             ReadingWordArgList,
         }
 
+        private static readonly Regex lvarRegex = new(@"(?:lvar\s+(?<lvar>\w{1,20}))", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex argsRegex = new(@"^\[(\s*(?<input>\w+:\w+))+\s*(--|]$)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         public static async Task<ForthTokenizerResult> Tokenzie(PlayerConnection? connection, string program, Dictionary<string, ForthVariable>? programLocalVariables = null)
         {
@@ -199,7 +201,7 @@ namespace moo.common.Scripting
                         {
                             // LVAR
                             {
-                                var lvarMatch = Regex.Match(directive, @"(?:lvar\s+(?<lvar>\w{1,20}))", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+                                var lvarMatch = lvarRegex.Match(directive);
                                 if (lvarMatch.Success)
                                     programLocalVariables.Add(lvarMatch.Groups["lvar"].Value, default);
                             }
@@ -292,7 +294,7 @@ namespace moo.common.Scripting
                     if (currentWordArgListBuilder.Length > 0)
                     {
                         var argList = currentWordArgListBuilder.ToString();
-                        var argMatches = Regex.Match(argList, @"^\[(\s*(?<input>\w+:\w+))+\s*(--|]$)", RegexOptions.Compiled);
+                        var argMatches = argsRegex.Match(argList);
                         if (argMatches.Success)
                         {
                             foreach (Capture cap in argMatches.Groups["input"].Captures)
