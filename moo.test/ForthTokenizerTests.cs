@@ -1,5 +1,6 @@
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using moo.common.Models;
 using moo.common.Scripting;
 using NUnit.Framework;
@@ -16,7 +17,7 @@ namespace Tests
             var preproc = await ForthPreprocessor.Preprocess(Dbref.NOT_FOUND, null, programText, CancellationToken.None);
             Assert.NotNull(preproc.ProcessedProgram);
 
-            var result = await ForthTokenizer.Tokenzie(null, preproc.ProcessedProgram!, new System.Collections.Generic.Dictionary<string, ForthVariable>());
+            var result = await ForthTokenizer.Tokenzie(null, preproc.ProcessedProgram!, new System.Collections.Generic.Dictionary<string, ForthVariable>(), null);
             Assert.NotNull(result);
         }
 
@@ -26,7 +27,7 @@ namespace Tests
             var programText = $": w\n\"\";";
             var preproc = await ForthPreprocessor.Preprocess(Dbref.NOT_FOUND, null, programText, CancellationToken.None);
             Assert.IsTrue(preproc.IsSuccessful);
-            var result = await ForthTokenizer.Tokenzie(null, preproc.ProcessedProgram!, new System.Collections.Generic.Dictionary<string, ForthVariable>());
+            var result = await ForthTokenizer.Tokenzie(null, preproc.ProcessedProgram!, new System.Collections.Generic.Dictionary<string, ForthVariable>(), null);
             Assert.NotNull(result);
             Assert.NotNull(result.Words);
             Assert.AreEqual(1, result.Words.Count);
@@ -44,7 +45,7 @@ namespace Tests
             var programText = $": w\n\" \";";
             var preproc = await ForthPreprocessor.Preprocess(Dbref.NOT_FOUND, null, programText, CancellationToken.None);
             Assert.IsTrue(preproc.IsSuccessful);
-            var result = await ForthTokenizer.Tokenzie(null, preproc.ProcessedProgram!, new System.Collections.Generic.Dictionary<string, ForthVariable>());
+            var result = await ForthTokenizer.Tokenzie(null, preproc.ProcessedProgram!, new System.Collections.Generic.Dictionary<string, ForthVariable>(), null);
             Assert.NotNull(result);
             Assert.NotNull(result.Words);
             Assert.AreEqual(1, result.Words.Count);
@@ -62,7 +63,7 @@ namespace Tests
             var programText = $": w\n\"\\\"\";"; // "\""
             var preproc = await ForthPreprocessor.Preprocess(Dbref.NOT_FOUND, null, programText, CancellationToken.None);
             Assert.IsTrue(preproc.IsSuccessful);
-            var result = await ForthTokenizer.Tokenzie(null, preproc.ProcessedProgram!, new System.Collections.Generic.Dictionary<string, ForthVariable>());
+            var result = await ForthTokenizer.Tokenzie(null, preproc.ProcessedProgram!, new System.Collections.Generic.Dictionary<string, ForthVariable>(), null);
             Assert.NotNull(result);
             Assert.NotNull(result.Words);
             Assert.AreEqual(1, result.Words.Count);
@@ -80,7 +81,7 @@ namespace Tests
             var programText = $": w\n\"\\\"\" \"\\\" \";"; // "\"" "\" "
             var preproc = await ForthPreprocessor.Preprocess(Dbref.NOT_FOUND, null, programText, CancellationToken.None);
             Assert.IsTrue(preproc.IsSuccessful);
-            var result = await ForthTokenizer.Tokenzie(null, preproc.ProcessedProgram!, new System.Collections.Generic.Dictionary<string, ForthVariable>());
+            var result = await ForthTokenizer.Tokenzie(null, preproc.ProcessedProgram!, new System.Collections.Generic.Dictionary<string, ForthVariable>(), null);
             Assert.NotNull(result);
             Assert.NotNull(result.Words);
             Assert.AreEqual(1, result.Words.Count);
@@ -102,7 +103,7 @@ namespace Tests
             Assert.IsTrue(preproc.IsSuccessful);
             Assert.NotNull(preproc.ProcessedProgram);
 
-            var result = await ForthTokenizer.Tokenzie(null, preproc.ProcessedProgram!, new System.Collections.Generic.Dictionary<string, ForthVariable>());
+            var result = await ForthTokenizer.Tokenzie(null, preproc.ProcessedProgram!, new System.Collections.Generic.Dictionary<string, ForthVariable>(), null);
             Assert.NotNull(result);
             Assert.NotNull(result.Words);
             Assert.AreEqual(1, result.Words.Count);

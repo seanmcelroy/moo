@@ -1,4 +1,5 @@
 using System;
+using Microsoft.Extensions.Logging;
 
 namespace moo.common.Models
 {
@@ -10,13 +11,13 @@ namespace moo.common.Models
 
         public Room() => type = (int)Dbref.DbrefObjectType.Room;
 
-        public static Room Make(string name, Dbref owner)
+        public static Room Make(string name, Dbref owner, ILogger? logger)
         {
             var room = ThingRepository.Instance.Make<Room>();
             room.name = name;
             room.DropTo = room.id;
             room.owner = owner;
-            Console.WriteLine($"Created new room {room.UnparseObjectInternal()}");
+            logger?.LogDebug("Created new room {unparsed}", room.UnparseObjectInternal());
             return room;
         }
     }

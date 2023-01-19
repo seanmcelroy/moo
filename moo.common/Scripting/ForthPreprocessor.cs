@@ -527,8 +527,7 @@ namespace moo.common.Scripting
                             var undefMatch = undefRegex.Match(token);
                             if (undefMatch.Success)
                             {
-                                if (defines.ContainsKey(undefMatch.Groups["defName"].Value.ToUpperInvariant()))
-                                    defines.Remove(undefMatch.Groups["defName"].Value.ToUpperInvariant());
+                                defines.Remove(undefMatch.Groups["defName"].Value.ToUpperInvariant());
                                 tokenHandled = true;
                                 continue;
                             }

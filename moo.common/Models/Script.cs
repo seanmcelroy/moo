@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using moo.common.Connections;
 using moo.common.Scripting;
 
@@ -28,7 +29,7 @@ namespace moo.common.Models
             return new Tuple<bool, string?>(false, null);
         }
 
-        public static async Task<Tuple<bool, string, ForthTokenizerResult>> CompileAsync(Script script, string programText, Dbref player, CancellationToken cancellationToken)
+        public static async Task<Tuple<bool, string, ForthTokenizerResult>> CompileAsync(Script script, string programText, Dbref player, ILogger? logger, CancellationToken cancellationToken)
         {
             // Set 1: Preprocessing directives
             var preprocessed = await ForthPreprocessor.Preprocess(player, script, programText, cancellationToken);
@@ -36,21 +37,21 @@ namespace moo.common.Models
                 return new Tuple<bool, string, ForthTokenizerResult>(false, preprocessed.Reason, default);
 
             // Step 2: Tokenization
-            var tokenized = await ForthTokenizer.Tokenzie(null, preprocessed.ProcessedProgram, preprocessed.ProgramLocalVariables);
+            var tokenized = await ForthTokenizer.Tokenzie(null, preprocessed.ProcessedProgram, preprocessed.ProgramLocalVariables, logger);
             if (!tokenized.IsSuccessful)
                 return new Tuple<bool, string, ForthTokenizerResult>(false, tokenized.Reason, default);
 
             return new Tuple<bool, string, ForthTokenizerResult>(true, "Compiled", tokenized);
         }
 
-        public async Task<Tuple<bool, string>> CompileAsync(Dbref player, CancellationToken cancellationToken)
+        public async Task<Tuple<bool, string>> CompileAsync(Dbref player, ILogger? logger, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(programText))
                 return new Tuple<bool, string>(true, "No program text provided");
 
             if (default(ForthTokenizerResult).Equals(tokenized))
             {
-                var result = await CompileAsync(this, programText, player, cancellationToken);
+                var result = await CompileAsync(this, programText, player, logger, cancellationToken);
                 if (!result.Item1)
                     return new Tuple<bool, string>(false, result.Item2);
 
@@ -74,16 +75,17 @@ namespace moo.common.Models
             Dbref player,
             PlayerConnection? connection,
             CommandResult command,
+            ILogger? logger, 
             CancellationToken cancellationToken)
         {
             // TODO: Right now we block on programs
 
             byte effectiveMuckerLevel =
-                HasFlag(Flag.WIZARD) ? 4
-                : HasFlag(Flag.LEVEL_3) ? 3
-                : HasFlag(Flag.LEVEL_2) ? 2
-                : HasFlag(Flag.LEVEL_1) ? 1
-                : 0;
+                HasFlag(Flag.WIZARD) ? (byte)4
+                : HasFlag(Flag.LEVEL_3) ? (byte)3
+                : HasFlag(Flag.LEVEL_2) ? (byte)2
+                : HasFlag(Flag.LEVEL_1) ? (byte)1
+                : (byte)0;
 
             var playerObj = await player.Get(cancellationToken);
             if (playerObj == null)
@@ -94,7 +96,7 @@ namespace moo.common.Models
                 State = ForthProcess.ProcessState.Parsing
             };
 
-            var compileResult = await CompileAsync(player, cancellationToken);
+            var compileResult = await CompileAsync(player, logger, cancellationToken);
 
             if (!compileResult.Item1)
             {
@@ -110,6 +112,7 @@ namespace moo.common.Models
                 id,
                 command.GetVerb(),
                 new[] { command.GetNonVerbPhrase() },
+                logger,
                 cancellationToken);
             var scriptResult = new VerbResult(result.IsSuccessful, result.Reason?.ToString());
 

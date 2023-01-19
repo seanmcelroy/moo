@@ -34,7 +34,7 @@ namespace moo.common.Scripting.ForthPrimatives
                 return ForthPrimativeResult.SUCCESS;
             }
 
-            var strA = str1.Substring(0, idx);
+            var strA = str1[..idx];
             var strB = str1[(idx + 1)..];
 
             parameters.Stack.Push(new ForthDatum(strA));

@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using moo.common.Connections;
 using moo.common.Database;
 using moo.common.Models;
@@ -19,7 +20,7 @@ namespace moo.common.Actions.BuiltIn
             return new Tuple<bool, string?>(false, null);
         }
 
-        public async Task<VerbResult> Process(Dbref player, PlayerConnection? connection, CommandResult command, CancellationToken cancellationToken)
+        public async Task<VerbResult> Process(Dbref player, PlayerConnection? connection, CommandResult command, ILogger? logger, CancellationToken cancellationToken)
         {
             var str = command.GetNonVerbPhrase();
             if (str == null || str.Length < 3)
@@ -72,14 +73,14 @@ namespace moo.common.Actions.BuiltIn
             if (predicate.EndsWith(':'))
             {
                 // Remove property at directory
-                var propertyPath = predicate.Substring(0, predicate.IndexOf(':') - 1);
+                var propertyPath = predicate[..(predicate.IndexOf(':') - 1)];
                 target.ClearPropertyPath(propertyPath);
                 return new VerbResult(true, $"Object {target.UnparseObjectInternal()} cleared of properties under {propertyPath}.");
             }
             else if (predicate.Contains(':'))
             {
                 var predicateColonIndex = predicate.IndexOf(':');
-                var propertyPath = predicate.Substring(0, predicateColonIndex - 1);
+                var propertyPath = predicate[..(predicateColonIndex - 1)];
                 var propertyValue = predicate[(predicateColonIndex + 1)..];
 
                 // Add property at directory

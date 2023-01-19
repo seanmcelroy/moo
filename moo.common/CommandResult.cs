@@ -27,7 +27,8 @@ namespace moo.common
             {
                 return text;
             }
-            return (text.Substring(0, pos) + text[(pos + search.Length)..]).TrimStart();
+
+            return $"{text[..pos]}{text[(pos + search.Length)..]}".TrimStart();
         }
 
         public bool HasIndirectObject() => !string.IsNullOrWhiteSpace(match.Groups["io"].Value);

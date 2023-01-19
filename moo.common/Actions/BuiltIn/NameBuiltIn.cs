@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using moo.common.Connections;
 using moo.common.Database;
 using moo.common.Models;
@@ -17,7 +18,7 @@ namespace moo.common.Actions.BuiltIn
             return new Tuple<bool, string?>(false, null);
         }
 
-        public async Task<VerbResult> Process(Dbref player, PlayerConnection? connection, CommandResult command, CancellationToken cancellationToken)
+        public async Task<VerbResult> Process(Dbref player, PlayerConnection? connection, CommandResult command, ILogger? logger, CancellationToken cancellationToken)
         {
             var str = command.GetNonVerbPhrase();
             if (str == null || string.IsNullOrWhiteSpace(str))
@@ -44,7 +45,7 @@ namespace moo.common.Actions.BuiltIn
             }
 
             var target = targetLookup.value;
-            var predicateParts = predicate.LastIndexOf(' ') == -1 ? new[] { predicate } : new string[] { predicate.Substring(0, predicate.LastIndexOf(' ')), predicate[(predicate.LastIndexOf(' ') + 1)..] };
+            var predicateParts = predicate.LastIndexOf(' ') == -1 ? new[] { predicate } : new string[] { predicate[..predicate.LastIndexOf(' ')], predicate[(predicate.LastIndexOf(' ') + 1)..] };
             if (predicateParts.Length < 1 || predicateParts.Length > 2)
                 return new VerbResult(false, "@NAME <object>=<name> [<password>]\r\n\r\nSets the name field of <object> to <name>. A null <name> is illegal. You must supply <password> if renaming a player. Wizards can rename any player but still must include the password.");
 

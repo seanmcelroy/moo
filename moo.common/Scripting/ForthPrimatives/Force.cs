@@ -44,7 +44,7 @@ namespace moo.common.Scripting.ForthPrimatives
             //    abort_interp("Cannot force god (1).");
 
             var conn = Server.GetConnection(target);
-            await Server.RunCommand(target, conn, new CommandResult(action), parameters.CancellationToken);
+            await Server.RunCommand(target, conn, new CommandResult(action), parameters.logger, parameters.CancellationToken);
 
             // TODO: force levels to track recursion https://github.com/fuzzball-muck/fuzzball/blob/e8c6e70c91098d8b7ba7f96a10c88b58f34acd1f/src/p_misc.c#L615
             return ForthPrimativeResult.SUCCESS;

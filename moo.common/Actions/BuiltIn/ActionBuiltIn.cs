@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using moo.common.Connections;
 using moo.common.Database;
 using moo.common.Models;
@@ -17,7 +18,7 @@ namespace moo.common.Actions.BuiltIn
             return new Tuple<bool, string?>(false, null);
         }
 
-        public async Task<VerbResult> Process(Dbref player, PlayerConnection? connection, CommandResult command, CancellationToken cancellationToken)
+        public async Task<VerbResult> Process(Dbref player, PlayerConnection? connection, CommandResult command, ILogger? logger, CancellationToken cancellationToken)
         {
             var str = command.GetNonVerbPhrase();
             if (str == null || str.Length < 3)
@@ -60,7 +61,7 @@ namespace moo.common.Actions.BuiltIn
             if (!result)
                 return new VerbResult(false, $"You don't control {source.id}");
 
-            var exit = Exit.Make(name, player);
+            var exit = Exit.Make(name, player, logger);
             var moveResult = await exit.MoveToAsync(source, cancellationToken);
             if (!moveResult.isSuccess)
                 await Server.NotifyAsync(player, $"You can't seem to do that on {sourcePhrase}.  {moveResult.reason}");

@@ -485,8 +485,7 @@ namespace moo.common.Models
 
         public void ClearPropertyPath(string path)
         {
-            if (properties != null)
-                properties.ClearPropertyPathValue(path);
+            properties?.ClearPropertyPathValue(path);
             Dirty = true;
         }
 

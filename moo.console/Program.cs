@@ -2,8 +2,8 @@
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using moo.common;
-using moo.common.Actions.BuiltIn;
 using moo.common.Connections;
 using moo.common.Models;
 
@@ -14,19 +14,37 @@ namespace moo.console
         static async Task Main()
         {
             Console.Out.WriteLine("\r\n\r\nMoo!\r\n");
+
+            using var loggerFactory = LoggerFactory.Create(builder =>
+            {
+                builder
+                    .AddFilter("Microsoft", LogLevel.Warning)
+                    .AddFilter("System", LogLevel.Warning)
+                    .AddFilter("LoggingConsoleApp.Program", LogLevel.Debug)
+                    .AddSimpleConsole(options =>
+                    {
+                        options.IncludeScopes = false;
+                        options.SingleLine = true;
+                        options.TimestampFormat = "HH:mm:ss ";
+                    });
+            });
+            var logger = loggerFactory.CreateLogger<Program>();
+
+            logger.LogInformation("Greetings Professor Faulkin.");
+
             var cts = new CancellationTokenSource();
 
             try
             {
-                var server = Server.Initialize(Console.Out);
+                var server = Server.Initialize(logger);
 
-                var consolePlayer = await LoadSandbox(cts.Token);
+                var consolePlayer = await LoadSandbox(logger, cts.Token);
                 var consoleConnection = server.AttachConsolePlayer(consolePlayer, Console.In, Console.Out, cts.Token);
 
-                Console.Out.WriteLine("Starting server");
-                server.Start(cts.Token);
+                logger.LogInformation("Starting server");
+                server.Start(logger, cts.Token);
 
-                Console.Out.WriteLine("Loading script directory");
+                logger.LogInformation("Loading script directory");
                 var scriptsToLoadInOrder = new string[] {
                 $"scripts{System.IO.Path.DirectorySeparatorChar}cmd-@register.muf",
                 $"scripts{System.IO.Path.DirectorySeparatorChar}std-defs.muf",
@@ -63,17 +81,18 @@ namespace moo.console
 
                 foreach (var scriptPath in scriptsToLoad)
                 {
-                    Task.WaitAll(Task.Run(async () =>
+                    Task.Run(async () =>
                     {
                         await ReadInScriptFile(scriptPath, consoleConnection);
                         while (!consoleConnection.IsIdle)
                         {
                             Thread.Sleep(250);
                         }
-                        await consoleConnection.SendOutput($"Read in script file {scriptPath}");
-                    }));
+                        logger.LogDebug("Read in script file {scriptPath}", scriptPath);
+                    }).Wait();
                 }
 
+                logger.LogInformation("Starting main process loop.");
                 while (!cts.IsCancellationRequested)
                 {
 
@@ -87,13 +106,14 @@ namespace moo.console
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
+                logger?.LogCritical(ex, "General exception on Main()");
+                Environment.Exit(ex.HResult);
             }
         }
 
-        private static async Task<HumanPlayer> LoadSandbox(CancellationToken cancellationToken)
+        private static async Task<HumanPlayer> LoadSandbox(ILogger? logger, CancellationToken cancellationToken)
         {
-            var aether = Room.Make("The Aether", Dbref.GOD);
+            var aether = Room.Make("The Aether", Dbref.GOD, logger);
             aether.id = Dbref.AETHER;
             HostPlayer.make("God", aether);
             var player = HumanPlayer.make("Wizard", aether);

@@ -40,7 +40,7 @@ namespace moo.common.Models
             var realHash = Convert.FromBase64String(passwordHashBase64);
 
             // Generate the test hash
-            using var pbkdf2 = new Rfc2898DeriveBytes(testPassword, salt, iterations: 10000);
+            using var pbkdf2 = new Rfc2898DeriveBytes(testPassword, salt, 3000000, HashAlgorithmName.SHA512);
             var testHash = pbkdf2.GetBytes(20); //20 bytes length is 160 bits
             return testHash.SequenceEqual(realHash);
         }
@@ -59,7 +59,7 @@ namespace moo.common.Models
             }
 
             // Generate the hash
-            using (var pbkdf2 = new Rfc2898DeriveBytes(newPassword, salt, iterations: 10000))
+            using (var pbkdf2 = new Rfc2898DeriveBytes(newPassword, salt, 3000000, HashAlgorithmName.SHA512))
             {
                 var hash = pbkdf2.GetBytes(20); //20 bytes length is 160 bits
                 passwordSaltBase64 = Convert.ToBase64String(salt);

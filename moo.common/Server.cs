@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using moo.common.Actions.BuiltIn;
 using moo.common.Connections;
 using moo.common.Database;
@@ -40,19 +41,19 @@ namespace moo.common
 
         private static readonly ConcurrentQueue<ForthProcess> processesWaitingForPreempt = new();
 
-        private readonly TextWriter statusWriter;
+        private readonly ILogger? logger;
 
         private Task playerHandlerTask;
 
         public long PreemptProcessId;
 
-        private Server(TextWriter statusWriter) => this.statusWriter = statusWriter;
+        private Server(ILogger? logger) => this.logger = logger;
 
-        public static Server Initialize(TextWriter statusWriter)
+        public static Server Initialize(ILogger? logger)
         {
             if (Instance != null)
                 throw new InvalidOperationException("Already initialized");
-            Instance = new Server(statusWriter);
+            Instance = new Server(logger);
             return Instance;
         }
 
@@ -77,7 +78,12 @@ namespace moo.common
         {
             var consoleConnection = new ConsoleConnection(player, input, output, cancellationToken);
             _players.Add(consoleConnection);
-            statusWriter.WriteLine($"Console player {player.UnparseObjectInternal()} attached");
+
+            if (logger == null)
+                Console.Out.WriteLine($"Console player {player.UnparseObjectInternal()} attached");
+            else
+                logger.LogInformation("Console player {player} attached", player.UnparseObjectInternal());
+
             return consoleConnection;
         }
 
@@ -106,10 +112,11 @@ namespace moo.common
             Dbref trigger,
             string command,
             object[] args,
+            ILogger? logger,
             CancellationToken cancellationToken)
         {
             processes.Add(process);
-            var programResult = await process.RunAsync(words, trigger, command, args, cancellationToken);
+            var programResult = await process.RunAsync(words, trigger, command, args, logger, cancellationToken);
             return programResult;
         }
 
@@ -120,20 +127,20 @@ namespace moo.common
                 return;
 
             processesWaitingForPreempt.Enqueue(target);
-            await statusWriter.WriteLineAsync($"PID {target.ProcessId} queueing for preempt mode");
+            logger?.LogTrace("PID {pid} queueing for preempt mode", target.ProcessId);
 
             var task = Task.Factory.StartNew(async () =>
             {
                 while (!cancellationToken.IsCancellationRequested &&
                     (Interlocked.Read(ref PreemptProcessId) != 0 ||
-                    !(processesWaitingForPreempt.TryPeek(out ForthProcess nextInLine) && nextInLine.ProcessId == processId)) &&
-                    !processesWaitingForPreempt.TryDequeue(out ForthProcess dequeued))
+                    !(processesWaitingForPreempt.TryPeek(out ForthProcess? nextInLine) && nextInLine.ProcessId == processId)) &&
+                    !processesWaitingForPreempt.TryDequeue(out ForthProcess? dequeued))
                 {
                     Thread.Yield();
                     Thread.Sleep(50);
                 }
 
-                await statusWriter.WriteLineAsync($"PID {target.ProcessId} is up, waiting to pre-empt other tasks");
+                logger?.LogTrace("PID {pid} is up, waiting to pre-empt other tasks", target.ProcessId);
 
                 while (
                     !cancellationToken.IsCancellationRequested &&
@@ -154,7 +161,7 @@ namespace moo.common
 
                 Interlocked.Exchange(ref PreemptProcessId, target.ProcessId);
                 target.State = ForthProcess.ProcessState.RunningPreempt;
-                await statusWriter.WriteLineAsync($"PID {target.ProcessId} in preempt mode");
+                logger?.LogTrace("PID {pid} in preempt mode", target.ProcessId);
             });
 
             Task.WaitAll(new[] { task }, 60 * 1000, cancellationToken);
@@ -188,7 +195,7 @@ namespace moo.common
 
         public static IEnumerable<int> GetConnectionDescriptors(Dbref playerId) => _players.Where(p => p.Dbref == playerId).Select(p => p.ConnectorDescriptor);
 
-        public static IEnumerable<Tuple<Dbref, string>> GetConnectionPlayers() => _players.Select(conn => new Tuple<Dbref, string>(conn.Dbref, conn.Name));
+        public static IEnumerable<Tuple<Dbref, string>> GetConnectionPlayers() => _players.Select(conn => new Tuple<Dbref, string>(conn.Dbref, conn.Name ?? "*NULL*"));
 
         public static async Task<Player?> NotifyAsync(Dbref player, string message)
         {
@@ -207,9 +214,9 @@ namespace moo.common
                 await connection.SendOutput(message);
         }
 
-        public void Start(CancellationToken cancellationToken)
+        public void Start(ILogger? logger, CancellationToken cancellationToken)
         {
-            statusWriter.WriteLine("Initializing sqlite storage provider");
+            logger?.LogInformation("Initializing sqlite storage provider");
             var storageProvider = new SqliteStorageProvider();
             storageProvider.Initialize();
             ThingRepository.Instance.SetStorageProvider(storageProvider);
@@ -223,7 +230,7 @@ namespace moo.common
             {
                 do
                 {
-                    await Task.WhenAll(GetConnectedPlayers().Select(async (connection) => await connection.RunNextCommand(cancellationToken)));
+                    await Task.WhenAll(GetConnectedPlayers().Select(async (connection) => await connection.RunNextCommand(logger, cancellationToken)));
                 } while (!cancellationToken.IsCancellationRequested);
 
             }, cancellationToken);
@@ -234,6 +241,7 @@ namespace moo.common
                     Dbref player,
                     PlayerConnection? connection,
                     CommandResult command,
+                    ILogger? logger,
                     CancellationToken cancellationToken)
         {
             if (command == default || command.Raw.Length == 0)
@@ -246,7 +254,7 @@ namespace moo.common
                 if (action.CanProcess(player, command).Item1)
                 {
                     // TODO: Right now we block on programs
-                    actionResult = await action.Process(player, connection, command, cancellationToken);
+                    actionResult = await action.Process(player, connection, command, logger, cancellationToken);
                     if (!actionResult.isSuccess && connection != null)
                         await connection.SendOutput($"ERROR: {actionResult.reason}");
 
@@ -280,7 +288,7 @@ namespace moo.common
                         return;
                     }
 
-                    await exit.Process(player, connection, command, cancellationToken);
+                    await exit.Process(player, connection, command, logger, cancellationToken);
                     return;
                 }
 
@@ -289,7 +297,7 @@ namespace moo.common
             }
 
             if (command.Raw.StartsWith("@"))
-                Console.WriteLine($"Unknown at-command: {command.Raw}");
+                logger?.LogWarning("Unknown at-command: {raw}", command.Raw);
 
             if (connection != null)
                 await connection.SendOutput("Huh?");

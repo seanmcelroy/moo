@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using moo.common.Models;
 using moo.common.Scripting;
 
@@ -12,7 +13,7 @@ namespace moo.common.Connections
     public abstract class PlayerConnection
     {
         private static int nextConnectorDescriptor;
-        private readonly HumanPlayer player;
+        private HumanPlayer? player;
         private readonly int connectorDescriptor;
         private readonly DateTime connectionTime;
         private DateTime? lastInput;
@@ -40,7 +41,7 @@ namespace moo.common.Connections
 
         public bool IsIdle => editor == null && buffer.Length == 0 && !unattended;
 
-        protected PlayerConnection(HumanPlayer player)
+        protected PlayerConnection(HumanPlayer? player)
         {
             this.player = player;
             var next = Interlocked.Increment(ref nextConnectorDescriptor);
@@ -111,7 +112,7 @@ namespace moo.common.Connections
                 if (firstBreak < 1) // None, or zero.
                     return default;
 
-                var raw = bufferString.Substring(0, firstBreak);
+                var raw = bufferString[..firstBreak];
                 switch (breakChar)
                 {
                     case '\n':
@@ -140,7 +141,7 @@ namespace moo.common.Connections
 
         public Player GetPlayer() => this.player;
 
-        public async Task RunNextCommand(CancellationToken cancellationToken)
+        public async Task RunNextCommand(ILogger? logger, CancellationToken cancellationToken)
         {
             var command = PopCommand();
 
@@ -152,7 +153,7 @@ namespace moo.common.Connections
 
             if (editor != null)
             {
-                var editorResult = await editor.HandleInputAsync(command.Raw, cancellationToken);
+                var editorResult = await editor.HandleInputAsync(command.Raw, logger, cancellationToken);
 
                 if (!editorResult.IsSuccessful)
                     await SendOutput($"ERROR: {editorTag}: {editorResult.Reason}");
@@ -171,7 +172,7 @@ namespace moo.common.Connections
             //if (Unattended)
             //    await sendOutput($"AUTO> {command.raw}");
 
-            await Server.RunCommand(this.Dbref, this, command, cancellationToken);
+            await Server.RunCommand(this.Dbref, this, command, logger, cancellationToken);
         }
     }
 }

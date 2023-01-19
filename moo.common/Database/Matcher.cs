@@ -298,20 +298,20 @@ namespace moo.common.Database
 
         public static async Task<MatchResult> MatchHome(this Task<MatchResult> match) => await (await match).MatchHome();
 
-        private static async Task<MatchResult> MatchHome(this MatchResult match)
+        private static Task<MatchResult> MatchHome(this MatchResult match)
         {
             if (string.Compare("home", match.MatchName, true) == 0)
                 match.ExactMatch = HOME;
-            return match;
+            return Task.FromResult(match);
         }
 
         public static async Task<MatchResult> MatchNil(this Task<MatchResult> match) => await (await match).MatchNil();
 
-        private static async Task<MatchResult> MatchNil(this MatchResult match)
+        private static Task<MatchResult> MatchNil(this MatchResult match)
         {
             if (string.Compare("nil", match.MatchName, true) == 0)
                 match.ExactMatch = NIL;
-            return match;
+            return Task.FromResult(match);
         }
 
         public static async Task<MatchResult> MatchAbsolute(this Task<MatchResult> matchTask, bool doThis = true) => await (await matchTask).MatchAbsolute(doThis);

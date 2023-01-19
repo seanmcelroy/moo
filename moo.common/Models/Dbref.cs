@@ -157,7 +157,7 @@ namespace moo.common.Models
                 return false;
 
             // Target must be controlled or publicly linkable with its linklock passed
-            var (whoControlsWhere, who, where) = await whoDbref.Controls(whereDbref, cancellationToken);
+            var (whoControlsWhere, _, where) = await whoDbref.Controls(whereDbref, cancellationToken);
             return whoControlsWhere
                 || (where.IsLinkable && true); // TODO: test_lock(NOTHING, who, where, MESGPROP_LINKLOCK));
         }

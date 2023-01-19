@@ -34,7 +34,7 @@ namespace Tests
                     new ForthDatum("propValue1"),
                     new ForthDatum(123)
                 });
-                var parameters = new ForthPrimativeParameters(null, stack.ClonePreservingOrder(), null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, default);
+                var parameters = new ForthPrimativeParameters(null, stack.ClonePreservingOrder(), null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
                 var result1 = await AddProp.ExecuteAsync(parameters);
                 Assert.NotNull(result1);
                 Assert.IsTrue(result1.IsSuccessful);
@@ -57,7 +57,7 @@ namespace Tests
                 });
 
                 var local = stack.ClonePreservingOrder();
-                var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, default);
+                var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
                 var result = await GetProp.ExecuteAsync(parameters);
                 Assert.NotNull(result);
                 Assert.IsTrue(result.IsSuccessful, result.Reason);
@@ -89,7 +89,7 @@ namespace Tests
                     new ForthDatum("propValue1"),
                     new ForthDatum(123)
                 });
-                var parameters = new ForthPrimativeParameters(null, stack.ClonePreservingOrder(), null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, default);
+                var parameters = new ForthPrimativeParameters(null, stack.ClonePreservingOrder(), null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
                 var result1 = await AddProp.ExecuteAsync(parameters);
                 Assert.NotNull(result1);
                 Assert.IsTrue(result1.IsSuccessful);
@@ -112,7 +112,7 @@ namespace Tests
                 });
 
                 var local = stack.ClonePreservingOrder();
-                var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, default);
+                var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
                 var result = await GetPropStr.ExecuteAsync(parameters);
                 Assert.NotNull(result);
                 Assert.IsTrue(result.IsSuccessful, result.Reason);
@@ -144,7 +144,7 @@ namespace Tests
                 });
 
                 var local = stack.ClonePreservingOrder();
-                var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, default);
+                var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
                 var result = await GetPropStr.ExecuteAsync(parameters);
                 Assert.NotNull(result);
                 Assert.IsTrue(result.IsSuccessful, result.Reason);

@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using moo.common.Connections;
 using moo.common.Models;
 
@@ -14,6 +15,7 @@ namespace moo.common
             Dbref player,
             PlayerConnection? connection,
             CommandResult command,
+            ILogger? logger,
             CancellationToken cancellationToken);
     }
 }

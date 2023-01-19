@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using moo.common.Connections;
 using moo.common.Database;
 using static moo.common.Models.Dbref;
@@ -15,13 +16,13 @@ namespace moo.common.Models
 
         public Exit() => this.type = (int)DbrefObjectType.Exit;
 
-        public static Exit Make(string name, Dbref owner)
+        public static Exit Make(string name, Dbref owner, ILogger? logger)
         {
             // Our caller is responsible for MoveToAsync()
             var exit = ThingRepository.Instance.Make<Exit>();
             exit.name = name;
             exit.owner = owner;
-            Console.WriteLine($"Created new exit {exit.UnparseObjectInternal()}");
+            logger?.LogDebug("Created new exit {unparsed}", exit.UnparseObjectInternal());
             return exit;
         }
 
@@ -148,7 +149,7 @@ namespace moo.common.Models
             return new Tuple<bool, string?>(true, null);
         }
 
-        public async Task<VerbResult> Process(Dbref player, PlayerConnection? connection, CommandResult command, CancellationToken cancellationToken)
+        public async Task<VerbResult> Process(Dbref player, PlayerConnection? connection, CommandResult command, ILogger? logger, CancellationToken cancellationToken)
         {
             if (this == null || LinkTargets.Count == 0 || !LinkTargets.Any(l => l.IsValid()))
                 return new VerbResult(false, "Unlinked.");
@@ -174,7 +175,7 @@ namespace moo.common.Models
                     }
                 case DbrefObjectType.Program:
                     {
-                        var actionResult = await ((Script)linkTo).Process(player, connection, command, cancellationToken);
+                        var actionResult = await ((Script)linkTo).Process(player, connection, command, logger, cancellationToken);
                         if (!actionResult.isSuccess)
                             await Server.NotifyAsync(player, $"ERROR: {actionResult.reason}");
                         return actionResult;

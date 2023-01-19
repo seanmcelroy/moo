@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Threading;
 using System.Threading.Tasks;
-using moo.common.Connections;
+using Microsoft.Extensions.Logging;
 using moo.common.Models;
 
 namespace moo.common.Scripting
@@ -26,6 +26,8 @@ namespace moo.common.Scripting
 
         public readonly string? Command;
 
+        public readonly ILogger? logger;
+
         public readonly CancellationToken CancellationToken;
 
         public Dbref? LastListItem => lastListItem;
@@ -43,6 +45,7 @@ namespace moo.common.Scripting
             Func<Dbref, string, Task>? notify,
             Func<Dbref, string, List<Dbref>, Task>? notifyRoom,
             Dbref? lastListItem,
+            ILogger? logger,
             CancellationToken cancellationToken)
         {
             Process = process;
@@ -53,6 +56,7 @@ namespace moo.common.Scripting
             Trigger = trigger;
             Command = command;
             this.lastListItem = lastListItem;
+            this.logger = logger;
             CancellationToken = cancellationToken;
         }
     }

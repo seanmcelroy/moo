@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using moo.common.Connections;
 using moo.common.Models;
 
@@ -21,16 +22,16 @@ namespace moo.common.Actions.BuiltIn
             return new Tuple<bool, string?>(false, null);
         }
 
-        public Task<VerbResult> Process(Dbref player, PlayerConnection? connection, CommandResult command, CancellationToken cancellationToken)
+        public Task<VerbResult> Process(Dbref player, PlayerConnection? connection, CommandResult command, ILogger? logger, CancellationToken cancellationToken)
         {
             var script = Server.RegisterScript(command.GetDirectObject(), connection.GetPlayer());
             connection.EnterEditMode(script, command.GetDirectObject(), async t =>
             {
                 // Move this to my inventory
                 script.programText = t;
-                await script.MoveToAsync(connection, cancellationToken);
+                await script.MoveToAsync(connection, cancellationToken);     
 
-                Console.WriteLine($"Created new program {script.UnparseObjectInternal()}");
+                logger?.LogInformation("Created new program {name}", script.UnparseObjectInternal());
             });
 
             return Task.FromResult(new VerbResult(true, "Editor initiated"));

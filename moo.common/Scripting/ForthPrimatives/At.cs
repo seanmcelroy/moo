@@ -38,6 +38,9 @@ namespace moo.common.Scripting.ForthPrimatives
 
         public static ForthVariable ResolveVariableByName(Dictionary<string, ForthVariable> variables, Dbref id, Dbref location, Dbref trigger, string command, string variableName)
         {
+            if (variables == null)
+                return default;
+
             // Handle built-in variables.
             if (string.Compare("me", variableName) == 0)
                 return new ForthVariable(id, ForthVariable.VariableType.DbRef, true);

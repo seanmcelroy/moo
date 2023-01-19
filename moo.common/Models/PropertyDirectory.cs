@@ -33,16 +33,15 @@ namespace moo.common.Models
                 {
                     var propdirTitle = parts[0];
                     PropertyDirectory subdir;
-                    if (this.ContainsKey(propdirTitle))
+
+                    if (TryGetValue(propdirTitle, out Property p))
                     {
-                        subdir = (PropertyDirectory)this[propdirTitle].directory!;
-                        if (subdir == null)
-                            throw new System.InvalidOperationException();
+                        subdir = p.directory!;
                     }
                     else
                     {
                         subdir = new PropertyDirectory();
-                        this.Add(propdirTitle, subdir);
+                        Add(propdirTitle, subdir);
                     }
 
                     var remainingTitle = name[(propdirTitle.Length + 1)..];
@@ -77,7 +76,7 @@ namespace moo.common.Models
             if (firstSeparator >= 0)
             {
                 // Subdirectory needed
-                var firstSegmentName = path.Substring(0, firstSeparator);
+                var firstSegmentName = path[..firstSeparator];
                 if (this.ContainsKey(firstSegmentName))
                 {
                     var firstSegmentProperty = this.GetValueOrDefault(firstSegmentName);
@@ -115,7 +114,7 @@ namespace moo.common.Models
             if (firstSeparator >= 0)
             {
                 // Subdirectory needed
-                var firstSegmentName = path.Substring(0, firstSeparator);
+                var firstSegmentName = path[..firstSeparator];
                 if (this.ContainsKey(firstSegmentName))
                 {
                     var firstSegmentProperty = this.GetValueOrDefault(firstSegmentName);
@@ -206,7 +205,7 @@ namespace moo.common.Models
 
         public void SetPropertyPathValue(string path, PropertyType type, object value)
         {
-            var pathDirectory = path.LastIndexOf('/') == -1 ? path : path.Substring(0, path.LastIndexOf('/'));
+            var pathDirectory = path.LastIndexOf('/') == -1 ? path : path[..path.LastIndexOf('/')];
             var directory = this.FindPropertyPathForSet(path);
 
             // This property directory!
@@ -214,8 +213,7 @@ namespace moo.common.Models
             var lastPathPartIndex = path.LastIndexOf('/');
             var lastPathPart = path[(lastPathPartIndex + 1)..];
 
-            if (directory.ContainsKey(lastPathPart))
-                directory.Remove(lastPathPart);
+            directory.Remove(lastPathPart);
 
             switch (type)
             {
@@ -248,8 +246,7 @@ namespace moo.common.Models
             var lastPathPartIndex = path.LastIndexOf('/');
             var lastPathPart = path[(lastPathPartIndex + 1)..];
 
-            if (directory.ContainsKey(lastPathPart))
-                directory.Remove(lastPathPart);
+            directory.Remove(lastPathPart);
 
             switch (value.Type)
             {
@@ -275,7 +272,7 @@ namespace moo.common.Models
 
         public override bool Equals(object? obj)
         {
-            if (!(obj is PropertyDirectory))
+            if (obj is not PropertyDirectory)
                 return false;
 
             var pd = (PropertyDirectory)obj;

@@ -20,7 +20,10 @@ namespace moo.common.Scripting.ForthPrimatives
                 return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "CONIDLE requires the top parameter on the stack to be an integer");
 
             var connection = Server.GetConnectionForConnectionNumber(n1.UnwrapInt());
-            parameters.Stack.Push(new ForthDatum(Convert.ToInt32((DateTime.Now - connection.ConnectionTime).TotalSeconds)));
+            if (connection == null)
+                parameters.Stack.Push(new ForthDatum(0));
+            else
+                parameters.Stack.Push(new ForthDatum(Convert.ToInt32((DateTime.Now - connection.ConnectionTime).TotalSeconds)));
             return ForthPrimativeResult.SUCCESS;
         }
     }

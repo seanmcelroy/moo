@@ -22,8 +22,7 @@ namespace moo.common.Scripting.ForthPrimatives
 
         static void SetNewRandomSeed(string seed)
         {
-            if (seed == null)
-                seed = "default-seed";
+            seed ??= "default-seed";
 
             var textSeedHash = System.Security.Cryptography.MD5.HashData(System.Text.Encoding.UTF8.GetBytes(seed));
             var newSeedValue = BitConverter.ToInt32(textSeedHash, 0);

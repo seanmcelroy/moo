@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using moo.common.Connections;
 using static moo.common.Scripting.ForthDatum;
 
@@ -26,12 +27,11 @@ namespace moo.common.Scripting
         private static readonly Regex lvarRegex = new(@"(?:lvar\s+(?<lvar>\w{1,20}))", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static readonly Regex argsRegex = new(@"^\[(\s*(?<input>\w+:\w+))+\s*(--|]$)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-        public static async Task<ForthTokenizerResult> Tokenzie(PlayerConnection? connection, string program, Dictionary<string, ForthVariable>? programLocalVariables = null)
+        public static async Task<ForthTokenizerResult> Tokenzie(PlayerConnection? connection, string program, Dictionary<string, ForthVariable>? programLocalVariables = null, ILogger? logger = null)
         {
             var defines = new Dictionary<string, string>();
             var words = new List<ForthWord>();
-            if (programLocalVariables == null)
-                programLocalVariables = new Dictionary<string, ForthVariable>();
+            programLocalVariables ??= new Dictionary<string, ForthVariable>();
 
             var lineNumber = 1;
             var columnNumber = 0;
@@ -297,7 +297,7 @@ namespace moo.common.Scripting
                         var argMatches = argsRegex.Match(argList);
                         if (argMatches.Success)
                         {
-                            foreach (Capture cap in argMatches.Groups["input"].Captures)
+                            foreach (var cap in argMatches.Groups["input"].Captures.Cast<Capture>())
                             {
                                 var type = cap.Value.Split(':')[0];
                                 var name = cap.Value.Split(':')[1];

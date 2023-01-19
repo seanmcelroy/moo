@@ -19,7 +19,7 @@ namespace Tests
             }));
 
             var local = stack.ClonePreservingOrder();
-            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, default);
+            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = OpIsArray.Execute(parameters);
             Assert.NotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
@@ -38,7 +38,7 @@ namespace Tests
             stack.Push(new ForthDatum("string"));
 
             var local = stack.ClonePreservingOrder();
-            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, default);
+            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = OpIsArray.Execute(parameters);
             Assert.NotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
@@ -57,7 +57,7 @@ namespace Tests
             stack.Push(new ForthDatum(new Dbref("#123")));
 
             var local = stack.ClonePreservingOrder();
-            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, default);
+            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = OpIsDbRef.Execute(parameters);
             Assert.NotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
@@ -76,7 +76,7 @@ namespace Tests
             stack.Push(new ForthDatum("string"));
 
             var local = stack.ClonePreservingOrder();
-            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, default);
+            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = OpIsDbRef.Execute(parameters);
             Assert.NotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
@@ -95,7 +95,7 @@ namespace Tests
             stack.Push(new ForthDatum(12.34F));
 
             var local = stack.ClonePreservingOrder();
-            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, default);
+            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = OpIsFloat.Execute(parameters);
             Assert.NotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
@@ -114,7 +114,7 @@ namespace Tests
             stack.Push(new ForthDatum("string"));
 
             var local = stack.ClonePreservingOrder();
-            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, default);
+            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = OpIsFloat.Execute(parameters);
             Assert.NotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
@@ -133,7 +133,7 @@ namespace Tests
             stack.Push(new ForthDatum(123));
 
             var local = stack.ClonePreservingOrder();
-            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, default);
+            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = OpIsInt.Execute(parameters);
             Assert.NotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
@@ -152,7 +152,7 @@ namespace Tests
             stack.Push(new ForthDatum("string"));
 
             var local = stack.ClonePreservingOrder();
-            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, default);
+            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = OpIsInt.Execute(parameters);
             Assert.NotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
@@ -171,7 +171,7 @@ namespace Tests
             stack.Push(new ForthDatum("actual string"));
 
             var local = stack.ClonePreservingOrder();
-            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, default);
+            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = OpIsString.Execute(parameters);
             Assert.NotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
@@ -190,7 +190,7 @@ namespace Tests
             stack.Push(new ForthDatum(123));
 
             var local = stack.ClonePreservingOrder();
-            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, default);
+            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = OpIsString.Execute(parameters);
             Assert.NotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
@@ -210,7 +210,7 @@ namespace Tests
             stack.Push(new ForthDatum(10));
 
             var local = stack.ClonePreservingOrder();
-            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, default);
+            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = OpLessThan.Execute(parameters);
             Assert.NotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
@@ -230,7 +230,7 @@ namespace Tests
             stack.Push(new ForthDatum(1));
 
             var local = stack.ClonePreservingOrder();
-            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, default);
+            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = OpLessThan.Execute(parameters);
             Assert.NotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
@@ -250,7 +250,7 @@ namespace Tests
             stack.Push(new ForthDatum(1));
 
             var local = stack.ClonePreservingOrder();
-            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, default);
+            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = OpLessThan.Execute(parameters);
             Assert.NotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
@@ -270,7 +270,7 @@ namespace Tests
             stack.Push(new ForthDatum(10.0F));
 
             var local = stack.ClonePreservingOrder();
-            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, default);
+            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = OpLessThan.Execute(parameters);
             Assert.NotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
@@ -290,7 +290,7 @@ namespace Tests
             stack.Push(new ForthDatum(1.0F));
 
             var local = stack.ClonePreservingOrder();
-            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, default);
+            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = OpLessThan.Execute(parameters);
             Assert.NotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
@@ -310,7 +310,7 @@ namespace Tests
             stack.Push(new ForthDatum(10.0F / 5.0F));
 
             var local = stack.ClonePreservingOrder();
-            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, default);
+            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = OpLessThan.Execute(parameters);
             Assert.NotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
@@ -331,7 +331,7 @@ namespace Tests
             stack.Push(new ForthDatum(10));
 
             var local = stack.ClonePreservingOrder();
-            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, default);
+            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = OpLessThanOrEqual.Execute(parameters);
             Assert.NotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
@@ -351,7 +351,7 @@ namespace Tests
             stack.Push(new ForthDatum(1));
 
             var local = stack.ClonePreservingOrder();
-            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, default);
+            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = OpLessThanOrEqual.Execute(parameters);
             Assert.NotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
@@ -371,7 +371,7 @@ namespace Tests
             stack.Push(new ForthDatum(1));
 
             var local = stack.ClonePreservingOrder();
-            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, default);
+            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = OpLessThanOrEqual.Execute(parameters);
             Assert.NotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
@@ -391,7 +391,7 @@ namespace Tests
             stack.Push(new ForthDatum(10.0F));
 
             var local = stack.ClonePreservingOrder();
-            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, default);
+            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = OpLessThanOrEqual.Execute(parameters);
             Assert.NotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
@@ -411,7 +411,7 @@ namespace Tests
             stack.Push(new ForthDatum(1.0F));
 
             var local = stack.ClonePreservingOrder();
-            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, default);
+            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = OpLessThanOrEqual.Execute(parameters);
             Assert.NotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
@@ -431,7 +431,7 @@ namespace Tests
             stack.Push(new ForthDatum(10.0F / 5.0F));
 
             var local = stack.ClonePreservingOrder();
-            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, default);
+            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = OpLessThanOrEqual.Execute(parameters);
             Assert.NotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);

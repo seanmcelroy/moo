@@ -29,7 +29,7 @@ namespace moo.common.Models
 
         public override bool Equals(object? obj)
         {
-            if (!(obj is ConcurrentDbrefSet))
+            if (obj is not ConcurrentDbrefSet)
                 return false;
 
             var cds = (ConcurrentDbrefSet)obj;

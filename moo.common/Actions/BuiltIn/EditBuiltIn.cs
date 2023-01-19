@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using moo.common.Connections;
 using moo.common.Database;
 using moo.common.Models;
@@ -21,6 +22,7 @@ namespace moo.common.Actions.BuiltIn
             Dbref player,
             PlayerConnection? connection,
             CommandResult command,
+            ILogger? logger, 
             CancellationToken cancellationToken)
         {
             var str = command.GetNonVerbPhrase();
@@ -60,7 +62,7 @@ namespace moo.common.Actions.BuiltIn
             {
                 program.programText += $"\n{t}";
                 program.Uncompile();
-                await program.CompileAsync(player, cancellationToken);
+                await program.CompileAsync(player, logger, cancellationToken);
             });
 
             return new VerbResult(true, "Editor initiated");

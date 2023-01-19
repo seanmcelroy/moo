@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using moo.common.Connections;
 using moo.common.Models;
 using moo.common.Scripting.ForthPrimatives;
@@ -125,11 +126,12 @@ namespace moo.common.Scripting
             string wordName,
             Dbref? lastListItem,
             byte effectiveMuckerLevel,
+            ILogger? logger,
              CancellationToken cancellationToken)
         {
             return await this.words
                 .Single(w => string.Compare(w.name, wordName, true) == 0)
-                .RunAsync(this, stack, player, location, trigger, command, lastListItem, cancellationToken);
+                .RunAsync(this, stack, player, location, trigger, command, lastListItem, logger, cancellationToken);
         }
 
         public void Pause()
@@ -171,6 +173,7 @@ namespace moo.common.Scripting
             Dbref trigger,
             string command,
             object[] args,
+            ILogger? logger,
             CancellationToken cancellationToken)
         {
             if (hasRan)
@@ -189,7 +192,7 @@ namespace moo.common.Scripting
             }
 
             State = ProcessState.Running;
-            var result = await words.Last().RunAsync(this, stack, player, location, trigger, command, null, cancellationToken);
+            var result = await words.Last().RunAsync(this, stack, player, location, trigger, command, null, logger, cancellationToken);
             State = ProcessState.Complete;
 
             if (Server.GetInstance().PreemptProcessId == this.processId)

@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using moo.common.Connections;
 using moo.common.Models;
 using moo.common.Scripting.ForthPrimatives;
@@ -228,6 +229,7 @@ namespace moo.common.Scripting
             Dbref trigger,
             string? command,
             Dbref? lastListItem,
+            ILogger? logger, 
             CancellationToken cancellationToken)
         {
             // For each line
@@ -272,7 +274,7 @@ namespace moo.common.Scripting
                 if (verbosity > 5)
                 {
                     if (stack.Count == 0)
-                        Console.WriteLine($"DATUM: {datum.Value}");
+                        logger?.LogTrace("DATUM: {value}",datum.Value);
                     else
                         Console.WriteLine($"DATUM: {datum.Value} \tSTACK: {stack.Reverse().Select(x => x.Value?.ToString() ?? string.Empty).Aggregate((c, n) => $"{c},{n}")}");
                 }
@@ -662,7 +664,7 @@ namespace moo.common.Scripting
                      && process.HasWord(datum.Value.ToString()))
                 {
                     // Yield to other word.
-                    var wordResult = await process.RunWordAsync(datum.Value.ToString()!, lastListItem, process.EffectiveMuckerLevel, cancellationToken);
+                    var wordResult = await process.RunWordAsync(datum.Value.ToString()!, lastListItem, process.EffectiveMuckerLevel, logger, cancellationToken);
                     if (!wordResult.IsSuccessful)
                         return wordResult;
                     continue;
@@ -685,9 +687,8 @@ namespace moo.common.Scripting
                 }
 
                 if ((datum.Type == DatumType.Unknown || datum.Type == DatumType.Variable)
-                    && variables.ContainsKey(datumLiteral))
+                    && variables.TryGetValue(datumLiteral, out ForthVariable v))
                 {
-                    var v = variables[datumLiteral];
                     if (v.IsConstant)
                         stack.Push(new ForthDatum(v.Value, v.Type == VariableType.String ? DatumType.String : (v.Type == VariableType.Float ? DatumType.Float : (v.Type == VariableType.Integer ? DatumType.Integer : (v.Type == VariableType.DbRef ? DatumType.DbRef : DatumType.Unknown)))));
                     else
@@ -724,6 +725,7 @@ namespace moo.common.Scripting
                             async (d, s) => await Server.NotifyAsync(d, s),
                             async (d, s, e) => await Server.NotifyRoomAsync(d, s, e),
                             lastListItem,
+                            logger,
                             cancellationToken);
 
                         var matchingPrimative = callTable[callTableKey];
@@ -742,8 +744,8 @@ namespace moo.common.Scripting
                             {
                                 if (programLocalVariables.ContainsKey(dirty.Key))
                                 {
-                                    var v = programLocalVariables[dirty.Key];
-                                    if (v.IsConstant)
+                                    var vv = programLocalVariables[dirty.Key];
+                                    if (vv.IsConstant)
                                         return new ForthWordResult(ForthErrorResult.VARIABLE_IS_CONSTANT, $"Variable {dirty.Key} is a constant in this scope and cannot be changed.");
 
                                     programLocalVariables[dirty.Key] = dirty.Value;

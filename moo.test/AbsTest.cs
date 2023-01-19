@@ -16,7 +16,7 @@ namespace Tests
             stack.Push(new ForthDatum(42));
 
             var local = stack.ClonePreservingOrder();
-            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, default);
+            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = Abs.Execute(parameters);
             Assert.NotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
@@ -35,7 +35,7 @@ namespace Tests
             stack.Push(new ForthDatum(-42));
 
             var local = stack.ClonePreservingOrder();
-            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, default);
+            var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = Abs.Execute(parameters);
             Assert.NotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);

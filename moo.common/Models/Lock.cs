@@ -32,7 +32,7 @@ namespace moo.common.Models
 
         public override bool Equals(object? obj)
         {
-            if (!(obj is Lock))
+            if (obj is not Lock)
                 return false;
 
             return this.Equals((Lock)obj);

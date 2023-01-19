@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using moo.common.Connections;
 using moo.common.Models;
 
@@ -27,7 +28,7 @@ namespace moo.common.Scripting
             this.script = script;
         }
 
-        public async Task<EditorResult> HandleInputAsync(string line, CancellationToken cancellationToken)
+        public async Task<EditorResult> HandleInputAsync(string line, ILogger? logger, CancellationToken cancellationToken)
         {
             if (line == null || line.Length == 0)
                 return EditorResult.NORMAL_CONTINUE;
@@ -47,7 +48,7 @@ namespace moo.common.Scripting
                     case 'c':
                         {
                             // Compile
-                            var compileResult = await Script.CompileAsync(script, ProgramText, connection.Dbref, cancellationToken);
+                            var compileResult = await Script.CompileAsync(script, ProgramText, connection.Dbref, logger, cancellationToken);
                             if (!compileResult.Item1)
                                 return new EditorResult(EditorErrorResult.COMPILE_ERROR, compileResult.Item2);
 

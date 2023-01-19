@@ -40,7 +40,7 @@ namespace moo.common.Scripting.ForthPrimatives
             }
             else
             {
-                parameters.Stack.Push(new ForthDatum(source.Substring(0, index)));
+                parameters.Stack.Push(new ForthDatum(source[..index]));
                 parameters.Stack.Push(new ForthDatum(source[index..]));
             }
 
