@@ -17,7 +17,7 @@ namespace moo.common.Database
 
             JArray array = JArray.Load(reader);
             var dbrefs = array.ToObject<IList<Dbref>>();
-            return new ConcurrentDbrefSet(dbrefs);
+            return dbrefs == null ? new ConcurrentDbrefSet() : new ConcurrentDbrefSet(dbrefs);
         }
 
         public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)

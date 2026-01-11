@@ -143,7 +143,7 @@ namespace Tests
                 Assert.AreEqual(1, local.Count);
                 var pop = local.Pop();
                 Assert.AreEqual(DatumType.String, pop.Type);
-                Assert.AreEqual("", pop.Value);
+                Assert.AreEqual("", pop.Value, $"Expected empty string but got '{pop.Value}'. testObj.id was {testObj.id}");
             }
         }
     }

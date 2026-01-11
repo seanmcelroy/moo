@@ -31,7 +31,7 @@ namespace moo.common.Scripting.ForthPrimatives
                 return new ForthPrimativeResult(ForthErrorResult.NO_SUCH_OBJECT, $"Unable to find object with dbref {sTarget.UnwrapDbref()}");
 
             var property = await targetResult.value.GetPropertyPathValueAsync((string)sPath.Value, parameters.CancellationToken);
-            if (property.Equals(default(Property)) || property.Type != PropertyType.Integer)
+            if (property.Equals(default(Property)) || property.Type != PropertyType.Integer || property.Value == null)
             {
                 parameters.Stack.Push(new ForthDatum(0));
                 return ForthPrimativeResult.SUCCESS;

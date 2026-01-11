@@ -200,7 +200,12 @@ namespace moo.common
                 return new RepositoryGetResult<T>($"{id} found in storage provider with type {providerResult.type}, but cannot be cast to requested type {typeof(T).Name}");
 
             // Deserialize
-            var x = (T)typeof(Thing).GetMethod("Deserialize").MakeGenericMethod(loadedType).Invoke(null, new object[] { providerResult.serialized });
+            var deserializeMethodInfo = typeof(Thing).GetMethod("Deserialize") ?? throw new InvalidOperationException($"Cannot find {nameof(Thing.Deserialize)}");
+            var genericMethodInfo = deserializeMethodInfo.MakeGenericMethod(loadedType) ?? throw new InvalidOperationException("Cannot make generic version of Deserialize");
+            var x = (T?)genericMethodInfo.Invoke(null, [providerResult.serialized]);
+
+            if (x == null)
+                return new RepositoryGetResult<T>(x, $"{id} could not be retrieved from storage");
 
             if (_cache.ContainsKey(x.id))
             {

@@ -16,12 +16,12 @@ namespace moo.common.Networking
         /// <summary>
         /// A list of threads and the associated TCP new-connection listeners that are serviced by each by the client
         /// </summary>
-        private readonly List<Tuple<Thread, TelnetListener>> listeners = new();
+        private readonly List<Tuple<Thread, TelnetListener>> listeners = [];
 
         /// <summary>
         /// A list of connections currently established to this server instance
         /// </summary>
-        private readonly List<TelnetConnection> connections = new();
+        private readonly List<TelnetConnection> connections = [];
 
         internal ILogger? Logger { private set; get; }
 
@@ -34,7 +34,7 @@ namespace moo.common.Networking
               .AsReadOnly();
 
 
-        public int[] TelnetClearPorts { get; set; }
+        public required int[] TelnetClearPorts { get; set; }
 
         TelnetServer(ILogger? logger)
         {
@@ -47,9 +47,9 @@ namespace moo.common.Networking
         /// </summary>
         public void Start()
         {
-            this.listeners.Clear();
+            listeners.Clear();
 
-            foreach (var clearPort in this.TelnetClearPorts)
+            foreach (var clearPort in TelnetClearPorts)
             {
                 // Establish the local endpoint for the socket.
                 var localEndPoint = new IPEndPoint(IPAddress.Any, clearPort);
@@ -57,10 +57,10 @@ namespace moo.common.Networking
                 // Create a TCP/IP socket.
                 var listener = new TelnetListener(this, localEndPoint);
 
-                this.listeners.Add(new Tuple<Thread, TelnetListener>(new Thread(listener.StartAccepting), listener));
+                listeners.Add(new Tuple<Thread, TelnetListener>(new Thread(listener.StartAccepting), listener));
             }
 
-            foreach (var listener in this.listeners)
+            foreach (var listener in listeners)
             {
                 try
                 {
@@ -78,7 +78,7 @@ namespace moo.common.Networking
 
         public void Stop()
         {
-            foreach (var listener in this.listeners)
+            foreach (var listener in listeners)
             {
                 try
                 {
@@ -94,9 +94,9 @@ namespace moo.common.Networking
                 }
             }
 
-            Task.WaitAll(this.connections.Select(connection => connection.Shutdown()).ToArray());
+            Task.WaitAll([.. connections.Select(connection => connection.Shutdown())]);
 
-            foreach (var thread in this.listeners)
+            foreach (var thread in listeners)
             {
                 try
                 {

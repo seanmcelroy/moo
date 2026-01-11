@@ -18,7 +18,7 @@ namespace moo.common.Scripting.ForthPrimatives
             if (n1.Type != DatumType.Integer && n1.Type != DatumType.DbRef)
                 return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "< requires the top parameter on the stack to be a number");
 
-            parameters.Stack.Push(new ForthDatum(n1.Value.ToString()));
+            parameters.Stack.Push(new ForthDatum(n1.Value?.ToString()));
             return ForthPrimativeResult.SUCCESS;
         }
     }

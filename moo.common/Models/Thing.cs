@@ -6,7 +6,6 @@ using System.Dynamic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
-using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using moo.common.Connections;
@@ -44,11 +43,11 @@ namespace moo.common.Models
         public Dbref id;
         public string? name;
 
-        public Dbref[] templates = Array.Empty<Dbref>();
+        public Dbref[] templates = [];
 
-        public Flag[] flags = Array.Empty<Flag>();
+        public Flag[] flags = [];
 
-        private Dbref location;
+        private Dbref location = Dbref.AETHER;
         public Dbref owner;
         public string? externalDescription;
         public int pennies;
@@ -86,7 +85,7 @@ namespace moo.common.Models
 
             // TODO: Where I'm going can't be inside of me.
 
-            if (this.contents.TryAdd(id))
+            if (contents.TryAdd(id))
             {
                 Dirty = true;
                 return new VerbResult(true, "");
@@ -112,10 +111,10 @@ namespace moo.common.Models
 
         public Dbref NextContent(Dbref lastContent)
         {
-            if (this.contents.Count == 0)
+            if (contents.Count == 0)
                 return Dbref.NOT_FOUND;
 
-            return this.contents.ToImmutableList()
+            return contents.ToImmutableList()
                 .OrderBy(k => k.ToInt32())
                 .SkipWhile(k => k <= lastContent)
                 .DefaultIfEmpty(Dbref.NOT_FOUND)
@@ -127,7 +126,7 @@ namespace moo.common.Models
             if (id == this.id)
                 return new VerbResult(false, "A thing cannot come from itself");
 
-            if (this.contents.TryRemove(id))
+            if (contents.TryRemove(id))
             {
                 Dirty = true;
                 return new VerbResult(true, "");
@@ -154,11 +153,18 @@ namespace moo.common.Models
                 return new VerbResult(false, "I am already in that.");
 
             var currentLocationLookup = await ThingRepository.Instance.GetAsync<Thing>(Location, cancellationToken);
+            if (!currentLocationLookup.isSuccess || currentLocationLookup.value == null)
+                return new VerbResult(false, $"Unable to find {Location}");
+
             var resultTakeOut = currentLocationLookup.value.Remove(id);
             if (currentLocationLookup.isSuccess)
             {
+                var targetPlayer = target.GetPlayer();
+                if (targetPlayer == null)
+                    return new VerbResult(false, $"Unable to find player {target.Dbref}");
+
                 currentLocationLookup.value.Remove(id);
-                var resultPutIn = target.GetPlayer().Add(id);
+                var resultPutIn = targetPlayer.Add(id);
                 if (resultPutIn)
                 {
                     Location = target.Dbref;
@@ -177,10 +183,12 @@ namespace moo.common.Models
                 return new VerbResult(false, "I am already in that.");
 
             var currentLocationLookup = await ThingRepository.Instance.GetAsync<Thing>(Location, cancellationToken);
+            if (!currentLocationLookup.isSuccess || currentLocationLookup.value == null)
+                return new VerbResult(false, "Item was not in that container");
+
             var resultTakeOut = currentLocationLookup.value.Remove(id);
             if (currentLocationLookup.isSuccess)
             {
-                currentLocationLookup.value.Remove(id);
                 var resultPutIn = target.Add(id);
                 if (resultPutIn)
                 {
@@ -205,8 +213,7 @@ namespace moo.common.Models
 
         public static T? Deserialize<T>(string serialized) where T : Thing, new()
         {
-            if (serialized == null)
-                throw new System.ArgumentNullException(nameof(serialized));
+            ArgumentNullException.ThrowIfNull(serialized);
 
             var root = DeserializePart(serialized).Select(k => k.Item1).Cast<Dictionary<string, object>>().Single();
 
@@ -230,22 +237,21 @@ namespace moo.common.Models
                     ((IDictionary<string, object>)expando)[prop.Key] = prop.Value;
             }
 
-            string json = Newtonsoft.Json.JsonConvert.SerializeObject(expando, new Newtonsoft.Json.JsonConverter[] {
+            string json = Newtonsoft.Json.JsonConvert.SerializeObject((IDictionary<string, object>)expando, [
                 new ConcurrentDbrefSetSerializer(),
                  new DbrefSerializer()
-            });
-            var result = Newtonsoft.Json.JsonConvert.DeserializeObject<T>(json, new Newtonsoft.Json.JsonConverter[] {
+            ]);
+            var result = Newtonsoft.Json.JsonConvert.DeserializeObject<T>(json, [
                 new ConcurrentDbrefSetSerializer(),
                 new DbrefSerializer()
-            });
+            ]);
 
             return result;
         }
 
-        public static IEnumerable<Tuple<object?, string>> DeserializePart(String serialized)
+        public static IEnumerable<Tuple<object?, string>> DeserializePart(string serialized)
         {
-            if (serialized == null)
-                throw new System.ArgumentNullException(nameof(serialized));
+            ArgumentNullException.ThrowIfNull(serialized);
 
             if (serialized.StartsWith("<null/>"))
             {
@@ -375,7 +381,7 @@ namespace moo.common.Models
 
                 var nameInner = serialized.FindInnerXml("name");
                 var propertyName = nameInner.inner!;
-                var propertyValue = DeserializePart(serialized[nameInner.endOfClosingTag..]).Single().Item1;
+                var propertyValue = DeserializePart(serialized[nameInner.endOfClosingTag..]).Single().Item1 ?? throw new InvalidOperationException($"Unknown null property: {propertyName}");
 
                 Property property;
                 if (typeof(string) == propertyValue.GetType())
@@ -432,15 +438,15 @@ namespace moo.common.Models
 
         public async Task<Property> GetPropertyPathValueAsync(string path, CancellationToken cancellationToken)
         {
-            if (this.properties == null)
+            if (properties.Count == 0)
                 return default;
 
-            var result = this.properties.GetPropertyPathValue(path);
+            var result = properties.GetPropertyPathValue(path);
 
             // Rooms inherit the properties of their parents
-            if (result.Equals(default(Property)) && this.id != Dbref.AETHER)
+            if (result.Equals(default(Property)) && id != Dbref.AETHER && Location.IsValid())
             {
-                var parentLookup = await ThingRepository.Instance.GetAsync<Thing>(this.Location, cancellationToken);
+                var parentLookup = await ThingRepository.Instance.GetAsync<Thing>(Location, cancellationToken);
                 if (!parentLookup.isSuccess || parentLookup.value == null)
                     return result;
 
@@ -457,7 +463,7 @@ namespace moo.common.Models
             if (!HasFlag(flag))
                 return;
 
-            flags = flags.Except(new[] { flag }).ToArray();
+            flags = [.. flags.Except([flag])];
             Dirty = true;
         }
 
@@ -465,21 +471,21 @@ namespace moo.common.Models
         {
             if (HasFlag(flag))
                 return;
-            if (this.flags == null)
-                this.flags = new Flag[] { flag };
+            if (flags == null)
+                flags = [flag];
             else
             {
-                var newArray = new Flag[this.flags.Length + 1];
-                Array.Copy(this.flags, newArray, this.flags.Length);
+                var newArray = new Flag[flags.Length + 1];
+                Array.Copy(flags, newArray, flags.Length);
                 newArray[^1] = flag;
-                this.flags = newArray;
+                flags = newArray;
             }
             Dirty = true;
         }
 
         public void ClearProperties()
         {
-            properties = new PropertyDirectory();
+            properties = [];
             Dirty = true;
         }
 
@@ -492,7 +498,7 @@ namespace moo.common.Models
         public void SetPropertyPathValue(string path, Dbref value)
         {
             if (properties == null)
-                properties = new PropertyDirectory();
+                properties = [];
 
             properties.SetPropertyPathValue(path, new ForthVariable(value, 0));
             Dirty = true;
@@ -501,7 +507,7 @@ namespace moo.common.Models
         public void SetPropertyPathValue(string path, float value)
         {
             if (properties == null)
-                properties = new PropertyDirectory();
+                properties = [];
 
             properties.SetPropertyPathValue(path, PropertyType.Float, value);
             Dirty = true;
@@ -510,7 +516,7 @@ namespace moo.common.Models
         public void SetPropertyPathValue(string path, PropertyType type, string value)
         {
             if (properties == null)
-                properties = new PropertyDirectory();
+                properties = [];
 
             properties.SetPropertyPathValue(path, type, value);
             Dirty = true;
@@ -519,7 +525,7 @@ namespace moo.common.Models
         public void SetPropertyPathValue(string path, PropertyType type, object value)
         {
             if (properties == null)
-                properties = new PropertyDirectory();
+                properties = [];
 
             properties.SetPropertyPathValue(path, type, value);
             Dirty = true;
@@ -528,7 +534,7 @@ namespace moo.common.Models
         public void SetPropertyPathValue(string path, ForthVariable value)
         {
             if (properties == null)
-                properties = new PropertyDirectory();
+                properties = [];
 
             properties.SetPropertyPathValue(path, value);
             Dirty = true;
@@ -695,11 +701,11 @@ namespace moo.common.Models
 
         public string UnparseObjectInternal()
         {
-            var flagString = this.flags == null || this.flags.Length == 0 ? string.Empty : this.flags.Select(f => ((char)f).ToString()).Aggregate((c, n) => $"{c}{n}");
-            return $"{this.name}(#{this.id.ToInt32()}{(char)this.id.Type}{flagString})";
+            var flagString = flags == null || flags.Length == 0 ? string.Empty : flags.Select(f => ((char)f).ToString()).Aggregate((c, n) => $"{c}{n}");
+            return $"{name}(#{id.ToInt32()}{(char)id.Type}{flagString})";
         }
 
-        public bool IsGod() => this.id == Dbref.GOD;
+        public bool IsGod() => id == Dbref.GOD;
 
         public bool IsLinkable => (Type == Dbref.DbrefObjectType.Room || Type == Dbref.DbrefObjectType.Thing)
                 ? HasFlag(Flag.ABODE)

@@ -28,7 +28,14 @@ namespace moo.common.Scripting.ForthPrimatives
             if (!targetResult.isSuccess || targetResult.value == null)
                 return new ForthPrimativeResult(ForthErrorResult.NO_SUCH_OBJECT, $"Unable to find object with dbref {sTarget.UnwrapDbref()}");
 
-            var property = await targetResult.value.GetPropertyPathValueAsync((string)sPath.Value, parameters.CancellationToken);
+            var path = (string?)sPath.Value;
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                parameters.Stack.Push(new ForthDatum(0));
+                return ForthPrimativeResult.SUCCESS;
+            }
+
+            var property = await targetResult.value.GetPropertyPathValueAsync(path, parameters.CancellationToken);
             if (property.Equals(default(Property)))
             {
                 parameters.Stack.Push(new ForthDatum(0));

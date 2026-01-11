@@ -20,11 +20,11 @@ namespace moo.common.Connections
         private readonly StringBuilder buffer = new();
         private readonly object bufferLock = new();
 
-        public Dbref Dbref => player.id;
+        public Dbref Dbref => player?.id ?? Dbref.NOT_FOUND;
 
-        public string? Name => player.name;
+        public string? Name => player?.name;
 
-        public Dbref Location => player.Location;
+        public Dbref Location => player?.Location ?? Dbref.NOT_FOUND;
 
         public int ConnectorDescriptor => connectorDescriptor;
 
@@ -139,7 +139,7 @@ namespace moo.common.Connections
             this.editorTag = tag;
         }
 
-        public Player GetPlayer() => this.player;
+        public Player? GetPlayer() => this.player;
 
         public async Task RunNextCommand(ILogger? logger, CancellationToken cancellationToken)
         {

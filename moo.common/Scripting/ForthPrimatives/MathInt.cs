@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using static moo.common.Scripting.ForthDatum;
 
 namespace moo.common.Scripting.ForthPrimatives
@@ -19,7 +20,13 @@ namespace moo.common.Scripting.ForthPrimatives
             if (reference.Type == DatumType.Unknown)
             {
                 // Resolve variable 
-                var variableName = reference.Value.ToString().ToLowerInvariant();
+                var variableName = reference.Value?.ToString()?.ToLowerInvariant();
+                if (string.IsNullOrWhiteSpace(variableName))
+                    return new ForthPrimativeResult(ForthErrorResult.VARIABLE_NOT_FOUND, $"No variable name was found");
+
+                if (parameters.Variables == null)
+                    return new ForthPrimativeResult(ForthErrorResult.VARIABLE_NOT_FOUND, $"No variable named {variableName} was found");
+
                 var variable = At.ResolveVariableByName(parameters.Variables, parameters.Player, parameters.Location, parameters.Trigger, parameters.Command, variableName);
 
                 if (default(ForthVariable).Equals(variable) && !parameters.Variables.ContainsKey(variableName))

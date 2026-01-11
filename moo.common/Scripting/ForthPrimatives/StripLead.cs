@@ -18,7 +18,7 @@ namespace moo.common.Scripting.ForthPrimatives
             if (s.Type != DatumType.String)
                 return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "STRIPLEAD requires the top parameter on the stack to be a string");
 
-            parameters.Stack.Push(new ForthDatum(((string)s.Value).TrimStart()));
+            parameters.Stack.Push(new ForthDatum(((string?)s.Value)?.TrimStart()));
             return ForthPrimativeResult.SUCCESS;
         }
     }

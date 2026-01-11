@@ -507,7 +507,9 @@ namespace Tests
             Assert.IsFalse(player.CheckPassword(" secret"));
             Assert.IsFalse(player.CheckPassword("hunter2"));
             Assert.IsFalse(player.CheckPassword(""));
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             Assert.IsFalse(player.CheckPassword(null));
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
             Assert.IsTrue(player.CheckPassword("secret"));
 
             var serialized = player.Serialize();

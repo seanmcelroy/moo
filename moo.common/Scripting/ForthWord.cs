@@ -5,7 +5,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using moo.common.Connections;
 using moo.common.Models;
 using moo.common.Scripting.ForthPrimatives;
 using static moo.common.Scripting.ForthDatum;
@@ -13,7 +12,7 @@ using static moo.common.Scripting.ForthVariable;
 
 namespace moo.common.Scripting
 {
-    public struct ForthWord
+    public readonly struct ForthWord
     {
         private static readonly Dictionary<string, Func<ForthPrimativeParameters, ForthPrimativeResult>> callTable = new();
         public readonly string name;
@@ -308,7 +307,7 @@ namespace moo.common.Scripting
                     if (string.Compare("var", datumLiteral, true) == 0)
                     {
                         var functionScopedVariableName = programData[x + 1];
-                        functionScopedVariables.Add(functionScopedVariableName.Value.ToString(), ForthVariable.UNINITIALIZED);
+                        functionScopedVariables.Add(functionScopedVariableName.Value.ToString(), UNINITIALIZED);
                         x++; // Advance past the variable name since it's ahead.
                         continue;
                     }

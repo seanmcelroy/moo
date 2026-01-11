@@ -3,11 +3,9 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace moo.common.Models
 {
-    public struct Lock
+    public struct Lock(string raw) : IEquatable<Lock>
     {
-        private string raw;
-
-        public Lock(string raw) => this.raw = raw;
+        private string raw = raw;
 
         public static bool TryParse([NotNullWhen(true)] string s, out Lock? result)
         {
@@ -26,19 +24,15 @@ namespace moo.common.Models
             return true;
         }
 
-        public override int GetHashCode() => raw.GetHashCode();
+        public override readonly int GetHashCode() => raw.GetHashCode();
 
-        public bool Equals(Lock obj) => string.Equals(obj.raw, this.raw, StringComparison.Ordinal);
+        public readonly bool Equals(Lock other) => string.Equals(other.raw, raw, StringComparison.Ordinal);
 
-        public override bool Equals(object? obj)
-        {
-            if (obj is not Lock)
-                return false;
+        public readonly bool Equals(Lock? other) => other != null && string.Equals(other.Value.raw, raw, StringComparison.Ordinal);
 
-            return this.Equals((Lock)obj);
-        }
+        public override readonly bool Equals(object? obj) => obj is Lock lk && Equals(lk);
 
-        public override string ToString() => raw;
+        public override readonly string ToString() => raw;
 
         public static bool operator ==(Lock left, Lock right) => left.Equals(right);
 

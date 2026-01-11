@@ -159,7 +159,7 @@ namespace moo.common.Models
             // Target must be controlled or publicly linkable with its linklock passed
             var (whoControlsWhere, _, where) = await whoDbref.Controls(whereDbref, cancellationToken);
             return whoControlsWhere
-                || (where.IsLinkable && true); // TODO: test_lock(NOTHING, who, where, MESGPROP_LINKLOCK));
+                || (where?.IsLinkable == true); // TODO: test_lock(NOTHING, who, where, MESGPROP_LINKLOCK));
         }
 
         public static Dbref Parse(string? s) => !TryParse(s, out Dbref result) ? NOT_FOUND : result;
@@ -233,14 +233,14 @@ namespace moo.common.Models
             return distance;
         }
 
-        public bool Equals(Dbref obj)
+        public readonly bool Equals(Dbref obj)
         {
             return obj.id == this.id;
         }
 
-        public override bool Equals(object? obj) => obj is Dbref dbref && this.Equals(dbref);
+        public override readonly bool Equals(object? obj) => obj is Dbref dbref && this.Equals(dbref);
 
-        public bool IsGod() => id == GOD.id;
+        public readonly bool IsGod() => id == GOD.id;
 
         public async Task<bool> IsWizard(CancellationToken cancellationToken)
         {
@@ -252,11 +252,11 @@ namespace moo.common.Models
             return playerLookup.isSuccess && playerLookup.value != null && playerLookup.value.HasFlag(Flag.WIZARD);
         }
 
-        public bool IsValid() => !(Equals(NOT_FOUND) || Equals(AMBIGUOUS));
+        public readonly bool IsValid() => !(Equals(NOT_FOUND) || Equals(AMBIGUOUS));
 
-        public int ToInt32() => this.id;
+        public readonly int ToInt32() => this.id;
 
-        public override string ToString()
+        public override readonly string ToString()
         {
             var ct = (char)type;
             return id < 0 || type == DbrefObjectType.Unknown || ct == '\0' ? $"#{id}" : $"#{id}{(char)type}";

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -7,7 +8,7 @@ using static moo.common.Scripting.ForthVariable;
 
 namespace moo.common.Models
 {
-    public class PropertyDirectory : Dictionary<string, Property>
+    public class PropertyDirectory : Dictionary<string, Property>, IEquatable<PropertyDirectory>
     {
         public static string Serialize(PropertyDirectory? value)
         {
@@ -40,7 +41,7 @@ namespace moo.common.Models
                     }
                     else
                     {
-                        subdir = new PropertyDirectory();
+                        subdir = [];
                         Add(propdirTitle, subdir);
                     }
 
@@ -50,10 +51,10 @@ namespace moo.common.Models
                 }
             }
 
-            if (this.ContainsKey(name))
+            if (ContainsKey(name))
                 this[name] = property;
             else
-                this.Add(name, property);
+                Add(name, property);
         }
 
         public void Add(string name, string value) => AddInPath(name, new Property(name, value));
@@ -66,7 +67,7 @@ namespace moo.common.Models
 
         public void Add(string name, float value) => AddInPath(name, new Property(name, value));
 
-        public void Add(string name, PropertyDirectory value) => this.Add(name, new Property(name, value));
+        public void Add(string name, PropertyDirectory value) => Add(name, new Property(name, value));
 
         public Property GetPropertyPathValue(string path)
         {
@@ -77,7 +78,7 @@ namespace moo.common.Models
             {
                 // Subdirectory needed
                 var firstSegmentName = path[..firstSeparator];
-                if (this.ContainsKey(firstSegmentName))
+                if (ContainsKey(firstSegmentName))
                 {
                     var firstSegmentProperty = this.GetValueOrDefault(firstSegmentName);
                     if (firstSegmentProperty.Type == PropertyType.Directory)
@@ -115,7 +116,7 @@ namespace moo.common.Models
             {
                 // Subdirectory needed
                 var firstSegmentName = path[..firstSeparator];
-                if (this.ContainsKey(firstSegmentName))
+                if (ContainsKey(firstSegmentName))
                 {
                     var firstSegmentProperty = this.GetValueOrDefault(firstSegmentName);
                     if (firstSegmentProperty.Type == PropertyType.Directory)
@@ -127,9 +128,9 @@ namespace moo.common.Models
                     else
                     {
                         // Exists and is NOT a directory.  Blow it away, recreate.
-                        this.Remove(firstSegmentName);
+                        Remove(firstSegmentName);
                         var firstSegmentPropertyDirectory = new PropertyDirectory();
-                        this.Add(firstSegmentName, firstSegmentPropertyDirectory);
+                        Add(firstSegmentName, firstSegmentPropertyDirectory);
                         return firstSegmentPropertyDirectory.FindPropertyPathForSet(path[(firstSeparator + 1)..]);
                     }
                 }
@@ -137,7 +138,7 @@ namespace moo.common.Models
                 {
                     // Does not exist.  Create.
                     var firstSegmentPropertyDirectory = new PropertyDirectory();
-                    this.Add(firstSegmentName, firstSegmentPropertyDirectory);
+                    Add(firstSegmentName, firstSegmentPropertyDirectory);
                     return firstSegmentPropertyDirectory.FindPropertyPathForSet(path[(firstSeparator + 1)..]);
                 }
             }
@@ -150,7 +151,7 @@ namespace moo.common.Models
 
         public void ClearPropertyPathValue(string path)
         {
-            var directory = this.FindPropertyPathForSet(path);
+            var directory = FindPropertyPathForSet(path);
             directory.Clear();
         }
 
@@ -205,8 +206,8 @@ namespace moo.common.Models
 
         public void SetPropertyPathValue(string path, PropertyType type, object value)
         {
-            var pathDirectory = path.LastIndexOf('/') == -1 ? path : path[..path.LastIndexOf('/')];
-            var directory = this.FindPropertyPathForSet(path);
+            //var pathDirectory = path.LastIndexOf('/') == -1 ? path : path[..path.LastIndexOf('/')];
+            var directory = FindPropertyPathForSet(path);
 
             // This property directory!
             path = path.TrimStart('/').TrimEnd('/');
@@ -239,7 +240,7 @@ namespace moo.common.Models
 
         public void SetPropertyPathValue(string path, ForthVariable value)
         {
-            var directory = this.FindPropertyPathForSet(path);
+            var directory = FindPropertyPathForSet(path);
 
             // This property directory!
             path = path.TrimStart('/').TrimEnd('/');
@@ -251,45 +252,44 @@ namespace moo.common.Models
             switch (value.Type)
             {
                 case VariableType.DbRef:
-                    directory.Add(lastPathPart, value.Value == null ? Dbref.NOT_FOUND : (Dbref)value.Value);
+                    if (value.Value != null)
+                        directory.Add(lastPathPart, (Dbref)value.Value);
                     break;
                 case VariableType.String:
-                    if (value.Value != null)
-                        directory.Add(lastPathPart, (string)value.Value);
+                    directory.Add(lastPathPart, value.Value as string ?? string.Empty);
                     break;
                 case VariableType.Integer:
-                    if (value.Value != null)
-                        directory.Add(lastPathPart, (int)value.Value);
+                    directory.Add(lastPathPart, value.Value as int? ?? 0);
                     break;
                 case VariableType.Float:
-                    if (value.Value != null)
-                        directory.Add(lastPathPart, (float)value.Value);
+                    directory.Add(lastPathPart, value.Value as float? ?? 0F);
                     break;
                 default:
-                    throw new System.InvalidOperationException($"Unable to handle property type: {value.Type}");
+                    throw new InvalidOperationException($"Unable to handle property type: {value.Type}");
             }
         }
 
-        public override bool Equals(object? obj)
+        public override bool Equals(object? obj) => obj is PropertyDirectory pd && Equals(pd);
+
+        public static bool operator ==(PropertyDirectory? left, PropertyDirectory? right) => ReferenceEquals(left, right) || (left is not null && left.Equals(right));
+
+        public static bool operator !=(PropertyDirectory? left, PropertyDirectory? right) => !(left == right);
+
+        public override int GetHashCode() => this.Select(x => x.GetHashCode()).Aggregate(0, (c, n) => c ^ n);
+
+        public bool Equals(PropertyDirectory? other)
         {
-            if (obj is not PropertyDirectory)
+            if (other == null)
                 return false;
 
-            var pd = (PropertyDirectory)obj;
-            if (pd.Keys.Count != Keys.Count)
+            if (other.Keys.Count != Keys.Count)
                 return false;
 
-            foreach (var pdk in pd.Keys)
-                if (!this.ContainsKey(pdk) || pd[pdk].GetHashCode() != this[pdk].GetHashCode())
+            foreach (var pdk in other.Keys)
+                if (!ContainsKey(pdk) || !other[pdk].Equals(this[pdk]))
                     return false;
 
             return true;
         }
-
-        public static bool operator ==(PropertyDirectory left, PropertyDirectory right) => left.Equals(right);
-
-        public static bool operator !=(PropertyDirectory left, PropertyDirectory right) => !(left == right);
-
-        public override int GetHashCode() => this.Select(x => x.GetHashCode()).Aggregate((c, n) => c ^ n);
     }
 }

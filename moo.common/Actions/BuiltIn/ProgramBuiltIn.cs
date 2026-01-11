@@ -24,7 +24,18 @@ namespace moo.common.Actions.BuiltIn
 
         public Task<VerbResult> Process(Dbref player, PlayerConnection? connection, CommandResult command, ILogger? logger, CancellationToken cancellationToken)
         {
-            var script = Server.RegisterScript(command.GetDirectObject(), connection.GetPlayer());
+            if (connection == null)
+            {
+                return Task.FromResult(new VerbResult(false, "No connection"));
+            }
+
+            var playerOnConnection = connection.GetPlayer();
+            if (playerOnConnection == null)
+            {
+                return Task.FromResult(new VerbResult(false, "No player on connection"));
+            }
+
+            var script = Server.RegisterScript(command.GetDirectObject(), playerOnConnection);
             connection.EnterEditMode(script, command.GetDirectObject(), async t =>
             {
                 // Move this to my inventory

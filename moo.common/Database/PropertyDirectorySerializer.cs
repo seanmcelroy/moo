@@ -11,6 +11,11 @@ namespace moo.common.Database
 
         public override object ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer) => new Dbref(reader.Value.ToString());
 
-        public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer) => writer.WriteValue(((PropertyDirectory)value).ToString());
+        public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
+        {
+            if (value == null)
+                return;
+            writer.WriteValue(((PropertyDirectory)value).ToString());
+        }
     }
 }

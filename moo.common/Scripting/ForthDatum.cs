@@ -209,7 +209,7 @@ namespace moo.common.Scripting
 
         public ForthDatum ToInteger() => Type switch
         {
-            DatumType.Float => new ForthDatum(Value == null ? (int?)null : (int?)Convert.ToInt32((float)Value), DatumType.Integer),
+            DatumType.Float => new ForthDatum(Value == null ? null : (int?)Convert.ToInt32((float)Value), DatumType.Integer),
             DatumType.Integer => this,
             DatumType.DbRef => new ForthDatum(UnwrapDbref().ToInt32()),
             _ => new ForthDatum(0),

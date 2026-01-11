@@ -28,7 +28,7 @@ namespace moo.common.Models
 
         public object? Value
         {
-            get
+            readonly get
             {
                 if (Type == PropertyType.DbRef)
                 {
@@ -116,10 +116,15 @@ namespace moo.common.Models
             this.Type = PropertyType.Directory;
         }
 
-        public string Serialize()
+        public readonly string Serialize()
         {
             if (string.IsNullOrWhiteSpace(Name))
-                throw new System.InvalidOperationException("Property name is not set");
+                throw new InvalidOperationException("Property name is not set");
+
+            if (Value == null)
+            {
+                throw new InvalidOperationException($"Cannot serialize null value for {Name}: {Type}");
+            }
 
             return Type switch
             {
@@ -129,7 +134,7 @@ namespace moo.common.Models
                 PropertyType.Lock => Serialize((Lock)Value, 0),
                 PropertyType.Float => Serialize((float)Value),
                 PropertyType.Directory => PropertyDirectory.Serialize((PropertyDirectory)Value),
-                _ => throw new System.InvalidOperationException($"Unknown property type for {Name}: {Type}"),
+                _ => throw new InvalidOperationException($"Unknown property type for {Name}: {Type}"),
             };
         }
 
@@ -215,6 +220,24 @@ namespace moo.common.Models
 
             result = default;
             return false;
+        }
+
+        public readonly override bool Equals(object? obj)
+        {
+            if (obj is not Property other) return false;
+            if (Name != other.Name || Type != other.Type) return false;
+            if (Name == null) return true; // Default=Default
+
+            return Type switch
+            {
+                PropertyType.DbRef => Value is Dbref d && d.Equals(other.Value as Dbref?),
+                PropertyType.Directory => directory?.Equals(other.directory) == true,
+                PropertyType.Float => Convert.ToSingle(value) == Convert.ToSingle(other.value),
+                PropertyType.Integer => Convert.ToInt32(value) == Convert.ToInt32(other.value),
+                PropertyType.Lock => value is Lock l && l.Equals(other.value as Lock?),
+                PropertyType.String => value is string s && string.CompareOrdinal(s, other.value as string) == 0,
+                _ => false
+            };
         }
     }
 }

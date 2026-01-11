@@ -16,7 +16,7 @@ namespace moo.common
 {
     public class Server
     {
-        private static Server Instance;
+        private static Server? Instance;
 
         private static readonly ConcurrentBag<PlayerConnection> _players = new();
 
@@ -43,7 +43,7 @@ namespace moo.common
 
         private readonly ILogger? logger;
 
-        private Task playerHandlerTask;
+        private Task? playerHandlerTask;
 
         public long PreemptProcessId;
 
@@ -90,7 +90,7 @@ namespace moo.common
         public static Script RegisterScript(string name, Player player, string? programText = null)
         {
             Script scriptObject = ThingRepository.Instance.Make<Script>();
-            scriptObject.name = name ?? throw new System.ArgumentNullException(nameof(name));
+            scriptObject.name = name ?? throw new ArgumentNullException(nameof(name));
             scriptObject.owner = player.id;
             scriptObject.programText = programText;
             if (player.HasFlag(Thing.Flag.WIZARD))
@@ -101,7 +101,7 @@ namespace moo.common
                 scriptObject.SetFlag(Thing.Flag.LEVEL_2);
             else if (player.HasFlag(Thing.Flag.LEVEL_1))
                 scriptObject.SetFlag(Thing.Flag.LEVEL_1);
-            var insertedScriptObject = ThingRepository.Instance.Insert(scriptObject);
+            var insertedScriptObject = ThingRepository.Instance.Insert(scriptObject) ?? throw new InvalidOperationException($"Could not assign new ID to script '{name}'; script creation failed.");
             globalActions.Add(insertedScriptObject);
             return insertedScriptObject;
         }
@@ -164,7 +164,7 @@ namespace moo.common
                 logger?.LogTrace("PID {pid} in preempt mode", target.ProcessId);
             });
 
-            Task.WaitAll(new[] { task }, 60 * 1000, cancellationToken);
+            Task.WaitAll([task], 60 * 1000, cancellationToken);
         }
 
         public static PlayerConnection? GetConnection(Dbref playerId) => _players.Where(x => x.Dbref == playerId).FirstOrDefault();

@@ -24,7 +24,10 @@ namespace moo.common.Scripting.ForthPrimatives
 
             int i = si.UnwrapInt();
             if (i < 0 || i > 2)
-                return new ForthPrimativeResult(ForthErrorResult.INVALID_VALUE, $"SETMODE requires PR_MODE, FG_MODE, or BG_MODE as valid parameters");
+                return new ForthPrimativeResult(ForthErrorResult.INVALID_VALUE, "SETMODE requires PR_MODE, FG_MODE, or BG_MODE as valid parameters");
+
+            if (parameters.Process == null)
+                return new ForthPrimativeResult(ForthErrorResult.INTERNAL_ERROR, "No process exists to change");
 
             // TODO: Change mode.
             if (i == (int)MultitaskingMode.Background)
