@@ -3,13 +3,14 @@ using moo.common;
 using moo.common.Models;
 using moo.common.Scripting;
 using moo.common.Scripting.ForthPrimatives;
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Tests
 {
+    [TestClass]
     public class OpTest
     {
-        [Test]
+        [TestMethod]
         public void IsArrayTrue()
         {
             var stack = new Stack<ForthDatum>();
@@ -21,7 +22,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = OpIsArray.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             var n = local.Pop();
@@ -31,7 +32,7 @@ namespace Tests
             Assert.AreEqual(0, local.Count);
         }
 
-        [Test]
+        [TestMethod]
         public void IsArrayFalse()
         {
             var stack = new Stack<ForthDatum>();
@@ -40,7 +41,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = OpIsArray.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             var n = local.Pop();
@@ -50,7 +51,7 @@ namespace Tests
             Assert.AreEqual(0, local.Count);
         }
 
-        [Test]
+        [TestMethod]
         public void IsDbrefTrue()
         {
             var stack = new Stack<ForthDatum>();
@@ -59,7 +60,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = OpIsDbRef.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             var n = local.Pop();
@@ -69,7 +70,7 @@ namespace Tests
             Assert.AreEqual(0, local.Count);
         }
 
-        [Test]
+        [TestMethod]
         public void IsDbrefFalse()
         {
             var stack = new Stack<ForthDatum>();
@@ -78,7 +79,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = OpIsDbRef.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             var n = local.Pop();
@@ -88,7 +89,7 @@ namespace Tests
             Assert.AreEqual(0, local.Count);
         }
 
-        [Test]
+        [TestMethod]
         public void IsFloatTrue()
         {
             var stack = new Stack<ForthDatum>();
@@ -97,7 +98,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = OpIsFloat.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             var n = local.Pop();
@@ -107,7 +108,7 @@ namespace Tests
             Assert.AreEqual(0, local.Count);
         }
 
-        [Test]
+        [TestMethod]
         public void IsFloatFalse()
         {
             var stack = new Stack<ForthDatum>();
@@ -116,7 +117,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = OpIsFloat.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             var n = local.Pop();
@@ -126,7 +127,7 @@ namespace Tests
             Assert.AreEqual(0, local.Count);
         }
 
-        [Test]
+        [TestMethod]
         public void IsIntTrue()
         {
             var stack = new Stack<ForthDatum>();
@@ -135,7 +136,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = OpIsInt.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             var n = local.Pop();
@@ -145,7 +146,7 @@ namespace Tests
             Assert.AreEqual(0, local.Count);
         }
 
-        [Test]
+        [TestMethod]
         public void IsIntFalse()
         {
             var stack = new Stack<ForthDatum>();
@@ -154,7 +155,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = OpIsInt.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             var n = local.Pop();
@@ -164,7 +165,7 @@ namespace Tests
             Assert.AreEqual(0, local.Count);
         }
 
-        [Test]
+        [TestMethod]
         public void IsStringTrue()
         {
             var stack = new Stack<ForthDatum>();
@@ -173,7 +174,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = OpIsString.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             var n = local.Pop();
@@ -183,7 +184,7 @@ namespace Tests
             Assert.AreEqual(0, local.Count);
         }
 
-        [Test]
+        [TestMethod]
         public void IsStringFalse()
         {
             var stack = new Stack<ForthDatum>();
@@ -192,7 +193,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = OpIsString.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             var n = local.Pop();
@@ -202,7 +203,7 @@ namespace Tests
             Assert.AreEqual(0, local.Count);
         }
 
-        [Test]
+        [TestMethod]
         public void IsIntLessThanTrue()
         {
             var stack = new Stack<ForthDatum>();
@@ -212,7 +213,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = OpLessThan.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             var n = local.Pop();
@@ -222,7 +223,7 @@ namespace Tests
             Assert.AreEqual(0, local.Count);
         }
 
-        [Test]
+        [TestMethod]
         public void IsIntLessThanFalseObvious()
         {
             var stack = new Stack<ForthDatum>();
@@ -232,7 +233,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = OpLessThan.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             var n = local.Pop();
@@ -242,7 +243,7 @@ namespace Tests
             Assert.AreEqual(0, local.Count);
         }
 
-        [Test]
+        [TestMethod]
         public void IsIntLessThanFalseEqual()
         {
             var stack = new Stack<ForthDatum>();
@@ -252,7 +253,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = OpLessThan.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             var n = local.Pop();
@@ -262,7 +263,7 @@ namespace Tests
             Assert.AreEqual(0, local.Count);
         }
 
-        [Test]
+        [TestMethod]
         public void IsFloatLessThanTrue()
         {
             var stack = new Stack<ForthDatum>();
@@ -272,7 +273,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = OpLessThan.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             var n = local.Pop();
@@ -282,7 +283,7 @@ namespace Tests
             Assert.AreEqual(0, local.Count);
         }
 
-        [Test]
+        [TestMethod]
         public void IsFloatLessThanFalseObvious()
         {
             var stack = new Stack<ForthDatum>();
@@ -292,7 +293,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = OpLessThan.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             var n = local.Pop();
@@ -302,7 +303,7 @@ namespace Tests
             Assert.AreEqual(0, local.Count);
         }
 
-        [Test]
+        [TestMethod]
         public void IsFloatLessThanFalseEqual()
         {
             var stack = new Stack<ForthDatum>();
@@ -312,7 +313,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = OpLessThan.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             var n = local.Pop();
@@ -323,7 +324,7 @@ namespace Tests
         }
 
         // LTE
-        [Test]
+        [TestMethod]
         public void IsIntLessThanOrEqualToTrueObvious()
         {
             var stack = new Stack<ForthDatum>();
@@ -333,7 +334,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = OpLessThanOrEqual.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             var n = local.Pop();
@@ -343,7 +344,7 @@ namespace Tests
             Assert.AreEqual(0, local.Count);
         }
 
-        [Test]
+        [TestMethod]
         public void IsIntLessThanOrEqualToFalse()
         {
             var stack = new Stack<ForthDatum>();
@@ -353,7 +354,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = OpLessThanOrEqual.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             var n = local.Pop();
@@ -363,7 +364,7 @@ namespace Tests
             Assert.AreEqual(0, local.Count);
         }
 
-        [Test]
+        [TestMethod]
         public void IsIntLessThanOrEqualToTrueEqual()
         {
             var stack = new Stack<ForthDatum>();
@@ -373,7 +374,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = OpLessThanOrEqual.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             var n = local.Pop();
@@ -383,7 +384,7 @@ namespace Tests
             Assert.AreEqual(0, local.Count);
         }
 
-        [Test]
+        [TestMethod]
         public void IsFloatLessThanOrEqualToTrueObvious()
         {
             var stack = new Stack<ForthDatum>();
@@ -393,7 +394,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = OpLessThanOrEqual.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             var n = local.Pop();
@@ -403,7 +404,7 @@ namespace Tests
             Assert.AreEqual(0, local.Count);
         }
 
-        [Test]
+        [TestMethod]
         public void IsFloatLessThanOrEqualToFalse()
         {
             var stack = new Stack<ForthDatum>();
@@ -413,7 +414,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = OpLessThanOrEqual.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             var n = local.Pop();
@@ -423,7 +424,7 @@ namespace Tests
             Assert.AreEqual(0, local.Count);
         }
 
-        [Test]
+        [TestMethod]
         public void IsFloatLessThanOrEqualToTrueEqual()
         {
             var stack = new Stack<ForthDatum>();
@@ -433,7 +434,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = OpLessThanOrEqual.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             var n = local.Pop();

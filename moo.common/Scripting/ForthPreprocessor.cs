@@ -83,13 +83,13 @@ namespace moo.common.Scripting
             var x = -1;
             var inMultiLineComment = false;
 
-            var lines = program.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+            var lines = program.Split(["\r\n", "\r", "\n"], StringSplitOptions.None);
             for (var i = 0; i < lines.Length; i++)
             {
                 var line = lines[i];
                 x++;
 
-                if (!inMultiLineComment && (line.TrimStart().StartsWith("$")
+                if (!inMultiLineComment && (line.TrimStart().StartsWith('$')
                  || line.TrimStart().StartsWith("PUBLIC ", StringComparison.OrdinalIgnoreCase)))
                 {
                     // $define

@@ -8,6 +8,8 @@ namespace moo.common.Database
     {
         bool IsCached(Dbref dbref);
 
+        void Clear();
+
         T? Insert<T>(T subject) where T : Thing;
 
         T Make<T>() where T : Thing, new();

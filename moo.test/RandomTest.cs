@@ -2,67 +2,68 @@ using System.Collections.Generic;
 using moo.common.Models;
 using moo.common.Scripting;
 using moo.common.Scripting.ForthPrimatives;
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Tests
 {
+    [TestClass]
     public class RandomTest
     {
-        [Test]
+        [TestMethod]
         public void GenerateUnseededRandomNumber()
         {
             var local = new Stack<ForthDatum>();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = RandomMethods.Random(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(1, local.Count);
 
             var n = local.Pop();
             Assert.AreEqual(ForthDatum.DatumType.Integer, n.Type);
-            Assert.Greater(n.UnwrapInt(), 0);
+            Assert.IsTrue(n.UnwrapInt() > 0);
 
             Assert.AreEqual(0, local.Count);
         }
 
-        [Test]
+        [TestMethod]
         public void GenerateSeededRandomNumber()
         {
             var local = new Stack<ForthDatum>();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = RandomMethods.SRand(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(1, local.Count);
 
             var n = local.Pop();
             Assert.AreEqual(ForthDatum.DatumType.Integer, n.Type);
-            Assert.Greater(n.UnwrapInt(), 0);
+            Assert.IsTrue(n.UnwrapInt() > 0);
 
             Assert.AreEqual(0, local.Count);
         }
 
-        [Test]
+        [TestMethod]
         public void GetSeed()
         {
             var local = new Stack<ForthDatum>();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = RandomMethods.GetSeed(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(1, local.Count);
 
             var seed = local.Pop();
             Assert.AreEqual(ForthDatum.DatumType.String, seed.Type);
-            Assert.NotNull(seed.Value);
+            Assert.IsNotNull(seed.Value);
 
             Assert.AreEqual(0, local.Count);
         }
 
-        [Test]
+        [TestMethod]
         public void SetSeed()
         {
             var localSetSeed1 = new Stack<ForthDatum>(new[] { new ForthDatum("unit-test-seed") });
@@ -95,7 +96,7 @@ namespace Tests
             var getRandom3Stack = new Stack<ForthDatum>();
             var getRandom3Parameters = new ForthPrimativeParameters(null, getRandom3Stack, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var getRandom3 = RandomMethods.SRand(getRandom3Parameters);
-            Assert.NotNull(getRandom3);
+            Assert.IsNotNull(getRandom3);
             Assert.IsTrue(getRandom3.IsSuccessful);
 
             var getRandom3Value = getRandom3Stack.Pop().UnwrapInt();

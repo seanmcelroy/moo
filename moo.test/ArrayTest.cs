@@ -3,13 +3,14 @@ using moo.common;
 using moo.common.Models;
 using moo.common.Scripting;
 using moo.common.Scripting.ForthPrimatives;
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Tests
 {
+    [TestClass]
     public class ArrayTest
     {
-        [Test]
+        [TestMethod]
         public void ArrayCountSimple()
         {
             var stack = new Stack<ForthDatum>();
@@ -22,7 +23,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = ArrayCount.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             var n = local.Pop();
@@ -32,7 +33,7 @@ namespace Tests
             Assert.AreEqual(0, local.Count);
         }
 
-        [Test]
+        [TestMethod]
         public void ArrayKeysSimple()
         {
             var stack = new Stack<ForthDatum>();
@@ -44,7 +45,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = ArrayKeys.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             var n = local.Pop();
@@ -62,7 +63,7 @@ namespace Tests
             Assert.AreEqual(0, local.Count);
         }
 
-        [Test]
+        [TestMethod]
         public void ArrayValsSimple()
         {
             var stack = new Stack<ForthDatum>();
@@ -74,7 +75,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = ArrayVals.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             var n = local.Pop();
@@ -92,7 +93,7 @@ namespace Tests
             Assert.AreEqual(0, local.Count);
         }
 
-        [Test]
+        [TestMethod]
         public void ArrayMakeSimple()
         {
             var stack = new Stack<ForthDatum>();
@@ -103,16 +104,16 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = ArrayMake.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             var a = local.Pop();
             Assert.AreEqual(ForthDatum.DatumType.Array, a.Type);
-            Assert.NotNull(a.Value);
-            Assert.IsInstanceOf<string>(a.Value);
+            Assert.IsNotNull(a.Value);
+            Assert.IsInstanceOfType(a.Value, typeof(string));
 
             var arr = a.UnwrapArray();
-            Assert.NotNull(arr);
+            Assert.IsNotNull(arr);
             Assert.AreEqual(2, arr.Length);
 
             Assert.AreEqual(ForthDatum.DatumType.String, arr[0].Type);
@@ -124,7 +125,7 @@ namespace Tests
             Assert.AreEqual(0, local.Count);
         }
 
-        [Test]
+        [TestMethod]
         public void ArrayMakeDictSimple()
         {
             var stack = new Stack<ForthDatum>();
@@ -137,16 +138,16 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = ArrayMakeDict.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             var a = local.Pop();
             Assert.AreEqual(ForthDatum.DatumType.Array, a.Type);
-            Assert.NotNull(a.Value);
-            Assert.IsInstanceOf<string>(a.Value);
+            Assert.IsNotNull(a.Value);
+            Assert.IsInstanceOfType(a.Value, typeof(string));
 
             var arr = a.UnwrapArray();
-            Assert.NotNull(arr);
+            Assert.IsNotNull(arr);
             Assert.AreEqual(2, arr.Length);
 
             Assert.AreEqual(ForthDatum.DatumType.String, arr[0].Type);
@@ -160,7 +161,7 @@ namespace Tests
             Assert.AreEqual(0, local.Count);
         }
 
-        [Test]
+        [TestMethod]
         public void ArrayReverseSimple()
         {
             var stack = new Stack<ForthDatum>();
@@ -172,16 +173,16 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = ArrayReverse.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             var a = local.Pop();
             Assert.AreEqual(ForthDatum.DatumType.Array, a.Type);
-            Assert.NotNull(a.Value);
-            Assert.IsInstanceOf<string>(a.Value);
+            Assert.IsNotNull(a.Value);
+            Assert.IsInstanceOfType(a.Value, typeof(string));
 
             var arr = a.UnwrapArray();
-            Assert.NotNull(arr);
+            Assert.IsNotNull(arr);
             Assert.AreEqual(2, arr.Length);
 
             Assert.AreEqual(ForthDatum.DatumType.String, arr[0].Type);

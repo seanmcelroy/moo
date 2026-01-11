@@ -2,13 +2,14 @@ using System.Threading;
 using System.Threading.Tasks;
 using moo.common.Models;
 using moo.common.Scripting;
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Tests
 {
+    [TestClass]
     public class ForthPreprocessorTests
     {
-        [Test]
+        [TestMethod]
         public async Task SimpleIfndef()
         {
             var script = new Script
@@ -18,10 +19,10 @@ namespace Tests
 
             var prep = await ForthPreprocessor.Preprocess(Dbref.NOT_FOUND, script, script.programText, CancellationToken.None);
             Assert.IsTrue(prep.IsSuccessful);
-            Assert.AreEqual("BAR\r\n", prep.ProcessedProgram);
+            Assert.AreEqual("BAR\n", prep.ProcessedProgram);
         }
 
-        [Test]
+        [TestMethod]
         public async Task SimpleDefReplacement()
         {
             var script = new Script
@@ -31,10 +32,10 @@ namespace Tests
 
             var prep = await ForthPreprocessor.Preprocess(Dbref.NOT_FOUND, script, script.programText, CancellationToken.None);
             Assert.IsTrue(prep.IsSuccessful);
-            Assert.AreEqual("3 push\r\n", prep.ProcessedProgram);
+            Assert.AreEqual("3 push\n", prep.ProcessedProgram);
         }
 
-        [Test]
+        [TestMethod]
         public async Task SimpleDefIfdefTest()
         {
             var script = new Script
@@ -44,10 +45,10 @@ namespace Tests
 
             var prep = await ForthPreprocessor.Preprocess(Dbref.NOT_FOUND, script, script.programText, CancellationToken.None);
             Assert.IsTrue(prep.IsSuccessful);
-            Assert.AreEqual("3 push\r\n", prep.ProcessedProgram);
+            Assert.AreEqual("3 push\n", prep.ProcessedProgram);
         }
 
-        [Test]
+        [TestMethod]
         public async Task SimpleDefIfdefElseTest()
         {
             var script = new Script
@@ -57,10 +58,10 @@ namespace Tests
 
             var prep = await ForthPreprocessor.Preprocess(Dbref.NOT_FOUND, script, script.programText, CancellationToken.None);
             Assert.IsTrue(prep.IsSuccessful);
-            Assert.AreEqual("3 3\r\n", prep.ProcessedProgram);
+            Assert.AreEqual("3 3\n", prep.ProcessedProgram);
         }
 
-        [Test]
+        [TestMethod]
         public async Task SimpleDefIfndefElseTest()
         {
             var script = new Script
@@ -70,10 +71,10 @@ namespace Tests
 
             var prep = await ForthPreprocessor.Preprocess(Dbref.NOT_FOUND, script, script.programText, CancellationToken.None);
             Assert.IsTrue(prep.IsSuccessful);
-            Assert.AreEqual("2 2\r\n", prep.ProcessedProgram);
+            Assert.AreEqual("2 2\n", prep.ProcessedProgram);
         }
 
-        [Test]
+        [TestMethod]
         public async Task NestedIfDefs()
         {
             var script = new Script
@@ -86,7 +87,7 @@ namespace Tests
             Assert.AreEqual("", prep.ProcessedProgram);
         }
 
-        [Test]
+        [TestMethod]
         public async Task NestedIfDefs2()
         {
             var script = new Script
@@ -99,7 +100,7 @@ namespace Tests
             Assert.AreEqual("3 3", prep.ProcessedProgram?.TrimEnd(new char[] { '\r', '\n' }));
         }
 
-        [Test]
+        [TestMethod]
         public async Task NestedIfDefs3()
         {
             var script = new Script
@@ -112,7 +113,7 @@ namespace Tests
             Assert.AreEqual("2 2", prep.ProcessedProgram?.TrimEnd(new char[] { '\r', '\n' }));
         }
 
-        [Test]
+        [TestMethod]
         public async Task NestedIfDefs4()
         {
             var script = new Script
@@ -125,7 +126,7 @@ namespace Tests
             Assert.AreEqual("4 4", prep.ProcessedProgram?.TrimEnd(new char[] { '\r', '\n' }));
         }
 
-        [Test]
+        [TestMethod]
         public async Task NestedIfDefs5()
         {
             var script = new Script
@@ -138,13 +139,13 @@ namespace Tests
             Assert.AreEqual("5 5", prep.ProcessedProgram?.TrimEnd(new char[] { '\r', '\n' }));
         }
 
-        [Test]
+        [TestMethod]
         public async Task DefineExpansion()
         {
             var programText = "$def stripspaces strip\n: getprepend (playerdbref -- string)\n     \"_whisp/prepend\" getpropstr dup not if\n        me @ \"_whisp/prepend\" \"W>>>\" setprop \n     else stripspaces \" \" strcat\n     then\n;";
             var prep = await ForthPreprocessor.Preprocess(Dbref.NOT_FOUND, null, programText, CancellationToken.None);
             Assert.IsTrue(prep.IsSuccessful);
-            Assert.NotNull(prep.ProcessedProgram);
+            Assert.IsNotNull(prep.ProcessedProgram);
             Assert.IsFalse(prep.ProcessedProgram!.Contains(" strip ", System.StringComparison.OrdinalIgnoreCase));
         }
     }

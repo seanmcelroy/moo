@@ -3,13 +3,14 @@ using moo.common;
 using moo.common.Models;
 using moo.common.Scripting;
 using moo.common.Scripting.ForthPrimatives;
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Tests
 {
+    [TestClass]
     public class PickTest
     {
-        [Test]
+        [TestMethod]
         public void Dup()
         {
             var stack = new Stack<ForthDatum>();
@@ -19,7 +20,7 @@ namespace Tests
             local.Push(new ForthDatum(1));
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = Pick.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(2, local.Count);
@@ -34,7 +35,7 @@ namespace Tests
             Assert.AreEqual(x1, x2);
         }
 
-        [Test]
+        [TestMethod]
         public void Over()
         {
             var stack = new Stack<ForthDatum>();
@@ -45,7 +46,7 @@ namespace Tests
             local.Push(new ForthDatum(2));
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = Pick.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(3, local.Count);
@@ -64,7 +65,7 @@ namespace Tests
             Assert.AreEqual(x1, x2);
         }
 
-        [Test]
+        [TestMethod]
         public void Pick3()
         {
             var stack = new Stack<ForthDatum>();
@@ -77,7 +78,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = Pick.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(5, local.Count);

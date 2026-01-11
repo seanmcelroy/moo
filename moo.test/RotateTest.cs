@@ -3,13 +3,14 @@ using moo.common;
 using moo.common.Models;
 using moo.common.Scripting;
 using moo.common.Scripting.ForthPrimatives;
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Tests
 {
+    [TestClass]
     public class RotateTest
     {
-        [Test]
+        [TestMethod]
         public void ForwardShift()
         {
             /*
@@ -29,7 +30,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = Rotate.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             var a = local.Pop();
@@ -51,7 +52,7 @@ namespace Tests
             Assert.AreEqual(0, local.Count);
         }
 
-        [Test]
+        [TestMethod]
         public void BackwardShift()
         {
             /*
@@ -71,7 +72,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = Rotate.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             var c = local.Pop();
@@ -93,7 +94,7 @@ namespace Tests
             Assert.AreEqual(0, local.Count);
         }
 
-        [Test]
+        [TestMethod]
         public void Rotate3()
         {
             /*
@@ -110,7 +111,7 @@ namespace Tests
             local.Push(new ForthDatum(3));
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = Rotate.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             var x = local.Pop();

@@ -3,13 +3,14 @@ using moo.common;
 using moo.common.Models;
 using moo.common.Scripting;
 using moo.common.Scripting.ForthPrimatives;
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Tests
 {
+    [TestClass]
     public class AbsTest
     {
-        [Test]
+        [TestMethod]
         public void Positive()
         {
             var stack = new Stack<ForthDatum>();
@@ -18,7 +19,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = Abs.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             var n = local.Pop();
@@ -28,7 +29,7 @@ namespace Tests
             Assert.AreEqual(0, local.Count);
         }
 
-        [Test]
+        [TestMethod]
         public void Negative()
         {
             var stack = new Stack<ForthDatum>();
@@ -37,7 +38,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = Abs.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             var n = local.Pop();

@@ -3,13 +3,14 @@ using moo.common;
 using moo.common.Models;
 using moo.common.Scripting;
 using moo.common.Scripting.ForthPrimatives;
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Tests
 {
+    [TestClass]
     public class StringTests
     {
-        [Test]
+        [TestMethod]
         public void NextClosingTagSimple()
         {
             var test = "<html></html>";
@@ -17,7 +18,7 @@ namespace Tests
             Assert.AreEqual(6, nextClosing);
         }
 
-        [Test]
+        [TestMethod]
         public void NextClosingTagNexted()
         {
             var test = "<html><html></html></html>";
@@ -25,7 +26,7 @@ namespace Tests
             Assert.AreEqual(19, nextClosing);
         }
 
-        [Test]
+        [TestMethod]
         public void NextClosingTagUnclosed()
         {
             var test = "<html><html>";
@@ -33,7 +34,7 @@ namespace Tests
             Assert.AreEqual(-1, nextClosing);
         }
 
-        [Test]
+        [TestMethod]
         public void FindInnerTextSimple()
         {
             var test = "<html>TEXT</html>";
@@ -42,7 +43,7 @@ namespace Tests
             Assert.AreEqual(inner.endOfClosingTag, test.Length);
         }
 
-        [Test]
+        [TestMethod]
         public void FindInnerTextDeep()
         {
             var test = "<html><title>This is a title</title><body><h2>Header</h2></body></html>";
@@ -51,7 +52,7 @@ namespace Tests
             Assert.AreEqual(57, inner.endOfClosingTag);
         }
 
-        [Test]
+        [TestMethod]
         public void FindInnerTextDeepMultiple()
         {
             var test = "<html><title>This is a title</title><body><h2>First</h2><h2>Second</h2></body></html>";
@@ -60,7 +61,7 @@ namespace Tests
             Assert.AreEqual(56, inner.endOfClosingTag);
         }
 
-        [Test]
+        [TestMethod]
         public void FindInnerTextDeepPractical()
         {
             var test = "<propdir><key>prop1</key><value><prop><name>level1/prop1</name><string>STRING</string></prop></value><key>prop2</key><value><prop><name>level1/prop2</name><integer>123</integer></prop></value></propdir>";
@@ -73,7 +74,7 @@ namespace Tests
             Assert.AreEqual(25, key1.endOfClosingTag);
         }
 
-        [Test]
+        [TestMethod]
         public void FindInnerTextDeepPractical2()
         {
             var test = "<propdir><key>deep</key><value><prop><name>deep</name><propdir><key>string</key><value><prop><name>string</name><string>STRING TEST &lt; WOO &gt;</string></prop></value><key>int</key><value><prop><name>int</name><float>321</float></prop></value><key>dbref</key><value><prop><name>dbref</name><dbref>#2468G</dbref></prop></value><key>float</key><value><prop><name>float</name><float>12.34</float></prop></value></propdir></prop></value></propdir>";
@@ -82,7 +83,7 @@ namespace Tests
             Assert.AreEqual("<key>deep</key><value><prop><name>deep</name><propdir><key>string</key><value><prop><name>string</name><string>STRING TEST &lt; WOO &gt;</string></prop></value><key>int</key><value><prop><name>int</name><float>321</float></prop></value><key>dbref</key><value><prop><name>dbref</name><dbref>#2468G</dbref></prop></value><key>float</key><value><prop><name>float</name><float>12.34</float></prop></value></propdir></prop></value>", inner);
         }
 
-        [Test]
+        [TestMethod]
         public void StripLeadingSpace()
         {
             /*
@@ -96,7 +97,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = StripLead.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(1, local.Count);
@@ -106,7 +107,7 @@ namespace Tests
             Assert.AreEqual(0, local.Count);
         }
 
-        [Test]
+        [TestMethod]
         public void StripTrailingSpace()
         {
             /*
@@ -120,7 +121,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = StripTail.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(1, local.Count);
@@ -130,7 +131,7 @@ namespace Tests
             Assert.AreEqual(0, local.Count);
         }
 
-        [Test]
+        [TestMethod]
         public void SplitNoMatch()
         {
             /*
@@ -144,7 +145,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = Split.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(2, local.Count);
@@ -159,7 +160,7 @@ namespace Tests
             Assert.AreEqual(0, local.Count);
         }
 
-        [Test]
+        [TestMethod]
         public void SplitOneMatch()
         {
             /*
@@ -173,7 +174,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = Split.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(2, local.Count);
@@ -188,7 +189,7 @@ namespace Tests
             Assert.AreEqual(0, local.Count);
         }
 
-        [Test]
+        [TestMethod]
         public void SplitTwoMatches()
         {
             /*
@@ -202,7 +203,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = Split.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(2, local.Count);
@@ -218,7 +219,7 @@ namespace Tests
         }
 
 
-        [Test]
+        [TestMethod]
         public void ReverseSplitNoMatch()
         {
             /*
@@ -232,7 +233,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = RSplit.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(2, local.Count);
@@ -247,7 +248,7 @@ namespace Tests
             Assert.AreEqual(0, local.Count);
         }
 
-        [Test]
+        [TestMethod]
         public void ReverseSplitOneMatch()
         {
             /*
@@ -261,7 +262,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = RSplit.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(2, local.Count);
@@ -276,7 +277,7 @@ namespace Tests
             Assert.AreEqual(0, local.Count);
         }
 
-        [Test]
+        [TestMethod]
         public void ReverseSplitTwoMatches()
         {
             /*
@@ -290,7 +291,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = RSplit.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(2, local.Count);
@@ -305,7 +306,7 @@ namespace Tests
             Assert.AreEqual(0, local.Count);
         }
 
-        [Test]
+        [TestMethod]
         public void StrCutNormal()
         {
             /*
@@ -321,7 +322,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = StrCut.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(2, local.Count);
@@ -336,7 +337,7 @@ namespace Tests
             Assert.AreEqual(0, local.Count);
         }
 
-        [Test]
+        [TestMethod]
         public void StrCutZero()
         {
             /*
@@ -352,7 +353,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = StrCut.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(2, local.Count);
@@ -367,7 +368,7 @@ namespace Tests
             Assert.AreEqual(0, local.Count);
         }
 
-        [Test]
+        [TestMethod]
         public void StrCutTooBig()
         {
             /*
@@ -383,7 +384,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = StrCut.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(2, local.Count);
@@ -398,7 +399,7 @@ namespace Tests
             Assert.AreEqual(0, local.Count);
         }
 
-        [Test]
+        [TestMethod]
         public void Midstr()
         {
             /*
@@ -414,7 +415,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = MidStr.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(1, local.Count);
@@ -426,14 +427,14 @@ namespace Tests
 
         }
 
-        [Test]
-        [TestCase("dg")]
-        [TestCase("dog")]
-        [TestCase("doog")]
-        [TestCase("dorfg")]
-        [TestCase("DG")]
-        [TestCase("DOG")]
-        [TestCase("DoOg")]
+        [DataTestMethod]
+        [DataRow("dg")]
+        [DataRow("dog")]
+        [DataRow("doog")]
+        [DataRow("dorfg")]
+        [DataRow("DG")]
+        [DataRow("DOG")]
+        [DataRow("DoOg")]
         public void SMatchWildDgMatch(string test)
         {
             /*
@@ -449,7 +450,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = SMatch.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(1, local.Count);
@@ -461,10 +462,10 @@ namespace Tests
 
         }
 
-        [Test]
-        [TestCase("dog")]
-        [TestCase("dig")]
-        [TestCase("dug")]
+        [DataTestMethod]
+        [DataRow("dog")]
+        [DataRow("dig")]
+        [DataRow("dug")]
         public void SMatchCharDgMatch(string test)
         {
             /*
@@ -480,7 +481,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = SMatch.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(1, local.Count);
@@ -492,9 +493,9 @@ namespace Tests
 
         }
 
-        [Test]
-        [TestCase("dg")]
-        [TestCase("drug")]
+        [DataTestMethod]
+        [DataRow("dg")]
+        [DataRow("drug")]
         public void SMatchCharDgFail(string test)
         {
             /*
@@ -510,7 +511,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = SMatch.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(1, local.Count);
@@ -522,9 +523,9 @@ namespace Tests
 
         }
 
-        [Test]
-        [TestCase("Mr.")]
-        [TestCase("Ms.")]
+        [DataTestMethod]
+        [DataRow("Mr.")]
+        [DataRow("Ms.")]
         public void SMatchCharBracketCharMatch(string test)
         {
             /*
@@ -540,7 +541,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = SMatch.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(1, local.Count);
@@ -552,9 +553,9 @@ namespace Tests
 
         }
 
-        [Test]
-        [TestCase("Ma")]
-        [TestCase("Mb")]
+        [DataTestMethod]
+        [DataRow("Ma")]
+        [DataRow("Mb")]
         public void SMatchCharBracketRangeMatch(string test)
         {
             /*
@@ -570,7 +571,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = SMatch.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(1, local.Count);
@@ -582,9 +583,9 @@ namespace Tests
 
         }
 
-        [Test]
-        [TestCase("Moira snores")]
-        [TestCase("Chupchup arghs.")]
+        [DataTestMethod]
+        [DataRow("Moira snores")]
+        [DataRow("Chupchup arghs.")]
         public void SMatchCharWordMatch(string test)
         {
             /*
@@ -600,7 +601,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = SMatch.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(1, local.Count);
@@ -612,8 +613,8 @@ namespace Tests
 
         }
 
-        [Test]
-        [TestCase("Moira' snores")]
+        [DataTestMethod]
+        [DataRow("Moira' snores")]
         public void SMatchCharWordFail(string test)
         {
             /*
@@ -629,7 +630,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = SMatch.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(1, local.Count);
@@ -641,11 +642,11 @@ namespace Tests
 
         }
 
-        [Test]
-        [TestCase("Foxen tickles Wolfen?")]
-        [TestCase("Lynx tickle Wolfen?")]
-        [TestCase("Fiera tyckle Wolfen?")]
-        [TestCase("Fiero tyckle?")]
+        [DataTestMethod]
+        [DataRow("Foxen tickles Wolfen?")]
+        [DataRow("Lynx tickle Wolfen?")]
+        [DataRow("Fiera tyckle Wolfen?")]
+        [DataRow("Fiero tyckle?")]
         public void SMatchCharWordMatchComplex(string test)
         {
             /*
@@ -661,7 +662,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = SMatch.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(1, local.Count);
@@ -673,9 +674,9 @@ namespace Tests
 
         }
 
-        [Test]
-        [TestCase("Sean")]
-        [TestCase("Jacob")]
+        [DataTestMethod]
+        [DataRow("Sean")]
+        [DataRow("Jacob")]
         public void SMatchCharWordNegateMatch(string test)
         {
             /*
@@ -691,7 +692,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = SMatch.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(1, local.Count);
@@ -703,9 +704,9 @@ namespace Tests
 
         }
 
-        [Test]
-        [TestCase("Foxen")]
-        [TestCase("Fiera")]
+        [DataTestMethod]
+        [DataRow("Foxen")]
+        [DataRow("Fiera")]
         public void SMatchCharWordNegateFail(string test)
         {
             /*
@@ -721,7 +722,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = SMatch.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(1, local.Count);
@@ -732,7 +733,7 @@ namespace Tests
             Assert.AreEqual(0, local.Count);
         }
 
-        [Test]
+        [TestMethod]
         public void SubstTest()
         {
             /*
@@ -754,7 +755,7 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = Subst.Execute(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(1, local.Count);

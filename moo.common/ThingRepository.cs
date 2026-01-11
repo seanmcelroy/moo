@@ -20,6 +20,12 @@ namespace moo.common
 
         public bool IsCached(Dbref dbref) => _cache.ContainsKey(dbref);
 
+        public void Clear()
+        {
+            _cache.Clear();
+            nextThingId = -1;
+        }
+
         public T? Insert<T>(T subject) where T : Thing
         {
             DbrefObjectType type;

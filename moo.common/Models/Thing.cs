@@ -53,7 +53,7 @@ namespace moo.common.Models
         public string? externalDescription;
         public int pennies;
         public int type;
-        public PropertyDirectory properties = new();// public for serialization
+        public PropertyDirectory properties = [];// public for serialization
         public ConcurrentDbrefSet contents = new();// public for serialization
         public ConcurrentDbrefSet linkTargets = new(); // public for serialization
 

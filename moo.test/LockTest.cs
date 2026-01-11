@@ -1,11 +1,12 @@
 using moo.common.Models;
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Tests
 {
+    [TestClass]
     public class LockTest
     {
-        [Test]
+        [TestMethod]
         public void ParseValid()
         {
             Assert.IsTrue(Lock.TryParse("sex:female", out _));

@@ -4,15 +4,16 @@ using moo.common;
 using moo.common.Models;
 using moo.common.Scripting;
 using moo.common.Scripting.ForthPrimatives;
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using static moo.common.Models.Property;
 using static moo.common.Scripting.ForthDatum;
 
 namespace Tests
 {
-    public class GetPropTest
+    [TestClass]
+    public class GetPropTest : TestBase
     {
-        [Test]
+        [TestMethod]
         public async Task GetProp_String()
         {
             /*
@@ -28,22 +29,18 @@ namespace Tests
 
             // Set the property up
             {
-                var stack = new Stack<ForthDatum>(new[]{
+                var stack = new Stack<ForthDatum>([
                     new ForthDatum(testObj.id),
                     new ForthDatum("propName"),
                     new ForthDatum("propValue1"),
                     new ForthDatum(123)
-                });
+                ]);
                 var parameters = new ForthPrimativeParameters(null, stack.ClonePreservingOrder(), null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
                 var result1 = await AddProp.ExecuteAsync(parameters);
-                Assert.NotNull(result1);
                 Assert.IsTrue(result1.IsSuccessful);
-
-                Assert.NotNull(testObj.properties);
                 Assert.AreEqual(1, testObj.properties.Count);
                 Assert.IsTrue(testObj.properties.ContainsKey("propName"));
                 var prop = testObj.properties["propName"];
-                Assert.NotNull(prop);
                 Assert.AreEqual("propName", prop.Name);
                 Assert.AreEqual(PropertyType.String, prop.Type);
                 Assert.AreEqual("propValue1", prop.Value);
@@ -51,15 +48,14 @@ namespace Tests
 
             // Now get
             {
-                var stack = new Stack<ForthDatum>(new[]{
+                var stack = new Stack<ForthDatum>([
                     new ForthDatum(testObj.id),
                     new ForthDatum("propName")
-                });
+                ]);
 
                 var local = stack.ClonePreservingOrder();
                 var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
                 var result = await GetProp.ExecuteAsync(parameters);
-                Assert.NotNull(result);
                 Assert.IsTrue(result.IsSuccessful, result.Reason);
 
                 Assert.AreEqual(1, local.Count);
@@ -69,7 +65,7 @@ namespace Tests
             }
         }
 
-        [Test]
+        [TestMethod]
         public async Task GetPropStr_String()
         {
             /*
@@ -83,22 +79,19 @@ namespace Tests
 
             // Set the property up
             {
-                var stack = new Stack<ForthDatum>(new[]{
+                var stack = new Stack<ForthDatum>([
                     new ForthDatum(testObj.id),
                     new ForthDatum("propName"),
                     new ForthDatum("propValue1"),
                     new ForthDatum(123)
-                });
+                ]);
                 var parameters = new ForthPrimativeParameters(null, stack.ClonePreservingOrder(), null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
                 var result1 = await AddProp.ExecuteAsync(parameters);
-                Assert.NotNull(result1);
                 Assert.IsTrue(result1.IsSuccessful);
 
-                Assert.NotNull(testObj.properties);
                 Assert.AreEqual(1, testObj.properties.Count);
                 Assert.IsTrue(testObj.properties.ContainsKey("propName"));
                 var prop = testObj.properties["propName"];
-                Assert.NotNull(prop);
                 Assert.AreEqual("propName", prop.Name);
                 Assert.AreEqual(PropertyType.String, prop.Type);
                 Assert.AreEqual("propValue1", prop.Value);
@@ -114,7 +107,6 @@ namespace Tests
                 var local = stack.ClonePreservingOrder();
                 var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
                 var result = await GetPropStr.ExecuteAsync(parameters);
-                Assert.NotNull(result);
                 Assert.IsTrue(result.IsSuccessful, result.Reason);
 
                 Assert.AreEqual(1, local.Count);
@@ -124,7 +116,7 @@ namespace Tests
             }
         }
 
-        [Test]
+        [TestMethod]
         public async Task GetPropStr_DoesNotExist()
         {
             /*
@@ -138,15 +130,14 @@ namespace Tests
 
             // Now get with no setup
             {
-                var stack = new Stack<ForthDatum>(new[]{
+                var stack = new Stack<ForthDatum>([
                     new ForthDatum(testObj.id),
                     new ForthDatum("propName")
-                });
+                ]);
 
                 var local = stack.ClonePreservingOrder();
                 var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
                 var result = await GetPropStr.ExecuteAsync(parameters);
-                Assert.NotNull(result);
                 Assert.IsTrue(result.IsSuccessful, result.Reason);
 
                 Assert.AreEqual(1, local.Count);

@@ -4,14 +4,15 @@ using moo.common;
 using moo.common.Models;
 using moo.common.Scripting;
 using moo.common.Scripting.ForthPrimatives;
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using static moo.common.Models.Property;
 
 namespace Tests
 {
-    public class AddPropTest
+    [TestClass]
+    public class AddPropTest : TestBase
     {
-        [Test]
+        [TestMethod]
         public async Task AddPropNormalString()
         {
             /*
@@ -35,20 +36,20 @@ namespace Tests
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
 
             var result = await AddProp.ExecuteAsync(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
-            Assert.NotNull(testObj.properties);
+            Assert.IsNotNull(testObj.properties);
             Assert.AreEqual(1, testObj.properties.Count);
             Assert.IsTrue(testObj.properties.ContainsKey("propName"));
             var prop = testObj.properties["propName"];
-            Assert.NotNull(prop);
+            Assert.IsNotNull(prop);
             Assert.AreEqual("propName", prop.Name);
             Assert.AreEqual(PropertyType.String, prop.Type);
             Assert.AreEqual("propValue", prop.Value);
         }
 
-        [Test]
+        [TestMethod]
         public async Task AddPropNormalInteger()
         {
             /*
@@ -72,20 +73,20 @@ namespace Tests
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
 
             var result = await AddProp.ExecuteAsync(parameters);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
-            Assert.NotNull(testObj.properties);
+            Assert.IsNotNull(testObj.properties);
             Assert.AreEqual(1, testObj.properties.Count);
             Assert.IsTrue(testObj.properties.ContainsKey("propName"));
             var prop = testObj.properties["propName"];
-            Assert.NotNull(prop);
+            Assert.IsNotNull(prop);
             Assert.AreEqual("propName", prop.Name);
             Assert.AreEqual(PropertyType.Integer, prop.Type);
             Assert.AreEqual(123, prop.Value);
         }
 
-        [Test]
+        [TestMethod]
         public async Task AddPropOverwriteString()
         {
             /*
@@ -108,14 +109,14 @@ namespace Tests
                 });
                 var parameters = new ForthPrimativeParameters(null, stack.ClonePreservingOrder(), null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
                 var result1 = await AddProp.ExecuteAsync(parameters);
-                Assert.NotNull(result1);
+                Assert.IsNotNull(result1);
                 Assert.IsTrue(result1.IsSuccessful);
 
-                Assert.NotNull(testObj.properties);
+                Assert.IsNotNull(testObj.properties);
                 Assert.AreEqual(1, testObj.properties.Count);
                 Assert.IsTrue(testObj.properties.ContainsKey("propName"));
                 var prop = testObj.properties["propName"];
-                Assert.NotNull(prop);
+                Assert.IsNotNull(prop);
                 Assert.AreEqual("propName", prop.Name);
                 Assert.AreEqual(PropertyType.String, prop.Type);
                 Assert.AreEqual("propValue1", prop.Value);
@@ -130,14 +131,14 @@ namespace Tests
                 });
                 var parameters = new ForthPrimativeParameters(null, stack.ClonePreservingOrder(), null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null,  default);
                 var result2 = await AddProp.ExecuteAsync(parameters);
-                Assert.NotNull(result2);
+                Assert.IsNotNull(result2);
                 Assert.IsTrue(result2.IsSuccessful);
 
-                Assert.NotNull(testObj.properties);
+                Assert.IsNotNull(testObj.properties);
                 Assert.AreEqual(1, testObj.properties.Count);
                 Assert.IsTrue(testObj.properties.ContainsKey("propName"));
                 var prop = testObj.properties["propName"];
-                Assert.NotNull(prop);
+                Assert.IsNotNull(prop);
                 Assert.AreEqual("propName", prop.Name);
                 Assert.AreEqual(PropertyType.String, prop.Type);
                 Assert.AreEqual("propValue2", prop.Value);
