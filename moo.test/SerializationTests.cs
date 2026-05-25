@@ -6,7 +6,7 @@ using moo.common.Database;
 using moo.common.Models;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Tests
+namespace moo.Test
 {
     [TestClass]
     public class SerializationTests : TestBase
@@ -239,7 +239,7 @@ namespace Tests
         [TestMethod]
         public void ReserializeConcurrentDbrefSet()
         {
-            var cds = new ConcurrentDbrefSet(new[] { Dbref.Parse("#123E") });
+            var cds = new ConcurrentDbrefSet([Dbref.Parse("#123E")]);
             var serialized = Thing.Serialize(cds);
             Assert.IsNotNull(serialized);
             var deserializedResult = Thing.DeserializePart(serialized);
@@ -443,10 +443,10 @@ namespace Tests
         public void DeserializeContentsConcurrentDbrefSet()
         {
             var json = "{\"properties\":{\"test\":{\"Name\":\"test\",\"directory\":{\"deep\":{\"Name\":\"deep\",\"directory\":{\"string\":{\"Name\":\"string\",\"directory\":null,\"value\":\"STRING TEST < WOO >\",\"Type\":1,\"Value\":\"STRING TEST < WOO >\"},\"int\":{\"Name\":\"int\",\"directory\":null,\"value\":321.0,\"Type\":4,\"Value\":321.0},\"dbref\":{\"Name\":\"dbref\",\"directory\":null,\"value\":\"#2468G\",\"Type\":3,\"Value\":\"#2468G\"},\"float\":{\"Name\":\"float\",\"directory\":null,\"value\":12.34,\"Type\":4,\"Value\":12.34}},\"value\":null,\"Type\":5,\"Value\":{\"string\":{\"Name\":\"string\",\"directory\":null,\"value\":\"STRING TEST < WOO >\",\"Type\":1,\"Value\":\"STRING TEST < WOO >\"},\"int\":{\"Name\":\"int\",\"directory\":null,\"value\":321.0,\"Type\":4,\"Value\":321.0},\"dbref\":{\"Name\":\"dbref\",\"directory\":null,\"value\":\"#2468G\",\"Type\":3,\"Value\":\"#2468G\"},\"float\":{\"Name\":\"float\",\"directory\":null,\"value\":12.34,\"Type\":4,\"Value\":12.34}}}},\"value\":null,\"Type\":5,\"Value\":{\"deep\":{\"Name\":\"deep\",\"directory\":{\"string\":{\"Name\":\"string\",\"directory\":null,\"value\":\"STRING TEST < WOO >\",\"Type\":1,\"Value\":\"STRING TEST < WOO >\"},\"int\":{\"Name\":\"int\",\"directory\":null,\"value\":321.0,\"Type\":4,\"Value\":321.0},\"dbref\":{\"Name\":\"dbref\",\"directory\":null,\"value\":\"#2468G\",\"Type\":3,\"Value\":\"#2468G\"},\"float\":{\"Name\":\"float\",\"directory\":null,\"value\":12.34,\"Type\":4,\"Value\":12.34}},\"value\":null,\"Type\":5,\"Value\":{\"string\":{\"Name\":\"string\",\"directory\":null,\"value\":\"STRING TEST < WOO >\",\"Type\":1,\"Value\":\"STRING TEST < WOO >\"},\"int\":{\"Name\":\"int\",\"directory\":null,\"value\":321.0,\"Type\":4,\"Value\":321.0},\"dbref\":{\"Name\":\"dbref\",\"directory\":null,\"value\":\"#2468G\",\"Type\":3,\"Value\":\"#2468G\"},\"float\":{\"Name\":\"float\",\"directory\":null,\"value\":12.34,\"Type\":4,\"Value\":12.34}}}}}},\"aliases\":[\"test\"],\"contents\":[\"#135T\"],\"externalDescription\":\"test externalDescription\",\"flags\":[76],\"id\":\"#0E\",\"linkTargets\":[\"#246R\"],\"location\":\"#0\",\"name\":\"test name\",\"owner\":\"#456P\",\"pennies\":0,\"templates\":[]}";
-            var result = Newtonsoft.Json.JsonConvert.DeserializeObject<Exit>(json, new Newtonsoft.Json.JsonConverter[] {
+            var result = Newtonsoft.Json.JsonConvert.DeserializeObject<Exit>(json, [
                 new ConcurrentDbrefSetSerializer(),
                 new DbrefSerializer()
-            });
+            ]);
             Assert.IsNotNull(result);
             Assert.AreEqual(1, result.contents.Count);
         }
@@ -456,7 +456,7 @@ namespace Tests
         {
             var testExit = ThingRepository.Instance.Make<Exit>();
             testExit.aliases.Add("test");
-            testExit.SetLinkTargets(new Dbref[] { new Dbref(246, Dbref.DbrefObjectType.Room) });
+            testExit.SetLinkTargets([new(246, Dbref.DbrefObjectType.Room)]);
             testExit.contents.TryAdd(new Dbref(135, Dbref.DbrefObjectType.Thing));
             testExit.externalDescription = "test externalDescription";
             testExit.SetFlag(Thing.Flag.LINK_OK);
@@ -517,7 +517,6 @@ namespace Tests
 
             var deserialized = Thing.Deserialize<HumanPlayer>(serialized);
             Assert.IsNotNull(deserialized);
-            Assert.IsNotNull(deserialized!.properties);
             Assert.AreEqual(player.properties.Count, deserialized.properties.Count);
             Assert.AreEqual(player.properties, deserialized.properties);
 

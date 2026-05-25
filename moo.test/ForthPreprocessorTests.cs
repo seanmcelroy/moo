@@ -1,10 +1,10 @@
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using moo.common.Models;
 using moo.common.Scripting;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Tests
+namespace moo.Test
 {
     [TestClass]
     public class ForthPreprocessorTests
@@ -97,7 +97,8 @@ namespace Tests
 
             var prep = await ForthPreprocessor.Preprocess(Dbref.NOT_FOUND, script, script.programText, CancellationToken.None);
             Assert.IsTrue(prep.IsSuccessful);
-            Assert.AreEqual("3 3", prep.ProcessedProgram?.TrimEnd(new char[] { '\r', '\n' }));
+            Assert.IsNotNull(prep.ProcessedProgram);
+            Assert.AreEqual("3 3", prep.ProcessedProgram.TrimEnd(['\r', '\n']));
         }
 
         [TestMethod]
@@ -110,7 +111,8 @@ namespace Tests
 
             var prep = await ForthPreprocessor.Preprocess(Dbref.NOT_FOUND, script, script.programText, CancellationToken.None);
             Assert.IsTrue(prep.IsSuccessful);
-            Assert.AreEqual("2 2", prep.ProcessedProgram?.TrimEnd(new char[] { '\r', '\n' }));
+            Assert.IsNotNull(prep.ProcessedProgram);
+            Assert.AreEqual("2 2", prep.ProcessedProgram.TrimEnd(['\r', '\n']));
         }
 
         [TestMethod]
@@ -123,7 +125,8 @@ namespace Tests
 
             var prep = await ForthPreprocessor.Preprocess(Dbref.NOT_FOUND, script, script.programText, CancellationToken.None);
             Assert.IsTrue(prep.IsSuccessful);
-            Assert.AreEqual("4 4", prep.ProcessedProgram?.TrimEnd(new char[] { '\r', '\n' }));
+            Assert.IsNotNull(prep.ProcessedProgram);
+            Assert.AreEqual("4 4", prep.ProcessedProgram.TrimEnd(['\r', '\n']));
         }
 
         [TestMethod]
@@ -136,7 +139,26 @@ namespace Tests
 
             var prep = await ForthPreprocessor.Preprocess(Dbref.NOT_FOUND, script, script.programText, CancellationToken.None);
             Assert.IsTrue(prep.IsSuccessful);
-            Assert.AreEqual("5 5", prep.ProcessedProgram?.TrimEnd(new char[] { '\r', '\n' }));
+            Assert.IsNotNull(prep.ProcessedProgram);
+            Assert.AreEqual("5 5", prep.ProcessedProgram.TrimEnd(['\r', '\n']));
+        }
+
+        [TestMethod]
+        public async Task IfdefWithValueDoesNotNpeOnNullValuedDefine()
+        {
+            // Bug: when a $def was declared without a value, defines[key] was null,
+            // and `$ifdef NAME = something` then called .Equals on that null and
+            // threw NullReferenceException. The fix uses TryGetValue + string.Equals
+            // so the comparison cleanly returns false.
+            var script = new Script
+            {
+                programText = "$def NULLVAL\n$ifdef NULLVAL = something\n1 1\n$else\n9 9\n$endif"
+            };
+
+            var prep = await ForthPreprocessor.Preprocess(Dbref.NOT_FOUND, script, script.programText, CancellationToken.None);
+            Assert.IsTrue(prep.IsSuccessful);
+            Assert.IsNotNull(prep.ProcessedProgram);
+            Assert.AreEqual("9 9", prep.ProcessedProgram.TrimEnd('\r', '\n'));
         }
 
         [TestMethod]
@@ -146,7 +168,15 @@ namespace Tests
             var prep = await ForthPreprocessor.Preprocess(Dbref.NOT_FOUND, null, programText, CancellationToken.None);
             Assert.IsTrue(prep.IsSuccessful);
             Assert.IsNotNull(prep.ProcessedProgram);
-            Assert.IsFalse(prep.ProcessedProgram!.Contains(" strip ", System.StringComparison.OrdinalIgnoreCase));
+            Assert.IsFalse(prep.ProcessedProgram.Contains(" strip ", System.StringComparison.OrdinalIgnoreCase));
+        }
+
+        [TestMethod]
+        public async Task UnterminatedDefineReturnsErrorInsteadOfThrowing()
+        {
+            var script = new Script { programText = "$define FOO bar baz\n( no enddef )\n" };
+            var prep = await ForthPreprocessor.Preprocess(Dbref.NOT_FOUND, script, script.programText, CancellationToken.None);
+            Assert.IsFalse(prep.IsSuccessful);
         }
     }
 }

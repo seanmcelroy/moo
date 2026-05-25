@@ -23,7 +23,7 @@ namespace moo.common.Scripting.ForthPrimatives
             if (parameters.Stack.Count < n1.UnwrapInt() * 2)
                 return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, $"ARRAY_MAKE_DICT has fewer than requested {n1.UnwrapInt()} index/value pairs on the stack");
 
-            var arrayList = new List<ForthDatum>(parameters.Stack.Count);
+            var dictInner = new Dictionary<object, ForthDatum>(parameters.Stack.Count);
             for (int i = 0; i < n1.UnwrapInt(); i++)
             {
                 var val = parameters.Stack.Pop();
@@ -31,21 +31,21 @@ namespace moo.common.Scripting.ForthPrimatives
                 switch (val.Type)
                 {
                     case DatumType.DbRef:
-                        arrayList.Add(new ForthDatum(val.UnwrapDbref(), key: idx.Value?.ToString()));
+                        dictInner.Add(idx.Value, new ForthDatum(val.UnwrapDbref(), key: idx.Value?.ToString()));
                         break;
                     case DatumType.Integer:
-                        arrayList.Add(new ForthDatum(val.UnwrapInt(), key: idx.Value?.ToString()));
+                        dictInner.Add(idx.Value, new ForthDatum(val.UnwrapInt(), key: idx.Value?.ToString()));
                         break;
                     case DatumType.String:
-                        arrayList.Add(new ForthDatum(val.Value?.ToString(), key: idx.Value?.ToString()));
+                        dictInner.Add(idx.Value, new ForthDatum(val.Value?.ToString(), key: idx.Value?.ToString()));
                         break;
                     default:
                         throw new InvalidOperationException();
                 }
             }
 
-            arrayList.Reverse();
-            parameters.Stack.Push(new ForthDatum(arrayList.ToArray()));
+            var dict = new ForthDictionaryArray(dictInner);
+            parameters.Stack.Push(new ForthDatum(dict));
             return ForthPrimativeResult.SUCCESS;
         }
     }

@@ -39,10 +39,10 @@ namespace moo.common.Models
         private readonly DbrefObjectType type;
 
         [JsonIgnore]
-        public int Number => id;
+        public readonly int Number => id;
 
         [JsonIgnore]
-        public DbrefObjectType Type => type;
+        public readonly DbrefObjectType Type => type;
 
         public Dbref(int id, DbrefObjectType type)
         {
@@ -254,7 +254,7 @@ namespace moo.common.Models
 
         public readonly bool IsValid() => !(Equals(NOT_FOUND) || Equals(AMBIGUOUS));
 
-        public readonly int ToInt32() => this.id;
+        public readonly int ToInt32() => id;
 
         public override readonly string ToString()
         {

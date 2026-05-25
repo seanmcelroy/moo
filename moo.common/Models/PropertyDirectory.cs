@@ -67,6 +67,10 @@ namespace moo.common.Models
 
         public void Add(string name, float value) => AddInPath(name, new Property(name, value));
 
+        public void Add(string name, ForthDictionaryArray value) => AddInPath(name, new Property(name, value));
+
+        public void Add(string name, ForthListArray value) => AddInPath(name, new Property(name, value));
+
         public void Add(string name, PropertyDirectory value) => Add(name, new Property(name, value));
 
         public Property GetPropertyPathValue(string path)
@@ -109,6 +113,8 @@ namespace moo.common.Models
 
         private PropertyDirectory FindPropertyPathForSet(string path)
         {
+            ArgumentNullException.ThrowIfNull(path);
+
             path = path.TrimStart('/').TrimEnd('/');
 
             var firstSeparator = path.IndexOf('/');
@@ -200,7 +206,7 @@ namespace moo.common.Models
                     SetPropertyPathValue(path, type, (object)value);
                     return true;
                 default:
-                    throw new System.InvalidOperationException($"Unable to handle property type: {type}");
+                    throw new InvalidOperationException($"Unable to handle property type: {type}");
             }
         }
 
@@ -263,6 +269,17 @@ namespace moo.common.Models
                     break;
                 case VariableType.Float:
                     directory.Add(lastPathPart, value.Value as float? ?? 0F);
+                    break;
+                case VariableType.Array:
+                    if (value.Value != null)
+                    {
+                        if (value.Value is ForthDictionaryArray da)
+                            directory.Add(lastPathPart, da);
+                        else if (value.Value is ForthListArray la)
+                            directory.Add(lastPathPart, la);
+                        else
+                            throw new InvalidOperationException($"Unable to handle non-array type '{value.Value.GetType().Name}'.");
+                    }
                     break;
                 default:
                     throw new InvalidOperationException($"Unable to handle property type: {value.Type}");

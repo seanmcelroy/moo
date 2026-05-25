@@ -1,11 +1,12 @@
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using moo.common;
 using moo.common.Models;
 using moo.common.Scripting;
 using moo.common.Scripting.ForthPrimatives;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Tests
+namespace moo.Test
 {
     [TestClass]
     public class BitwiseTests
@@ -20,7 +21,6 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = MathBitOr.Execute(parameters);
-            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             var n = local.Pop();
@@ -40,7 +40,6 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = MathBitXOr.Execute(parameters);
-            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             var n = local.Pop();
@@ -60,7 +59,6 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = MathBitAnd.Execute(parameters);
-            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             var n = local.Pop();
@@ -68,6 +66,22 @@ namespace Tests
             Assert.AreEqual(10, n.Value);
 
             Assert.AreEqual(0, local.Count);
+        }
+
+        [TestMethod]
+        public async Task BitwiseAndDispatchedToBitAndNotBitXor()
+        {
+            // Regression for the original bug where callTable["bitand"] was wired
+            // to MathBitXOr.Execute, so `42 91 bitand` silently computed XOR (113)
+            // instead of AND (10). A direct unit test of MathBitAnd would not have
+            // caught this because the dispatch table is what was wrong; exercise the
+            // primitive via the engine's name lookup.
+            var (result, stack) = await ExecutionTestHelpers.RunProgramAsync(": main 42 91 bitand ;");
+            Assert.IsTrue(result.IsSuccessful, result.Reason);
+            Assert.AreEqual(1, stack.Count);
+            var top = stack.Pop();
+            Assert.AreEqual(ForthDatum.DatumType.Integer, top.Type);
+            Assert.AreEqual(10, top.Value); // 42 & 91 = 10  (XOR would give 113)
         }
 
         [TestMethod]
@@ -80,7 +94,6 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = MathBitShift.Execute(parameters);
-            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             var n = local.Pop();
@@ -100,7 +113,6 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = MathBitShift.Execute(parameters);
-            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             var n = local.Pop();
@@ -120,7 +132,6 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = MathBitShift.Execute(parameters);
-            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             var n = local.Pop();
@@ -140,7 +151,6 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = MathBitShift.Execute(parameters);
-            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             var n = local.Pop();
@@ -160,7 +170,6 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = MathBitShift.Execute(parameters);
-            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             var n = local.Pop();

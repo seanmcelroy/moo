@@ -18,9 +18,20 @@ namespace moo.common.Scripting.ForthPrimatives
             if (n1.Type != DatumType.Array)
                 return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "ARRAY_COUNT requires the top parameter on the stack to be an array");
 
-            var array = n1.UnwrapArray();
+            if (n1.Value == null)
+            {
+                parameters.Stack.Push(new ForthDatum(0));
+                return ForthPrimativeResult.SUCCESS;
+            }
 
-            parameters.Stack.Push(new ForthDatum(array.Length));
+            var count = n1.Value switch
+            {
+                ForthDictionaryArray da => da.Count,
+                ForthListArray la => la.Count,
+                _ => 0,
+            };
+
+            parameters.Stack.Push(new ForthDatum(count));
             return ForthPrimativeResult.SUCCESS;
         }
     }

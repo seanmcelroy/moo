@@ -1,7 +1,7 @@
 using moo.common.Models;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Tests
+namespace moo.Test
 {
     [TestClass]
     public class LockTest

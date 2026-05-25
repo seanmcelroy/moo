@@ -476,7 +476,7 @@ namespace moo.common.Models
             else
             {
                 var newArray = new Flag[flags.Length + 1];
-                Array.Copy(flags, newArray, flags.Length);
+                System.Array.Copy(flags, newArray, flags.Length);
                 newArray[^1] = flag;
                 flags = newArray;
             }
@@ -647,6 +647,8 @@ namespace moo.common.Models
         public static string Serialize(Dbref value, byte dud) => $"<dbref>{value}</dbref>";
 
         public static string Serialize(Lock value, byte dud) => $"<lock>{value}</lock>";
+
+        public static string Serialize(Array value, byte dud) => $"<array>{value}</array>";
 
         public static string Serialize(string? value) => value == null ? $"<string/>" : $"<string>{System.Web.HttpUtility.HtmlEncode(value)}</string>";
 

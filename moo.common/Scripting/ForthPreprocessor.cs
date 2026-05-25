@@ -42,7 +42,7 @@ namespace moo.common.Scripting
             CancellationToken cancellationToken)
         {
             var sb = new StringBuilder();
-            var defines = new Dictionary<string, string?>() {
+            var defines = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase) {
             { "PR_MODE", "0" },
             { "FG_MODE", "1" },
             { "BG_MODE", "2" },
@@ -73,7 +73,8 @@ namespace moo.common.Scripting
             { "SORTTYPE_NOCASE_DESCEND", "3" },
             { "ARRAY_INTERSECT", "2 array_nintersect" },
             { "STRIP", "striplead striptail" },
-            { "[]", "array_getitem" }
+            { "[]", "array_getitem" },
+            { "[..]", "array_getrange" }
         };
             var controlFlow = new Stack<ControlFlowMarker>();
             var verbosity = 0;
@@ -101,13 +102,16 @@ namespace moo.common.Scripting
                         {
                             // This is broken up across multiple lines.
                             var multiline = line;
+                            var sbDef = new StringBuilder(line);
                             var i2 = i;
-                            do
+                            while (!defineCompleteRegex.IsMatch(sbDef.ToString()))
                             {
                                 i2++;
-                                multiline += lines[i2];
-                                defineMatch = defineCompleteRegex.Match(multiline);
-                            } while (!defineCompleteRegex.IsMatch(multiline));
+                                if (i2 >= lines.Length)
+                                    return new ForthPreprocessingResult($"$define for '{defineOpenMatch.Groups["defName"].Value}' is missing $enddef");
+                                sbDef.Append('\n').Append(lines[i2]);
+                            }
+                            defineMatch = defineCompleteRegex.Match(sbDef.ToString());
                             i = i2;
                         }
 
@@ -288,9 +292,17 @@ namespace moo.common.Scripting
                                     }
                                 }
 
-                                var isTrue = ifdefMatch.Groups["defValue"].Success
-                                ? (defines.ContainsKey(ifdefMatch.Groups["defName"].Value.ToUpperInvariant()) && defines[ifdefMatch.Groups["defName"].Value.ToUpperInvariant()].Equals(ifdefMatch.Groups["defValue"].Value))
-                                : defines.ContainsKey(ifdefMatch.Groups["defName"].Value.ToUpperInvariant());
+                                var key = ifdefMatch.Groups["defName"].Value.ToUpperInvariant();
+                                bool isTrue;
+                                if (ifdefMatch.Groups["defValue"].Success)
+                                {
+                                    isTrue = defines.TryGetValue(key, out var v)
+                                        && string.Equals(v, ifdefMatch.Groups["defValue"].Value, StringComparison.Ordinal);
+                                }
+                                else
+                                {
+                                    isTrue = defines.ContainsKey(key);
+                                }
 
                                 var negate = ifdefMatch.Groups["negate"].Success;
 

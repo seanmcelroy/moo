@@ -26,7 +26,10 @@ namespace moo.common.Scripting.ForthPrimatives
             for (int i = 0; i < n1.UnwrapInt(); i++)
                 arrayList.Add(parameters.Stack.Pop());
 
-            parameters.Stack.Push(new ForthDatum(arrayList.ToArray()));
+            arrayList.Reverse();
+
+            var list = new ForthListArray(arrayList);
+            parameters.Stack.Push(new ForthDatum(list));
             return ForthPrimativeResult.SUCCESS;
         }
     }

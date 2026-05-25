@@ -35,7 +35,6 @@ namespace moo.common.Scripting
         }
 
         private static int nextPid = 1;
-        private readonly static object nextPidLock = new();
 
         private readonly int processId;
         private MultitaskingMode mode;
@@ -51,9 +50,7 @@ namespace moo.common.Scripting
         private readonly Dbref location;
         private readonly Dbref trigger;
         private readonly string? command;
-        private readonly Dbref scriptId;
         private readonly byte effectiveMuckerLevel;
-        private readonly PlayerConnection connection;
         private readonly string scopeId;
         private readonly string outerScopeId;
         private bool hasRan;
@@ -80,7 +77,6 @@ namespace moo.common.Scripting
             State = ProcessState.Initializing;
             mode = MultitaskingMode.Foreground;
             this.effectiveMuckerLevel = effectiveMuckerLevel;
-            this.connection = connection;
             scopeId = Guid.NewGuid().ToString();
 
             if (outerScopeId != null)
@@ -97,14 +93,12 @@ namespace moo.common.Scripting
 
         public static int GetNextPid()
         {
-            lock (nextPidLock)
-            {
-                var pid = Interlocked.Increment(ref nextPid);
-                if (pid < int.MaxValue)
-                    return pid;
-                Interlocked.Exchange(ref nextPid, 1);
-                return 1;
-            }
+            var pid = Interlocked.Increment(ref nextPid);
+            if (pid > 0 && pid < int.MaxValue)
+                return pid;
+            Interlocked.CompareExchange(ref nextPid, 0, pid);
+
+            return 1;
         }
 
         public ConcurrentDictionary<string, ForthVariable> GetProgramLocalVariables()
@@ -112,13 +106,10 @@ namespace moo.common.Scripting
             return this.programLocalVariables;
         }
 
-        public void SetProgramLocalVariable(string name, ForthVariable value)
-        {
-            if (!programLocalVariables.TryAdd(name, value))
-            {
-                programLocalVariables[name] = value;
-            }
-        }
+        // Exposed for tests so end-to-end programs can be inspected after RunAsync.
+        public Stack<ForthDatum> Stack => stack;
+
+        public void SetProgramLocalVariable(string name, ForthVariable value) => programLocalVariables[name.ToLowerInvariant()] = value;
 
         public bool HasWord(string? wordName) => !string.IsNullOrWhiteSpace(wordName) && words.Any(w => string.Compare(w.name, wordName, true) == 0);
 
@@ -129,9 +120,10 @@ namespace moo.common.Scripting
             ILogger? logger,
              CancellationToken cancellationToken)
         {
-            return await this.words
-                .Single(w => string.Compare(w.name, wordName, true) == 0)
-                .RunAsync(this, stack, player, location, trigger, command, lastListItem, logger, cancellationToken);
+            var match = words.FirstOrDefault(w => string.Compare(w.name, wordName, true) == 0);
+            if (default(ForthWord).Equals(match))
+                return new ForthWordResult(ForthErrorResult.SYNTAX_ERROR, $"No such word: {wordName}");
+            return await match.RunAsync(this, stack, player, location, trigger, command, lastListItem, logger, cancellationToken);
         }
 
         public void Pause()
@@ -189,6 +181,36 @@ namespace moo.common.Scripting
             {
                 if (args[0].GetType() == typeof(string))
                     stack.Push(new ForthDatum((string)args[0]));
+            }
+
+            if (args != null)
+            {
+                foreach (var arg in args)
+                {
+                    if (arg != null) 
+                    {
+                        switch (arg)
+                        {
+                            case string s:
+                                stack.Push(new ForthDatum(s));
+                                break;
+                            case int i:
+                                stack.Push(new ForthDatum(i));
+                                break;
+                            case float f:
+                                stack.Push(new ForthDatum(f));
+                                break;
+                            case Dbref d:
+                                stack.Push(new ForthDatum(d));
+                                break;
+                            case ForthDatum dat:
+                                stack.Push(dat);
+                                break;
+                            default:
+                                return new ForthWordResult(ForthErrorResult.TYPE_MISMATCH, $"Unsupported arg type {arg.GetType().Name}");
+                        }
+                    }
+                }
             }
 
             State = ProcessState.Running;

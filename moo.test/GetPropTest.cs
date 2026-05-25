@@ -8,7 +8,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using static moo.common.Models.Property;
 using static moo.common.Scripting.ForthDatum;
 
-namespace Tests
+namespace moo.Test
 {
     [TestClass]
     public class GetPropTest : TestBase
@@ -38,7 +38,7 @@ namespace Tests
                 var parameters = new ForthPrimativeParameters(null, stack.ClonePreservingOrder(), null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
                 var result1 = await AddProp.ExecuteAsync(parameters);
                 Assert.IsTrue(result1.IsSuccessful);
-                Assert.AreEqual(1, testObj.properties.Count);
+                Assert.HasCount(1, testObj.properties);
                 Assert.IsTrue(testObj.properties.ContainsKey("propName"));
                 var prop = testObj.properties["propName"];
                 Assert.AreEqual("propName", prop.Name);
@@ -99,10 +99,10 @@ namespace Tests
 
             // Now get
             {
-                var stack = new Stack<ForthDatum>(new[]{
+                var stack = new Stack<ForthDatum>([
                     new ForthDatum(testObj.id),
                     new ForthDatum("propName")
-                });
+                ]);
 
                 var local = stack.ClonePreservingOrder();
                 var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);

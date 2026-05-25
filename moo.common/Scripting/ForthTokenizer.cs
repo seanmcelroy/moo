@@ -25,13 +25,13 @@ namespace moo.common.Scripting
         }
 
         private static readonly Regex lvarRegex = new(@"(?:lvar\s+(?<lvar>\w{1,20}))", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private static readonly Regex argsRegex = new(@"^\[(\s*(?<input>\w+:\w+))+\s*(--|]$)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex argsRegex = new(@"^\[\s*(?<input>(?:\w+:)?\w+)(?:\s+(?<input>(\w+:)?\w+))*\s*(?:--(?:\s*(?<output>(?:(?:\w+:)?\w+)|(?:\w+\s*\|\s*\w+))(?:\s+(?<output>(?:(?:\w+:)?\w+)|(?:\w+\s*\|\s*\w+)))*\s*)?\s*)?\]$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         public static async Task<ForthTokenizerResult> Tokenzie(PlayerConnection? connection, string program, Dictionary<string, ForthVariable>? programLocalVariables = null, ILogger? logger = null)
         {
             var defines = new Dictionary<string, string>();
             var words = new List<ForthWord>();
-            programLocalVariables ??= new Dictionary<string, ForthVariable>();
+            programLocalVariables ??= [];
 
             var lineNumber = 1;
             var columnNumber = 0;
@@ -46,6 +46,8 @@ namespace moo.common.Scripting
             var currentDatum = new StringBuilder();
             var currentNonDatum = new StringBuilder();
             var verbosity = 0;
+            var stringEscape = false;
+
 
             foreach (var c in program)
             {
@@ -57,24 +59,48 @@ namespace moo.common.Scripting
                 switch (forwardOperation)
                 {
                     case ForwardOperation.ReadingString:
-                        if ((currentDatum.Length > 0 && currentDatum[^1] == '\\' && c == '\"') || c != '\"')
+                        if (stringEscape)
                         {
-                            //if (program.Contains("@archive"))
-                            //    Console.Write(c);
-                            currentDatum.Append(c);
+                            char unesc = c switch
+                            {
+                                'n' => '\n',
+                                't' => '\t',
+                                'r' => '\r',
+                                '\\' => '\\',
+                                '"' => '"',
+                                _ => c
+                            };
+                            currentDatum.Append(unesc);
+                            stringEscape = false;
+                            if (linebreakCharacters.Contains(c))
+                            {
+                                lineNumber++;
+                                if (currentWordName != null) currentWordLineNumber++;
+                                columnNumber = 0;
+                            }
                             continue;
                         }
-                        else
+                        if (c == '\\') { stringEscape = true; continue; }
+                        if (c == '"')
                         {
-                            //if (verbosity >= 2 && program.Contains("@archive"))// && connection != null)
-                            //    Console.WriteLine($"STRING({lineNumber},{columnNumber - currentDatum.ToString().Length - 1}): \"{currentDatum}\"");
-                            currentWordData.Add(new ForthDatum(currentDatum.ToString(), DatumType.String, lineNumber, columnNumber - currentDatum.ToString().Length - 1, currentWordName, currentWordLineNumber));
-                            //if (program.Contains("@archive"))
-                            //    Console.WriteLine($"Output String: {currentDatum}");
+                            if (currentWordData != null)
+                            {
+                                currentWordData!.Add(new ForthDatum(currentDatum.ToString(), DatumType.String,
+                                    lineNumber, columnNumber - currentDatum.Length - 1,
+                                    currentWordName, currentWordLineNumber));
+                            }
                             currentDatum.Clear();
                             forwardOperation = ForwardOperation.None;
                             continue;
                         }
+                        currentDatum.Append(c);
+                        if (linebreakCharacters.Contains(c))
+                        {
+                            lineNumber++;
+                            if (currentWordName != null) currentWordLineNumber++;
+                            columnNumber = 0;
+                        }
+                        continue;
                     case ForwardOperation.ReadingWordArgList:
                         currentWordArgListBuilder.Append(c);
                         if (c == ']')
@@ -203,7 +229,7 @@ namespace moo.common.Scripting
                             {
                                 var lvarMatch = lvarRegex.Match(directive);
                                 if (lvarMatch.Success)
-                                    programLocalVariables.Add(lvarMatch.Groups["lvar"].Value, default);
+                                    programLocalVariables.Add(lvarMatch.Groups["lvar"].Value.ToLowerInvariant(), default);
                             }
 
                             if (verbosity > 3 && connection != null)
@@ -220,11 +246,9 @@ namespace moo.common.Scripting
                     continue;
                 }
 
-                if (c == '\"' && currentWordNameBuilder.Length > 0)
+                if (c == '\"' && currentWordNameBuilder.Length > 0 && currentWordData != null)
                 {
                     forwardOperation = ForwardOperation.ReadingString;
-                    //if (program.Contains("@archive"))
-                    //    Console.WriteLine($"Started reading string on line: {lineNumber}");
                     continue;
                 }
 
@@ -261,23 +285,6 @@ namespace moo.common.Scripting
                     continue;
                 }
 
-                if (whitespaceCharacters.Contains(c) && currentDatum.Length == 0)
-                    continue;
-                /*UNNECESSARY if (linebreakCharacters.Contains(c))
-                {
-                    if (currentWordName.Length == 0)
-                    {
-                        await connection.sendOutput($"PREX({lineNumber},{columnNumber - currentNonDatum.ToString().Length}): {currentNonDatum}");
-                        currentNonDatum.Clear();
-                    }
-
-                    lineNumber++;
-                                    if (currentWordName != null) currentWordLineNumber++;
-                    columnNumber = 0;
-                                                preparserLine = false;
-                    continue;
-                }*/
-
                 if (c == ':' && currentWordNameBuilder.Length == 0)
                 {
                     currentWordData = new List<ForthDatum>();
@@ -289,8 +296,9 @@ namespace moo.common.Scripting
                 {
                     var wordName = currentWordNameBuilder.ToString();
 
-                    // Parse input list
-                    List<(string type, string name)> inputs = new();
+                    // Parse input/output list
+                    List<(string type, string name)> inputs = [];
+                    List<(string type, string name)> outputs = [];
                     if (currentWordArgListBuilder.Length > 0)
                     {
                         var argList = currentWordArgListBuilder.ToString();
@@ -299,14 +307,22 @@ namespace moo.common.Scripting
                         {
                             foreach (var cap in argMatches.Groups["input"].Captures.Cast<Capture>())
                             {
-                                var type = cap.Value.Split(':')[0];
-                                var name = cap.Value.Split(':')[1];
-                                inputs.Add((type, name));
+                                var split = cap.Value.Split(':');
+                                var typeHint = (split.Length == 1) ? "any" : split[0];
+                                var name = (split.Length == 1) ? split[0] : split[1];
+                                inputs.Add((typeHint, name));
+                            }
+                            foreach (var cap in argMatches.Groups["output"].Captures.Cast<Capture>())
+                            {
+                                var split = cap.Value.Split(':');
+                                var typeHint = (split.Length == 1) ? "any" : split[0];
+                                var name = (split.Length == 1) ? split[0] : split[1];
+                                outputs.Add((typeHint, name));
                             }
                         }
                     }
 
-                    words.Add(new ForthWord(wordName, currentWordData, inputs));
+                    words.Add(new ForthWord(wordName, currentWordData, inputs, outputs));
 
                     // Clean up for next word
                     currentWordName = null;
@@ -314,6 +330,7 @@ namespace moo.common.Scripting
                     currentWordArgListBuilder.Clear();
                     currentWordLineNumber = 0;
                     currentWordData = null;
+                    continue;
                 }
 
                 if (currentWordNameBuilder.Length > 0)

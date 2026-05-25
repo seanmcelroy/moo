@@ -52,7 +52,10 @@ namespace moo.common.Scripting.ForthPrimatives
             if (message == null || string.IsNullOrWhiteSpace(message))
                 return ForthPrimativeResult.SUCCESS;
 
-            await Server.NotifyRoomAsync(sTarget.UnwrapDbref(), message, excludeList);
+            if (parameters.NotifyRoom != null)
+                await parameters.NotifyRoom(sTarget.UnwrapDbref(), message, excludeList);
+            else
+                await Server.NotifyRoomAsync(sTarget.UnwrapDbref(), message, excludeList);
 
             return ForthPrimativeResult.SUCCESS;
         }

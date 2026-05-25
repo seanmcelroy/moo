@@ -19,10 +19,17 @@ namespace moo.common.Scripting.ForthPrimatives
             if (reference.Type != ForthDatum.DatumType.Variable)
                 return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "@ requires the top parameter on the stack to be a variable");
 
-            var variableName = reference.Value.ToString().ToLowerInvariant();
-            var variableValue = ResolveVariableByName(parameters.Variables, parameters.Player, parameters.Location, parameters.Trigger, parameters.Command, variableName);
+            var variableName = reference.Value?.ToString()?.ToLowerInvariant();
+            if (string.IsNullOrWhiteSpace(variableName))
+                return new ForthPrimativeResult(ForthErrorResult.VARIABLE_NOT_FOUND, $"No variable name was found");
 
-            if (default(ForthVariable).Equals(variableValue) && !parameters.Variables.ContainsKey(variableName))
+            var variables = parameters.Variables;
+            if (variables == null)
+                return new ForthPrimativeResult(ForthErrorResult.VARIABLE_NOT_FOUND, $"No variable named {variableName} was found");
+
+            var variableValue = ResolveVariableByName(variables, parameters.Player, parameters.Location, parameters.Trigger, parameters.Command, variableName);
+
+            if (default(ForthVariable).Equals(variableValue) && !variables.ContainsKey(variableName))
                 return new ForthPrimativeResult(ForthErrorResult.VARIABLE_NOT_FOUND, $"No variable named {variableName} was found");
 
             if (!default(ForthVariable).Equals(variableValue))
@@ -34,44 +41,48 @@ namespace moo.common.Scripting.ForthPrimatives
             return new ForthPrimativeResult(ForthErrorResult.UNKNOWN_TYPE, $"Unable to determine data type for {variableName}: {variableValue.Value}");
         }
 
-        public static ForthVariable ResolveVariableByName(ImmutableDictionary<string, ForthVariable> variables, Dbref id, Dbref location, Dbref trigger, string command, string variableName) => ResolveVariableByName(new Dictionary<string, ForthVariable>(variables), id, location, trigger, command, variableName);
-
-        public static ForthVariable ResolveVariableByName(Dictionary<string, ForthVariable> variables, Dbref id, Dbref location, Dbref trigger, string command, string variableName)
+        public static ForthVariable ResolveVariableByName(IReadOnlyDictionary<string, ForthVariable> variables, Dbref id, Dbref location, Dbref trigger, string command, string variableName)
         {
             if (variables == null)
                 return default;
 
-            // Handle built-in variables.
-            if (string.Compare("me", variableName) == 0)
+            // Handle built-in variables.  (Note that "here" is not a built-in supported here.)
+            if (string.Compare("me", variableName, System.StringComparison.OrdinalIgnoreCase) == 0)
                 return new ForthVariable(id, ForthVariable.VariableType.DbRef, true);
 
-            if (string.Compare("loc", variableName) == 0)
+            if (string.Compare("loc", variableName, System.StringComparison.OrdinalIgnoreCase) == 0)
                 return new ForthVariable(location, ForthVariable.VariableType.DbRef, true);
 
-            if (string.Compare("trigger", variableName) == 0)
+            if (string.Compare("trigger", variableName, System.StringComparison.OrdinalIgnoreCase) == 0)
                 return new ForthVariable(trigger, ForthVariable.VariableType.DbRef, true);
 
-            if (string.Compare("command", variableName) == 0)
+            if (string.Compare("command", variableName, System.StringComparison.OrdinalIgnoreCase) == 0)
                 return new ForthVariable(command, ForthVariable.VariableType.String, true);
 
-            if (!variables.ContainsKey(variableName))
+            var key = variableName.ToLowerInvariant();
+            if (!variables.TryGetValue(key, out var variableValue))
                 return default;
 
-            var variableValue = variables[variableName];
             if (variableValue.Value == null)
                 return default;
 
-            if (variableValue.Value.GetType() == typeof(Dbref))
-                return new ForthVariable((Dbref)variableValue.Value, 0);
+            if (variableValue.Value is Dbref d)
+                return new ForthVariable(d, 0);
 
-            if (variableValue.Value.GetType() == typeof(float))
-                return new ForthVariable((float?)variableValue.Value);
+            if (variableValue.Value is float f)
+                return new ForthVariable(f);
 
-            if (variableValue.Value.GetType() == typeof(int))
-                return new ForthVariable((int?)variableValue.Value);
+            if (variableValue.Value is int i)
+                return new ForthVariable(i);
 
-            if (variableValue.Value.GetType() == typeof(string))
-                return new ForthVariable((string)variableValue.Value);
+            if (variableValue.Value is string s)
+                return new ForthVariable(s);
+
+            if (variableValue.Value is ForthDictionaryArray da)
+                return new ForthVariable(da);
+
+            if (variableValue.Value is ForthListArray la)
+                return new ForthVariable(la);
 
             return default;
         }

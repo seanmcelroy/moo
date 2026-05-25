@@ -5,7 +5,7 @@ using moo.common.Scripting;
 using moo.common.Scripting.ForthPrimatives;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Tests
+namespace moo.Test
 {
     [TestClass]
     public class StringTests
@@ -97,14 +97,13 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = StripLead.Execute(parameters);
-            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
-            Assert.AreEqual(1, local.Count);
+            Assert.HasCount(1, local);
             var res = local.Pop();
             Assert.AreEqual(ForthDatum.DatumType.String, res.Type);
             Assert.AreEqual("abcd ", res.Value);
-            Assert.AreEqual(0, local.Count);
+            Assert.HasCount(0, local);
         }
 
         [TestMethod]
@@ -121,14 +120,13 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = StripTail.Execute(parameters);
-            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
-            Assert.AreEqual(1, local.Count);
+            Assert.HasCount(1, local);
             var res = local.Pop();
             Assert.AreEqual(ForthDatum.DatumType.String, res.Type);
             Assert.AreEqual(" abcd", res.Value);
-            Assert.AreEqual(0, local.Count);
+            Assert.HasCount(0, local);
         }
 
         [TestMethod]
@@ -145,10 +143,9 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = Split.Execute(parameters);
-            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
-            Assert.AreEqual(2, local.Count);
+            Assert.HasCount(2, local);
             var s2 = local.Pop();
             Assert.AreEqual(ForthDatum.DatumType.String, s2.Type);
             Assert.AreEqual(string.Empty, s2.Value);
@@ -157,7 +154,7 @@ namespace Tests
             Assert.AreEqual(ForthDatum.DatumType.String, s1.Type);
             Assert.AreEqual("abcdefg", s1.Value);
 
-            Assert.AreEqual(0, local.Count);
+            Assert.HasCount(0, local);
         }
 
         [TestMethod]
@@ -174,10 +171,9 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = Split.Execute(parameters);
-            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
-            Assert.AreEqual(2, local.Count);
+            Assert.HasCount(2, local);
             var s2 = local.Pop();
             Assert.AreEqual(ForthDatum.DatumType.String, s2.Type);
             Assert.AreEqual("efg", s2.Value);
@@ -186,7 +182,7 @@ namespace Tests
             Assert.AreEqual(ForthDatum.DatumType.String, s1.Type);
             Assert.AreEqual("abc", s1.Value);
 
-            Assert.AreEqual(0, local.Count);
+            Assert.HasCount(0, local);
         }
 
         [TestMethod]
@@ -203,10 +199,9 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = Split.Execute(parameters);
-            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
-            Assert.AreEqual(2, local.Count);
+            Assert.HasCount(2, local);
             var s2 = local.Pop();
             Assert.AreEqual(ForthDatum.DatumType.String, s2.Type);
             Assert.AreEqual("efgdhij", s2.Value);
@@ -215,7 +210,7 @@ namespace Tests
             Assert.AreEqual(ForthDatum.DatumType.String, s1.Type);
             Assert.AreEqual("abc", s1.Value);
 
-            Assert.AreEqual(0, local.Count);
+            Assert.HasCount(0, local);
         }
 
 
@@ -233,10 +228,9 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = RSplit.Execute(parameters);
-            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
-            Assert.AreEqual(2, local.Count);
+            Assert.HasCount(2, local);
             var s2 = local.Pop();
             Assert.AreEqual(ForthDatum.DatumType.String, s2.Type);
             Assert.AreEqual(string.Empty, s2.Value);
@@ -245,7 +239,7 @@ namespace Tests
             Assert.AreEqual(ForthDatum.DatumType.String, s1.Type);
             Assert.AreEqual("abcdefg", s1.Value);
 
-            Assert.AreEqual(0, local.Count);
+            Assert.HasCount(0, local);
         }
 
         [TestMethod]
@@ -262,10 +256,9 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = RSplit.Execute(parameters);
-            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
-            Assert.AreEqual(2, local.Count);
+            Assert.HasCount(2, local);
             var s2 = local.Pop();
             Assert.AreEqual(ForthDatum.DatumType.String, s2.Type);
             Assert.AreEqual("efg", s2.Value);
@@ -274,7 +267,7 @@ namespace Tests
             Assert.AreEqual(ForthDatum.DatumType.String, s1.Type);
             Assert.AreEqual("abc", s1.Value);
 
-            Assert.AreEqual(0, local.Count);
+            Assert.HasCount(0, local);
         }
 
         [TestMethod]
@@ -291,10 +284,9 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = RSplit.Execute(parameters);
-            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
-            Assert.AreEqual(2, local.Count);
+            Assert.HasCount(2, local);
             var s2 = local.Pop();
             Assert.AreEqual(ForthDatum.DatumType.String, s2.Type);
             Assert.AreEqual("hij", s2.Value);
@@ -303,7 +295,7 @@ namespace Tests
             Assert.AreEqual(ForthDatum.DatumType.String, s1.Type);
             Assert.AreEqual("abcdefg", s1.Value);
 
-            Assert.AreEqual(0, local.Count);
+            Assert.HasCount(0, local);
         }
 
         [TestMethod]
@@ -322,10 +314,9 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = StrCut.Execute(parameters);
-            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
-            Assert.AreEqual(2, local.Count);
+            Assert.HasCount(2, local);
             var s2 = local.Pop();
             Assert.AreEqual(ForthDatum.DatumType.String, s2.Type);
             Assert.AreEqual("bar", s2.Value);
@@ -334,7 +325,7 @@ namespace Tests
             Assert.AreEqual(ForthDatum.DatumType.String, s1.Type);
             Assert.AreEqual("Foo", s1.Value);
 
-            Assert.AreEqual(0, local.Count);
+            Assert.HasCount(0, local);
         }
 
         [TestMethod]
@@ -353,10 +344,9 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = StrCut.Execute(parameters);
-            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
-            Assert.AreEqual(2, local.Count);
+            Assert.HasCount(2, local);
             var s2 = local.Pop();
             Assert.AreEqual(ForthDatum.DatumType.String, s2.Type);
             Assert.AreEqual("Foobar", s2.Value);
@@ -365,7 +355,7 @@ namespace Tests
             Assert.AreEqual(ForthDatum.DatumType.String, s1.Type);
             Assert.AreEqual("", s1.Value);
 
-            Assert.AreEqual(0, local.Count);
+            Assert.HasCount(0, local);
         }
 
         [TestMethod]
@@ -384,10 +374,9 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = StrCut.Execute(parameters);
-            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
-            Assert.AreEqual(2, local.Count);
+            Assert.HasCount(2, local);
             var s2 = local.Pop();
             Assert.AreEqual(ForthDatum.DatumType.String, s2.Type);
             Assert.AreEqual("", s2.Value);
@@ -396,7 +385,7 @@ namespace Tests
             Assert.AreEqual(ForthDatum.DatumType.String, s1.Type);
             Assert.AreEqual("Foobar", s1.Value);
 
-            Assert.AreEqual(0, local.Count);
+            Assert.HasCount(0, local);
         }
 
         [TestMethod]
@@ -415,19 +404,18 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = MidStr.Execute(parameters);
-            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
-            Assert.AreEqual(1, local.Count);
+            Assert.HasCount(1, local);
             var s1 = local.Pop();
             Assert.AreEqual(ForthDatum.DatumType.String, s1.Type);
             Assert.AreEqual("est", s1.Value);
 
-            Assert.AreEqual(0, local.Count);
+            Assert.HasCount(0, local);
 
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow("dg")]
         [DataRow("dog")]
         [DataRow("doog")]
@@ -450,19 +438,18 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = SMatch.Execute(parameters);
-            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
-            Assert.AreEqual(1, local.Count);
+            Assert.HasCount(1, local);
             var n1 = local.Pop();
             Assert.AreEqual(ForthDatum.DatumType.Integer, n1.Type);
             Assert.AreEqual(1, n1.Value);
 
-            Assert.AreEqual(0, local.Count);
+            Assert.HasCount(0, local);
 
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow("dog")]
         [DataRow("dig")]
         [DataRow("dug")]
@@ -481,19 +468,18 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = SMatch.Execute(parameters);
-            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
-            Assert.AreEqual(1, local.Count);
+            Assert.HasCount(1, local);
             var n1 = local.Pop();
             Assert.AreEqual(ForthDatum.DatumType.Integer, n1.Type);
             Assert.AreEqual(1, n1.Value);
 
-            Assert.AreEqual(0, local.Count);
+            Assert.HasCount(0, local);
 
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow("dg")]
         [DataRow("drug")]
         public void SMatchCharDgFail(string test)
@@ -511,19 +497,18 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = SMatch.Execute(parameters);
-            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
-            Assert.AreEqual(1, local.Count);
+            Assert.HasCount(1, local);
             var n1 = local.Pop();
             Assert.AreEqual(ForthDatum.DatumType.Integer, n1.Type);
             Assert.AreEqual(0, n1.Value);
 
-            Assert.AreEqual(0, local.Count);
+            Assert.HasCount(0, local);
 
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow("Mr.")]
         [DataRow("Ms.")]
         public void SMatchCharBracketCharMatch(string test)
@@ -541,19 +526,18 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = SMatch.Execute(parameters);
-            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
-            Assert.AreEqual(1, local.Count);
+            Assert.HasCount(1, local);
             var n1 = local.Pop();
             Assert.AreEqual(ForthDatum.DatumType.Integer, n1.Type);
             Assert.AreEqual(1, n1.Value);
 
-            Assert.AreEqual(0, local.Count);
+            Assert.HasCount(0, local);
 
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow("Ma")]
         [DataRow("Mb")]
         public void SMatchCharBracketRangeMatch(string test)
@@ -571,19 +555,18 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = SMatch.Execute(parameters);
-            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
-            Assert.AreEqual(1, local.Count);
+            Assert.HasCount(1, local);
             var n1 = local.Pop();
             Assert.AreEqual(ForthDatum.DatumType.Integer, n1.Type);
             Assert.AreEqual(1, n1.Value);
 
-            Assert.AreEqual(0, local.Count);
+            Assert.HasCount(0, local);
 
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow("Moira snores")]
         [DataRow("Chupchup arghs.")]
         public void SMatchCharWordMatch(string test)
@@ -601,19 +584,18 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = SMatch.Execute(parameters);
-            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
-            Assert.AreEqual(1, local.Count);
+            Assert.HasCount(1, local);
             var n1 = local.Pop();
             Assert.AreEqual(ForthDatum.DatumType.Integer, n1.Type);
             Assert.AreEqual(1, n1.Value);
 
-            Assert.AreEqual(0, local.Count);
+            Assert.HasCount(0, local);
 
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow("Moira' snores")]
         public void SMatchCharWordFail(string test)
         {
@@ -630,19 +612,18 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = SMatch.Execute(parameters);
-            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
-            Assert.AreEqual(1, local.Count);
+            Assert.HasCount(1, local);
             var n1 = local.Pop();
             Assert.AreEqual(ForthDatum.DatumType.Integer, n1.Type);
             Assert.AreEqual(0, n1.Value);
 
-            Assert.AreEqual(0, local.Count);
+            Assert.HasCount(0, local);
 
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow("Foxen tickles Wolfen?")]
         [DataRow("Lynx tickle Wolfen?")]
         [DataRow("Fiera tyckle Wolfen?")]
@@ -662,19 +643,18 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = SMatch.Execute(parameters);
-            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
-            Assert.AreEqual(1, local.Count);
+            Assert.HasCount(1, local);
             var n1 = local.Pop();
             Assert.AreEqual(ForthDatum.DatumType.Integer, n1.Type);
             Assert.AreEqual(1, n1.Value);
 
-            Assert.AreEqual(0, local.Count);
+            Assert.HasCount(0, local);
 
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow("Sean")]
         [DataRow("Jacob")]
         public void SMatchCharWordNegateMatch(string test)
@@ -692,19 +672,18 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = SMatch.Execute(parameters);
-            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
-            Assert.AreEqual(1, local.Count);
+            Assert.HasCount(1, local);
             var n1 = local.Pop();
             Assert.AreEqual(ForthDatum.DatumType.Integer, n1.Type);
             Assert.AreEqual(1, n1.Value);
 
-            Assert.AreEqual(0, local.Count);
+            Assert.HasCount(0, local);
 
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow("Foxen")]
         [DataRow("Fiera")]
         public void SMatchCharWordNegateFail(string test)
@@ -722,15 +701,14 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = SMatch.Execute(parameters);
-            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
-            Assert.AreEqual(1, local.Count);
+            Assert.HasCount(1, local);
             var n1 = local.Pop();
             Assert.AreEqual(ForthDatum.DatumType.Integer, n1.Type);
             Assert.AreEqual(0, n1.Value);
 
-            Assert.AreEqual(0, local.Count);
+            Assert.HasCount(0, local);
         }
 
         [TestMethod]
@@ -755,15 +733,14 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = Subst.Execute(parameters);
-            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
-            Assert.AreEqual(1, local.Count);
+            Assert.HasCount(1, local);
             var s1 = local.Pop();
             Assert.AreEqual(ForthDatum.DatumType.String, s1.Type);
             Assert.AreEqual("HEY YOU THIS IS", s1.Value);
 
-            Assert.AreEqual(0, local.Count);
+            Assert.HasCount(0, local);
         }
     }
 }

@@ -1,7 +1,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using moo.common;
 
-namespace Tests
+namespace moo.Test
 {
     public abstract class TestBase
     {

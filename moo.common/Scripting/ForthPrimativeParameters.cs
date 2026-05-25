@@ -8,9 +8,9 @@ using moo.common.Models;
 
 namespace moo.common.Scripting
 {
-    public struct ForthPrimativeParameters
+    public readonly struct ForthPrimativeParameters
     {
-        private Dbref? lastListItem;
+        private readonly Dbref? lastListItem;
 
         public readonly ForthProcess? Process;
 
@@ -30,9 +30,12 @@ namespace moo.common.Scripting
 
         public readonly CancellationToken CancellationToken;
 
-        public Dbref? LastListItem => lastListItem;
+        public readonly Dbref? LastListItem => lastListItem;
 
-        public ImmutableDictionary<string, ForthVariable>? Variables => variables?.ToImmutableDictionary();
+        public readonly IReadOnlyDictionary<string, ForthVariable>? Variables => variables;
+
+        public readonly Func<Dbref, string, Task>? Notify;
+        public readonly Func<Dbref, string, List<Dbref>, Task>? NotifyRoom;
 
         public ForthPrimativeParameters(
             ForthProcess? process,
@@ -55,6 +58,8 @@ namespace moo.common.Scripting
             Location = location;
             Trigger = trigger;
             Command = command;
+            Notify = notify;
+            NotifyRoom = notifyRoom;
             this.lastListItem = lastListItem;
             this.logger = logger;
             CancellationToken = cancellationToken;

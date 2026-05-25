@@ -5,7 +5,7 @@ using moo.common.Scripting;
 using moo.common.Scripting.ForthPrimatives;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Tests
+namespace moo.Test
 {
     [TestClass]
     public class PickTest
@@ -20,7 +20,6 @@ namespace Tests
             local.Push(new ForthDatum(1));
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = Pick.Execute(parameters);
-            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(2, local.Count);
@@ -46,7 +45,6 @@ namespace Tests
             local.Push(new ForthDatum(2));
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = Pick.Execute(parameters);
-            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(3, local.Count);
@@ -78,7 +76,6 @@ namespace Tests
             var local = stack.ClonePreservingOrder();
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
             var result = Pick.Execute(parameters);
-            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.AreEqual(5, local.Count);

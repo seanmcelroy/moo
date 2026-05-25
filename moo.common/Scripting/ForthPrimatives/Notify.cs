@@ -34,7 +34,11 @@ namespace moo.common.Scripting.ForthPrimatives
 
             // Remove escape sequences from message, some MUF programs add them in.
             message = message.Replace("\\\"", "\"");
-            await Server.NotifyAsync(sTarget.UnwrapDbref(), message);
+
+            if (parameters.Notify != null)
+                await parameters.Notify(sTarget.UnwrapDbref(), message);
+            else
+                await Server.NotifyAsync(sTarget.UnwrapDbref(), message);
 
             return ForthPrimativeResult.SUCCESS;
         }

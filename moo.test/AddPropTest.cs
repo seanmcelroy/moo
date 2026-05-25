@@ -7,7 +7,7 @@ using moo.common.Scripting.ForthPrimatives;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using static moo.common.Models.Property;
 
-namespace Tests
+namespace moo.Test
 {
     [TestClass]
     public class AddPropTest : TestBase
@@ -36,14 +36,11 @@ namespace Tests
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
 
             var result = await AddProp.ExecuteAsync(parameters);
-            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
-            Assert.IsNotNull(testObj.properties);
             Assert.AreEqual(1, testObj.properties.Count);
             Assert.IsTrue(testObj.properties.ContainsKey("propName"));
             var prop = testObj.properties["propName"];
-            Assert.IsNotNull(prop);
             Assert.AreEqual("propName", prop.Name);
             Assert.AreEqual(PropertyType.String, prop.Type);
             Assert.AreEqual("propValue", prop.Value);
@@ -73,7 +70,6 @@ namespace Tests
             var parameters = new ForthPrimativeParameters(null, local, null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
 
             var result = await AddProp.ExecuteAsync(parameters);
-            Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccessful, result.Reason);
 
             Assert.IsNotNull(testObj.properties);
@@ -101,12 +97,12 @@ namespace Tests
             var testObj = ThingRepository.Instance.Make<Thing>();
 
             {
-                var stack = new Stack<ForthDatum>(new[]{
+                var stack = new Stack<ForthDatum>([
                     new ForthDatum(testObj.id),
                     new ForthDatum("propName"),
                     new ForthDatum("propValue1"),
                     new ForthDatum(123)
-                });
+                ]);
                 var parameters = new ForthPrimativeParameters(null, stack.ClonePreservingOrder(), null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null, default);
                 var result1 = await AddProp.ExecuteAsync(parameters);
                 Assert.IsNotNull(result1);
@@ -123,12 +119,12 @@ namespace Tests
             }
 
             {
-                var stack = new Stack<ForthDatum>(new[]{
+                var stack = new Stack<ForthDatum>([
                     new ForthDatum(testObj.id),
                     new ForthDatum("propName"),
                     new ForthDatum("propValue2"),
                     new ForthDatum(123)
-                });
+                ]);
                 var parameters = new ForthPrimativeParameters(null, stack.ClonePreservingOrder(), null, Dbref.NOT_FOUND, Dbref.NOT_FOUND, Dbref.NOT_FOUND, null, null, null, null, null,  default);
                 var result2 = await AddProp.ExecuteAsync(parameters);
                 Assert.IsNotNull(result2);

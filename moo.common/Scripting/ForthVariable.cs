@@ -1,13 +1,12 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
-using System.Text.RegularExpressions;
 using moo.common.Models;
 
 namespace moo.common.Scripting
 {
     public struct ForthVariable
     {
-        public static readonly ForthVariable UNINITIALIZED = new(null, VariableType.Unknown, true);
+        public static readonly ForthVariable UNINITIALIZED = new(null, VariableType.Unknown, false);
         public enum VariableType
         {
             Unknown,
@@ -15,6 +14,7 @@ namespace moo.common.Scripting
             Integer,
             DbRef,
             Float,
+            Lock,
             Array
         }
 
@@ -32,7 +32,7 @@ namespace moo.common.Scripting
                 ForthDatum.DatumType.Integer => VariableType.Integer,
                 ForthDatum.DatumType.String => VariableType.String,
                 ForthDatum.DatumType.Array => VariableType.Array,
-                _ => throw new System.ArgumentException($"Unhandled variable type: {value.Type}", nameof(value)),
+                _ => throw new ArgumentException($"Unhandled variable type: {value.Type}", nameof(value)),
             };
             Value = value.Value;
         }
@@ -70,6 +70,20 @@ namespace moo.common.Scripting
             IsConstant = isConstant;
             Value = value;
             Type = VariableType.Float;
+        }
+
+        public ForthVariable(ForthListArray value, int? lineNumber = null, int? columnNumber = null, bool isConstant = false)
+        {
+            IsConstant = isConstant;
+            Value = value;
+            Type = VariableType.Array;
+        }
+
+        public ForthVariable(ForthDictionaryArray value, int? lineNumber = null, int? columnNumber = null, bool isConstant = false)
+        {
+            IsConstant = isConstant;
+            Value = value;
+            Type = VariableType.Array;
         }
 
         public static bool TryInferType([NotNullWhen(true)] string? value, out Tuple<VariableType, object?>? result)

@@ -1,8 +1,11 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Serialization;
+using moo.common.Database;
 
 namespace moo.common.Models
 {
+    [JsonConverter(typeof(LockSerializer))]
     public struct Lock(string raw) : IEquatable<Lock>
     {
         private string raw = raw;

@@ -3,9 +3,11 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
+using moo.common.Scripting;
 
 namespace moo.common.Models
 {
+    // TODO: In the future with .NET 11 / C# langversion 15.0, make this a union type
     [DebuggerDisplay("{Name}={(directory != null ? \"directory\" : value)} ({Type})")]
     public struct Property
     {
@@ -17,7 +19,8 @@ namespace moo.common.Models
             DbRef = 3,
             Float = 4,
             Directory = 5,
-            Lock = 6
+            Lock = 6,
+            Array = 9
         }
 
         public string Name;
@@ -50,8 +53,7 @@ namespace moo.common.Models
 
         public Property(string name, string value)
         {
-            if (string.IsNullOrWhiteSpace(name))
-                throw new System.ArgumentNullException(nameof(name));
+            ArgumentException.ThrowIfNullOrWhiteSpace(name);
 
             this.Name = name;
             this.directory = null;
@@ -61,8 +63,7 @@ namespace moo.common.Models
 
         public Property(string name, int value)
         {
-            if (string.IsNullOrWhiteSpace(name))
-                throw new System.ArgumentNullException(nameof(name));
+            ArgumentException.ThrowIfNullOrWhiteSpace(name);
 
             this.Name = name;
             this.directory = null;
@@ -72,10 +73,9 @@ namespace moo.common.Models
 
         public Property(string name, Lock value)
         {
-            if (string.IsNullOrWhiteSpace(name))
-                throw new System.ArgumentNullException(nameof(name));
+            ArgumentException.ThrowIfNullOrWhiteSpace(name);
             if (default(Lock).Equals(value))
-                throw new System.ArgumentNullException(nameof(value));
+                throw new ArgumentNullException(nameof(value));
 
             this.Name = name;
             this.directory = null;
@@ -83,12 +83,35 @@ namespace moo.common.Models
             this.Type = PropertyType.Lock;
         }
 
+        public Property(string name, ForthDictionaryArray value)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(name);
+            if (default(ForthDictionaryArray).Equals(value))
+                throw new ArgumentNullException(nameof(value));
+
+            this.Name = name;
+            this.directory = null;
+            this.value = value.ToString(); // Serialize the array to a string
+            this.Type = PropertyType.Array;
+        }
+
+        public Property(string name, ForthListArray value)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(name);
+            if (default(ForthListArray).Equals(value))
+                throw new ArgumentNullException(nameof(value));
+
+            this.Name = name;
+            this.directory = null;
+            this.value = value.ToString(); // Serialize the array to a string
+            this.Type = PropertyType.Array;
+        }
+
         public Property(string name, Dbref value)
         {
-            if (string.IsNullOrWhiteSpace(name))
-                throw new System.ArgumentNullException(nameof(name));
+            ArgumentException.ThrowIfNullOrWhiteSpace(name);
             if (default(Dbref).Equals(value))
-                throw new System.ArgumentNullException(nameof(value));
+                throw new ArgumentNullException(nameof(value));
 
             this.Name = name;
             this.directory = null;
@@ -98,20 +121,21 @@ namespace moo.common.Models
 
         public Property(string name, float value)
         {
-            if (string.IsNullOrWhiteSpace(name))
-                throw new System.ArgumentNullException(nameof(name));
+            ArgumentException.ThrowIfNullOrWhiteSpace(name);
 
             this.Name = name;
             this.directory = null;
             this.value = value;
             this.Type = PropertyType.Float;
         }
+
         public Property(string name, PropertyDirectory value)
         {
-            if (string.IsNullOrWhiteSpace(name))
-                throw new System.ArgumentNullException(nameof(name));
+            ArgumentException.ThrowIfNullOrWhiteSpace(name);
+            ArgumentNullException.ThrowIfNull(value);
+
             this.Name = name;
-            this.directory = value ?? throw new System.ArgumentNullException(nameof(value));
+            this.directory = value;
             this.value = null;
             this.Type = PropertyType.Directory;
         }
@@ -132,6 +156,7 @@ namespace moo.common.Models
                 PropertyType.Integer => Serialize((int)Value),
                 PropertyType.DbRef => Serialize((Dbref)Value, 0),
                 PropertyType.Lock => Serialize((Lock)Value, 0),
+                PropertyType.Array => Serialize((Array)Value, 0),
                 PropertyType.Float => Serialize((float)Value),
                 PropertyType.Directory => PropertyDirectory.Serialize((PropertyDirectory)Value),
                 _ => throw new InvalidOperationException($"Unknown property type for {Name}: {Type}"),
@@ -140,8 +165,12 @@ namespace moo.common.Models
 
         public static string Serialize(Property prop)
         {
-            if (PropertyType.DbRef == prop.Type)
+            if (PropertyType.DbRef == prop.Type && prop.Value != null)
                 return $"<prop><name>{prop.Name}</name>" + Serialize((Dbref)prop.Value, 0) + "</prop>";
+            if (PropertyType.Lock == prop.Type && prop.Value != null)
+                return $"<prop><name>{prop.Name}</name>" + Serialize((Lock)prop.Value, 0) + "</prop>";
+            if (PropertyType.Array == prop.Type && prop.Value != null)
+                return $"<prop><name>{prop.Name}</name>" + Serialize((Array)prop.Value, 0) + "</prop>";
             if (typeof(string).IsAssignableFrom(prop.Value.GetType()))
                 return $"<prop><name>{prop.Name}</name>" + Serialize((string)prop.Value) + "</prop>";
             if (typeof(int).IsAssignableFrom(prop.Value.GetType()))
@@ -155,7 +184,7 @@ namespace moo.common.Models
             if (typeof(PropertyDirectory).IsAssignableFrom(prop.Value.GetType()))
                 return $"<prop><name>{prop.Name}</name>" + PropertyDirectory.Serialize((PropertyDirectory)prop.Value) + "</prop>";
 
-            throw new System.InvalidOperationException($"Cannot handle object of type {prop.Type}");
+            throw new InvalidOperationException($"Cannot handle object of type {prop.Type} (value={prop.Value ?? "NULL"})");
         }
 
         public static async Task<(Property, Dbref)> ScanEnvironmentForProperty(Dbref where, string propertyName, PropertyType propertyType, CancellationToken cancellationToken)
@@ -182,6 +211,7 @@ namespace moo.common.Models
 
         public static string Serialize(Dbref value, byte dud) => Thing.Serialize(value, 0);
         public static string Serialize(Lock value, byte dud) => Thing.Serialize(value, 0);
+        public static string Serialize(Array value, byte dud) => Thing.Serialize(value, 0);
         public static string Serialize(string? value) => Thing.Serialize(value);
         public static string Serialize(float value) => Thing.Serialize(value);
         public static string Serialize(int value) => Thing.Serialize(value);
@@ -235,6 +265,7 @@ namespace moo.common.Models
                 PropertyType.Float => Convert.ToSingle(value) == Convert.ToSingle(other.value),
                 PropertyType.Integer => Convert.ToInt32(value) == Convert.ToInt32(other.value),
                 PropertyType.Lock => value is Lock l && l.Equals(other.value as Lock?),
+                PropertyType.Array => value is Array a && (a.Equals(other.value as ForthListArray?) || a.Equals(other.value as ForthDictionaryArray?)),
                 PropertyType.String => value is string s && string.CompareOrdinal(s, other.value as string) == 0,
                 _ => false
             };

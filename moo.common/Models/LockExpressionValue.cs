@@ -16,7 +16,7 @@ namespace moo.common.Models
             var currentNegate = false;
             var currentPreceeding = LockExpressionBoolean.None;
             var sb = new StringBuilder();
-            List<LockExpressionPart> inners = new();
+            List<LockExpressionPart> inners = [];
 
             for (var i = 0; i < text.Length; i++)
             {

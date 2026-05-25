@@ -12,210 +12,210 @@ using static moo.common.Scripting.ForthVariable;
 
 namespace moo.common.Scripting
 {
-    public readonly struct ForthWord
+    public readonly struct ForthWord(string name, List<ForthDatum> programData, List<(string type, string name)> inputs, List<(string type, string name)> outputs)
     {
-        private static readonly Dictionary<string, Func<ForthPrimativeParameters, ForthPrimativeResult>> callTable = new();
-        public readonly string name;
-        public readonly ImmutableList<ForthDatum> programData;
-        public readonly ImmutableList<(string type, string name)> inputs;
+        private static readonly Dictionary<string, Func<ForthPrimativeParameters, ValueTask<ForthPrimativeResult>>> callTable = new(StringComparer.OrdinalIgnoreCase);
+        public readonly string name = name ?? throw new ArgumentNullException(nameof(name));
+        public readonly ImmutableArray<ForthDatum> programData = [.. programData];
+        public readonly ImmutableList<(string type, string name)> inputs = [.. inputs];
+        public readonly ImmutableList<(string type, string name)> outputs = [.. outputs];
 
         static ForthWord()
         {
             // Setup call table
-            callTable.Add("pop", (p) => Pop.Execute(p));
-            callTable.Add("popn", (p) => PopN.Execute(p));
+            callTable.Add("pop", (p) => new ValueTask<ForthPrimativeResult>(Pop.Execute(p)));
+            callTable.Add("popn", (p) => new ValueTask<ForthPrimativeResult>(PopN.Execute(p)));
             callTable.Add("dup", (p) =>
             {
                 // DUP is the same as 1 pick.
                 p.Stack.Push(new ForthDatum(1));
-                return Pick.Execute(p);
+                return new ValueTask<ForthPrimativeResult>(Pick.Execute(p));
             });
-            callTable.Add("dupn", (p) => DupN.Execute(p));
-            callTable.Add("ldup", (p) => LDup.Execute(p));
-            callTable.Add("swap", (p) => Swap.Execute(p));
+            callTable.Add("dupn", (p) => new ValueTask<ForthPrimativeResult>(DupN.Execute(p)));
+            callTable.Add("ldup", (p) => new ValueTask<ForthPrimativeResult>(LDup.Execute(p)));
+            callTable.Add("swap", (p) => new ValueTask<ForthPrimativeResult>(Swap.Execute(p)));
             callTable.Add("over", (p) =>
             {
                 // OVER is the same as 2 pick.
                 p.Stack.Push(new ForthDatum(2));
-                return Pick.Execute(p);
+                return new ValueTask<ForthPrimativeResult>(Pick.Execute(p));
             });
             callTable.Add("rot", (p) =>
             {
                 // ROT is the same as 3 rotate
                 p.Stack.Push(new ForthDatum(3));
-                return Rotate.Execute(p);
+                return new ValueTask<ForthPrimativeResult>(Rotate.Execute(p));
             });
-            callTable.Add("rotate", (p) => Rotate.Execute(p));
-            callTable.Add("pick", (p) => Pick.Execute(p));
-            callTable.Add("put", (p) => Put.Execute(p));
-            callTable.Add("reverse", (p) => Reverse.Execute(p));
-            callTable.Add("lreverse", (p) => LReverse.Execute(p));
+            callTable.Add("rotate", (p) => new ValueTask<ForthPrimativeResult>(Rotate.Execute(p)));
+            callTable.Add("pick", (p) => new ValueTask<ForthPrimativeResult>(Pick.Execute(p)));
+            callTable.Add("put", (p) => new ValueTask<ForthPrimativeResult>(Put.Execute(p)));
+            callTable.Add("reverse", (p) => new ValueTask<ForthPrimativeResult>(Reverse.Execute(p)));
+            callTable.Add("lreverse", (p) => new ValueTask<ForthPrimativeResult>(LReverse.Execute(p)));
             callTable.Add("depth", (p) =>
             {
                 // DEPTH ( -- i ) 
                 // Returns the number of items currently on the stack.
                 p.Stack.Push(new ForthDatum(p.Stack.Count));
-                return ForthPrimativeResult.SUCCESS;
+                return new ValueTask<ForthPrimativeResult>(ForthPrimativeResult.SUCCESS);
             });
             callTable.Add("{", (p) =>
             {
                 // { ( -- marker) 
                 // Pushes a marker onto the stack, to be used with } or }list or }dict.
                 p.Stack.Push(new ForthDatum("{", DatumType.Marker));
-                return ForthPrimativeResult.SUCCESS;
+                return ValueTask.FromResult(ForthPrimativeResult.SUCCESS);
             });
-            callTable.Add("}", (p) => MarkerEnd.Execute(p));
-            callTable.Add("@", (p) => At.Execute(p));
-            callTable.Add("!", (p) => Bang.Execute(p));
-            callTable.Add("<", (p) => OpLessThan.Execute(p));
-            callTable.Add(">", (p) => OpGreaterThan.Execute(p));
-            callTable.Add("=", (p) => OpEquals.Execute(p));
-            callTable.Add("<=", (p) => OpLessThanOrEqual.Execute(p));
-            callTable.Add(">=", (p) => OpGreaterThanOrEqual.Execute(p));
-            callTable.Add("not", (p) => OpNot.Execute(p));
-            callTable.Add("and", (p) => OpAnd.Execute(p));
-            callTable.Add("or", (p) => OpOr.Execute(p));
-            callTable.Add("xor", (p) => OpXor.Execute(p));
-            callTable.Add("string?", (p) => OpIsString.Execute(p));
-            callTable.Add("int?", (p) => OpIsInt.Execute(p));
-            callTable.Add("float?", (p) => OpIsFloat.Execute(p));
-            callTable.Add("dbref?", (p) => OpIsDbRef.Execute(p));
-            callTable.Add("array?", (p) => OpIsArray.Execute(p));
+            callTable.Add("}", (p) => new ValueTask<ForthPrimativeResult>(MarkerEnd.Execute(p)));
+            callTable.Add("@", (p) => new ValueTask<ForthPrimativeResult>(At.Execute(p)));
+            callTable.Add("!", (p) => new ValueTask<ForthPrimativeResult>(Bang.Execute(p)));
+            callTable.Add("<", (p) => new ValueTask<ForthPrimativeResult>(OpLessThan.Execute(p)));
+            callTable.Add(">", (p) => new ValueTask<ForthPrimativeResult>(OpGreaterThan.Execute(p)));
+            callTable.Add("=", (p) => new ValueTask<ForthPrimativeResult>(OpEquals.Execute(p)));
+            callTable.Add("<=", (p) => new ValueTask<ForthPrimativeResult>(OpLessThanOrEqual.Execute(p)));
+            callTable.Add(">=", (p) => new ValueTask<ForthPrimativeResult>(OpGreaterThanOrEqual.Execute(p)));
+            callTable.Add("not", (p) => new ValueTask<ForthPrimativeResult>(OpNot.Execute(p)));
+            callTable.Add("and", (p) => new ValueTask<ForthPrimativeResult>(OpAnd.Execute(p)));
+            callTable.Add("or", (p) => new ValueTask<ForthPrimativeResult>(OpOr.Execute(p)));
+            callTable.Add("xor", (p) => new ValueTask<ForthPrimativeResult>(OpXor.Execute(p)));
+            callTable.Add("string?", (p) => new ValueTask<ForthPrimativeResult>(OpIsString.Execute(p)));
+            callTable.Add("int?", (p) => new ValueTask<ForthPrimativeResult>(OpIsInt.Execute(p)));
+            callTable.Add("float?", (p) => new ValueTask<ForthPrimativeResult>(OpIsFloat.Execute(p)));
+            callTable.Add("dbref?", (p) => new ValueTask<ForthPrimativeResult>(OpIsDbRef.Execute(p)));
+            callTable.Add("array?", (p) => new ValueTask<ForthPrimativeResult>(OpIsArray.Execute(p)));
 
             // TODO ARRAY?
-            callTable.Add("array_count", (p) => ArrayCount.Execute(p));
-            callTable.Add("array_keys", (p) => ArrayKeys.Execute(p));
-            callTable.Add("array_make", (p) => ArrayMake.Execute(p));
-            callTable.Add("array_make_dict", (p) => ArrayMakeDict.Execute(p));
-            callTable.Add("array_reverse", (p) => ArrayReverse.Execute(p));
-            callTable.Add("array_vals", (p) => ArrayVals.Execute(p));
+            callTable.Add("array_count", (p) => new ValueTask<ForthPrimativeResult>(ArrayCount.Execute(p)));
+            callTable.Add("array_keys", (p) => new ValueTask<ForthPrimativeResult>(ArrayKeys.Execute(p)));
+            callTable.Add("array_make", (p) => new ValueTask<ForthPrimativeResult>(ArrayMake.Execute(p)));
+            callTable.Add("array_make_dict", (p) => new ValueTask<ForthPrimativeResult>(ArrayMakeDict.Execute(p)));
+            callTable.Add("array_reverse", (p) => new ValueTask<ForthPrimativeResult>(ArrayReverse.Execute(p)));
+            callTable.Add("array_union", (p) => new ValueTask<ForthPrimativeResult>(ArrayUnion.Execute(p)));
+            callTable.Add("array_vals", (p) => new ValueTask<ForthPrimativeResult>(ArrayVals.Execute(p)));
 
             // TODO DICTIONARY
             // TODO ADDRESS?
             // TODO LOCK?
 
             // I/O OPERATORS
-            callTable.Add("notify", (p) => Notify.ExecuteAsync(p).Result);
-            callTable.Add("notify_except", (p) =>
+            callTable.Add("notify", (p) => new ValueTask<ForthPrimativeResult>(Notify.ExecuteAsync(p)));
+            callTable.Add("notify_except", (p) => 
             {
                 // NOTIFY_EXCEPT is the same as 1 swap notify_exclude
                 p.Stack.Push(new ForthDatum(1));
                 var swapResult = Swap.Execute(p);
                 if (swapResult.IsSuccessful)
-                    return NotifyExclude.ExecuteAsync(p).Result;
+                    return new ValueTask<ForthPrimativeResult>(NotifyExclude.ExecuteAsync(p));
                 else
-                    return swapResult;
+                    return new ValueTask<ForthPrimativeResult>(swapResult);
             });
-            callTable.Add("notify_exclude", (p) => NotifyExclude.ExecuteAsync(p).Result);
+            callTable.Add("notify_exclude", (p) => new ValueTask<ForthPrimativeResult>(NotifyExclude.ExecuteAsync(p)));
 
             // MATHEMATICAL OPERATORS
-            callTable.Add("abs", (p) => Abs.Execute(p));
-            callTable.Add("int", (p) => MathInt.Execute(p));
-            callTable.Add("sign", (p) => Sign.Execute(p));
-            callTable.Add("getseed", (p) => RandomMethods.GetSeed(p));
-            callTable.Add("setseed", (p) => RandomMethods.SetSeed(p));
-            callTable.Add("srand", (p) => RandomMethods.SRand(p));
-            callTable.Add("random", (p) => RandomMethods.Random(p));
-            callTable.Add("bitor", (p) => MathBitOr.Execute(p));
-            callTable.Add("bitxor", (p) => MathBitXOr.Execute(p));
-            callTable.Add("bitand", (p) => MathBitXOr.Execute(p));
-            callTable.Add("bitshift", (p) => MathBitShift.Execute(p));
-            callTable.Add("+", (p) => MathAdd.Execute(p));
-            callTable.Add("-", (p) => MathSubtract.Execute(p));
-            callTable.Add("*", (p) => MathMultiply.Execute(p));
-            callTable.Add("/", (p) => MathDivide.Execute(p));
-            callTable.Add("%", (p) => MathModulo.Execute(p));
+            callTable.Add("abs", (p) => new ValueTask<ForthPrimativeResult>(Abs.Execute(p)));
+            callTable.Add("int", (p) => new ValueTask<ForthPrimativeResult>(MathInt.Execute(p)));
+            callTable.Add("sign", (p) => new ValueTask<ForthPrimativeResult>(Sign.Execute(p)));
+            callTable.Add("getseed", (p) => new ValueTask<ForthPrimativeResult>(RandomMethods.GetSeed(p)));
+            callTable.Add("setseed", (p) => new ValueTask<ForthPrimativeResult>(RandomMethods.SetSeed(p)));
+            callTable.Add("srand", (p) => new ValueTask<ForthPrimativeResult>(RandomMethods.SRand(p)));
+            callTable.Add("random", (p) => new ValueTask<ForthPrimativeResult>(RandomMethods.Random(p)));
+            callTable.Add("bitor", (p) => new ValueTask<ForthPrimativeResult>(MathBitOr.Execute(p)));
+            callTable.Add("bitxor", (p) => new ValueTask<ForthPrimativeResult>(MathBitXOr.Execute(p)));
+            callTable.Add("bitand", (p) => new ValueTask<ForthPrimativeResult>(MathBitAnd.Execute(p)));
+            callTable.Add("bitshift", (p) => new ValueTask<ForthPrimativeResult>(MathBitShift.Execute(p)));
+            callTable.Add("+", (p) => new ValueTask<ForthPrimativeResult>(MathAdd.Execute(p)));
+            callTable.Add("-", (p) => new ValueTask<ForthPrimativeResult>(MathSubtract.Execute(p)));
+            callTable.Add("*", (p) => new ValueTask<ForthPrimativeResult>(MathMultiply.Execute(p)));
+            callTable.Add("/", (p) => new ValueTask<ForthPrimativeResult>(MathDivide.Execute(p)));
+            callTable.Add("%", (p) => new ValueTask<ForthPrimativeResult>(MathModulo.Execute(p)));
 
             // STRING MANIPULATION OPERATIONS
-            callTable.Add("atoi", (p) => AtoI.Execute(p));
-            callTable.Add("ctoi", (p) => CtoI.Execute(p));
-            callTable.Add("strlen", (p) => StrLen.Execute(p));
-            callTable.Add("strcat", (p) => StrCat.Execute(p));
-            callTable.Add("strcmp", (p) => StrCmp.Execute(p));
-            callTable.Add("strncmp", (p) => StrNCmp.Execute(p));
-            callTable.Add("stringcmp", (p) => StringCmp.Execute(p));
-            callTable.Add("stringpfx", (p) => StringPfx.Execute(p));
-            callTable.Add("smatch", (p) => SMatch.Execute(p));
-            callTable.Add("instr", (p) => Instr.Execute(p));
-            callTable.Add("rinstr", (p) => RInstr.Execute(p));
-            callTable.Add("strcut", (p) => StrCut.Execute(p));
-            callTable.Add("midstr", (p) => MidStr.Execute(p));
-            callTable.Add("split", (p) => Split.Execute(p));
-            callTable.Add("rsplit", (p) => RSplit.Execute(p));
+            callTable.Add("atoi", (p) => new ValueTask<ForthPrimativeResult>(AtoI.Execute(p)));
+            callTable.Add("ctoi", (p) => new ValueTask<ForthPrimativeResult>(CtoI.Execute(p)));
+            callTable.Add("strlen", (p) => new ValueTask<ForthPrimativeResult>(StrLen.Execute(p)));
+            callTable.Add("strcat", (p) => new ValueTask<ForthPrimativeResult>(StrCat.Execute(p)));
+            callTable.Add("strcmp", (p) => new ValueTask<ForthPrimativeResult>(StrCmp.Execute(p)));
+            callTable.Add("strncmp", (p) => new ValueTask<ForthPrimativeResult>(StrNCmp.Execute(p)));
+            callTable.Add("stringcmp", (p) => new ValueTask<ForthPrimativeResult>(StringCmp.Execute(p)));
+            callTable.Add("stringpfx", (p) => new ValueTask<ForthPrimativeResult>(StringPfx.Execute(p)));
+            callTable.Add("smatch", (p) => new ValueTask<ForthPrimativeResult>(SMatch.Execute(p)));
+            callTable.Add("instr", (p) => new ValueTask<ForthPrimativeResult>(Instr.Execute(p)));
+            callTable.Add("rinstr", (p) => new ValueTask<ForthPrimativeResult>(RInstr.Execute(p)));
+            callTable.Add("strcut", (p) => new ValueTask<ForthPrimativeResult>(StrCut.Execute(p)));
+            callTable.Add("midstr", (p) => new ValueTask<ForthPrimativeResult>(MidStr.Execute(p)));
+            callTable.Add("split", (p) => new ValueTask<ForthPrimativeResult>(Split.Execute(p)));
+            callTable.Add("rsplit", (p) => new ValueTask<ForthPrimativeResult>(RSplit.Execute(p)));
 
-            callTable.Add("subst", (p) => Subst.Execute(p));
+            callTable.Add("subst", (p) => new ValueTask<ForthPrimativeResult>(Subst.Execute(p)));
 
-            callTable.Add("intostr", (p) => IntoStr.Execute(p));
+            callTable.Add("intostr", (p) => new ValueTask<ForthPrimativeResult>(IntoStr.Execute(p)));
 
-            callTable.Add("toupper", (p) => ToUpper.Execute(p));
-            callTable.Add("tolower", (p) => ToLower.Execute(p));
-            callTable.Add("striplead", (p) => StripLead.Execute(p));
-            callTable.Add("striptail", (p) => StripTail.Execute(p));
+            callTable.Add("toupper", (p) => new ValueTask<ForthPrimativeResult>(ToUpper.Execute(p)));
+            callTable.Add("tolower", (p) => new ValueTask<ForthPrimativeResult>(ToLower.Execute(p)));
+            callTable.Add("striplead", (p) => new ValueTask<ForthPrimativeResult>(StripLead.Execute(p)));
+            callTable.Add("striptail", (p) => new ValueTask<ForthPrimativeResult>(StripTail.Execute(p)));
 
-            callTable.Add("unparseobj", (p) => UnparseObj.ExecuteAsync(p).Result);
+            callTable.Add("unparseobj", (p) => new ValueTask<ForthPrimativeResult>(UnparseObj.ExecuteAsync(p)));
 
             // PROPERTY MANIPULATION
-            callTable.Add("getprop", (p) => GetProp.ExecuteAsync(p).Result);
-            callTable.Add("getpropstr", (p) => GetPropStr.ExecuteAsync(p).Result);
-            callTable.Add("getpropval", (p) => GetPropVal.ExecuteAsync(p).Result);
-            callTable.Add("getpropfval", (p) => GetPropFVal.ExecuteAsync(p).Result);
-            callTable.Add("addprop", (p) => AddProp.ExecuteAsync(p).Result);
-            callTable.Add("setprop", (p) => SetProp.ExecuteAsync(p).Result);
+            callTable.Add("getprop", (p) => new ValueTask<ForthPrimativeResult>(GetProp.ExecuteAsync(p)));
+            callTable.Add("getpropstr", (p) => new ValueTask<ForthPrimativeResult>(GetPropStr.ExecuteAsync(p)));
+            callTable.Add("getpropval", (p) => new ValueTask<ForthPrimativeResult>(GetPropVal.ExecuteAsync(p)));
+            callTable.Add("getpropfval", (p) => new ValueTask<ForthPrimativeResult>(GetPropFVal.ExecuteAsync(p)));
+            callTable.Add("addprop", (p) => new ValueTask<ForthPrimativeResult>(AddProp.ExecuteAsync(p)));
+            callTable.Add("setprop", (p) => new ValueTask<ForthPrimativeResult>(SetProp.ExecuteAsync(p)));
+            callTable.Add("array_get_reflist", (p) => new ValueTask<ForthPrimativeResult>(ArrayGetReflist.ExecuteAsync(p)));
+            callTable.Add("array_put_reflist", (p) => new ValueTask<ForthPrimativeResult>(ArrayPutReflist.ExecuteAsync(p)));
+            callTable.Add("array_getitem", (p) => new ValueTask<ForthPrimativeResult>(ArrayGetItem.ExecuteAsync(p)));
 
             // Database Related Operators
-            callTable.Add("dbref", (p) => DbrefConvert.Execute(p));
+            callTable.Add("dbref", (p) => new ValueTask<ForthPrimativeResult>(DbrefConvert.Execute(p)));
             // TODO: PROG
-            callTable.Add("trig", (p) => Trig.Execute(p));
+            callTable.Add("trig", (p) => new ValueTask<ForthPrimativeResult>(Trig.Execute(p)));
             // TODO: CALLER
             // TODO: DBTOP
-            callTable.Add("dbcmp", (p) => DbCmp.Execute(p));
-            callTable.Add("owner", (p) => Owner.ExecuteAsync(p).Result);
-            callTable.Add("location", (p) => Location.ExecuteAsync(p).Result);
-            callTable.Add("contents", (p) => Contents.ExecuteAsync(p).Result);
-            callTable.Add("next", (p) => Next.ExecuteAsync(p).Result);
-            callTable.Add("match", (p) => Match.ExecuteAsync(p).Result);
-            callTable.Add("pmatch", (p) => PMatch.Execute(p));
-            callTable.Add("part_pmatch", (p) => PartPMatch.Execute(p));
-            callTable.Add("pennies", (p) => Pennies.ExecuteAsync(p).Result);
-            callTable.Add("flag?", (p) => HasFlag.ExecuteAsync(p).Result);
-            callTable.Add("ok?", (p) => IsOk.ExecuteAsync(p).Result);
-            callTable.Add("player?", (p) => IsPlayer.ExecuteAsync(p).Result);
-            callTable.Add("room?", (p) => IsRoom.ExecuteAsync(p).Result);
-            callTable.Add("thing?", (p) => IsThing.ExecuteAsync(p).Result);
-            callTable.Add("exit?", (p) => IsExit.ExecuteAsync(p).Result);
-            callTable.Add("program?", (p) => IsProgram.ExecuteAsync(p).Result);
-            callTable.Add("sysparm", (p) => SysParm.Execute(p));
-            callTable.Add("name", (p) => Name.ExecuteAsync(p).Result);
-            callTable.Add("getlink", (p) => GetLink.ExecuteAsync(p).Result);
+            callTable.Add("dbcmp", (p) => new ValueTask<ForthPrimativeResult>(DbCmp.Execute(p)));
+            callTable.Add("owner", (p) => new ValueTask<ForthPrimativeResult>(Owner.ExecuteAsync(p)));
+            callTable.Add("location", (p) => new ValueTask<ForthPrimativeResult>(Location.ExecuteAsync(p)));
+            callTable.Add("contents", (p) => new ValueTask<ForthPrimativeResult>(Contents.ExecuteAsync(p)));
+            callTable.Add("next", (p) => new ValueTask<ForthPrimativeResult>(Next.ExecuteAsync(p)));
+            callTable.Add("match", (p) => new ValueTask<ForthPrimativeResult>(Match.ExecuteAsync(p)));
+            callTable.Add("pmatch", (p) => new ValueTask<ForthPrimativeResult>(PMatch.Execute(p)));
+            callTable.Add("part_pmatch", (p) => new ValueTask<ForthPrimativeResult>(PartPMatch.Execute(p)));
+            callTable.Add("pennies", (p) => new ValueTask<ForthPrimativeResult>(Pennies.ExecuteAsync(p)));
+            callTable.Add("flag?", (p) => new ValueTask<ForthPrimativeResult>(HasFlag.ExecuteAsync(p)));
+            callTable.Add("ok?", (p) => new ValueTask<ForthPrimativeResult>(IsOk.ExecuteAsync(p)));
+            callTable.Add("player?", (p) => new ValueTask<ForthPrimativeResult>(IsPlayer.ExecuteAsync(p)));
+            callTable.Add("room?", (p) => new ValueTask<ForthPrimativeResult>(IsRoom.ExecuteAsync(p)));
+            callTable.Add("thing?", (p) => new ValueTask<ForthPrimativeResult>(IsThing.ExecuteAsync(p)));
+            callTable.Add("exit?", (p) => new ValueTask<ForthPrimativeResult>(IsExit.ExecuteAsync(p)));
+            callTable.Add("program?", (p) => new ValueTask<ForthPrimativeResult>(IsProgram.ExecuteAsync(p)));
+            callTable.Add("sysparm", (p) => new ValueTask<ForthPrimativeResult>(SysParm.Execute(p)));
+            callTable.Add("name", (p) => new ValueTask<ForthPrimativeResult>(Name.ExecuteAsync(p)));
+            callTable.Add("getlink", (p) => new ValueTask<ForthPrimativeResult>(GetLink.ExecuteAsync(p)));
 
             // TIME MANIPULATION
-            callTable.Add("time", (p) => Time.Execute(p));
-            callTable.Add("date", (p) => Date.Execute(p));
-            callTable.Add("systime", (p) => SysTime.Execute(p));
-            callTable.Add("systime_precise", (p) => SysTimePrecise.Execute(p));
-            callTable.Add("gmtoffset", (p) => GmtOffset.Execute(p));
-            callTable.Add("timesplit", (p) => TimeSplit.Execute(p));
-            callTable.Add("timefmt", (p) => TimeFormat.Execute(p));
+            callTable.Add("time", (p) => new ValueTask<ForthPrimativeResult>(Time.Execute(p)));
+            callTable.Add("date", (p) => new ValueTask<ForthPrimativeResult>(Date.Execute(p)));
+            callTable.Add("systime", (p) => new ValueTask<ForthPrimativeResult>(SysTime.Execute(p)));
+            callTable.Add("systime_precise", (p) => new ValueTask<ForthPrimativeResult>(SysTimePrecise.Execute(p)));
+            callTable.Add("gmtoffset", (p) => new ValueTask<ForthPrimativeResult>(GmtOffset.Execute(p)));
+            callTable.Add("timesplit", (p) => new ValueTask<ForthPrimativeResult>(TimeSplit.Execute(p)));
+            callTable.Add("timefmt", (p) => new ValueTask<ForthPrimativeResult>(TimeFormat.Execute(p)));
 
             // PROCESS MANAGEMENT OPERATORS
-            callTable.Add("setmode", (p) => SetMode.Execute(p));
+            callTable.Add("setmode", (p) => new ValueTask<ForthPrimativeResult>(SetMode.Execute(p)));
 
             // CONNECTION MANAGEMENT OPERATORS
-            callTable.Add("awake?", (p) => Awake.Execute(p));
-            callTable.Add("conidle", (p) => ConIdle.Execute(p));
-            callTable.Add("descrcon", (p) => DescRcon.Execute(p));
-            callTable.Add("descriptors", (p) => Descriptors.Execute(p));
+            callTable.Add("awake?", (p) => new ValueTask<ForthPrimativeResult>(Awake.Execute(p)));
+            callTable.Add("conidle", (p) => new ValueTask<ForthPrimativeResult>(ConIdle.Execute(p)));
+            callTable.Add("descrcon", (p) => new ValueTask<ForthPrimativeResult>(DescRcon.Execute(p)));
+            callTable.Add("descriptors", (p) => new ValueTask<ForthPrimativeResult>(Descriptors.Execute(p)));
+            callTable.Add("online", (p) => new ValueTask<ForthPrimativeResult>(Online.Execute(p)));
+            callTable.Add("online_array", (p) => new ValueTask<ForthPrimativeResult>(OnlineArray.Execute(p)));
 
             // MISCELLANEOUS
-            callTable.Add("force", (p) => Force.ExecuteAsync(p).Result);
-            callTable.Add("version", (p) => ForthPrimatives.Version.Execute(p));
-        }
-
-        public ForthWord(string name, List<ForthDatum> programData, List<(string type, string name)> inputs)
-        {
-            this.name = name ?? throw new ArgumentNullException(nameof(name));
-            this.programData = programData.ToImmutableList();
-            this.inputs = inputs.ToImmutableList();
+            callTable.Add("force", (p) => new ValueTask<ForthPrimativeResult>(Force.ExecuteAsync(p)));
+            callTable.Add("version", (p) => new ValueTask<ForthPrimativeResult>(ForthPrimatives.Version.Execute(p)));
         }
 
         public static ICollection<string> GetPrimatives() => callTable.Keys;
@@ -235,8 +235,8 @@ namespace moo.common.Scripting
             var verbosity = 0;
             var lineCount = 0;
             var controlFlow = new Stack<ControlFlowMarker>();
-            Dictionary<string, ForthVariable> functionScopedVariables = new();
-            string? lastPrimative = null;
+            Dictionary<string, ForthVariable> functionScopedVariables = [];
+            // For debugging only: string? lastPrimative = null;
 
             // Prepopulate inputs on stack per prototype, if defined.
             foreach (var input in inputs.Reverse())
@@ -246,7 +246,7 @@ namespace moo.common.Scripting
             }
 
             int x = -1;
-            while (x < programData.Count - 1)
+            while (x < programData.Length - 1)
             {
                 x++;
                 var datum = programData[x];
@@ -306,8 +306,14 @@ namespace moo.common.Scripting
                     // VAR
                     if (string.Compare("var", datumLiteral, true) == 0)
                     {
-                        var functionScopedVariableName = programData[x + 1];
-                        functionScopedVariables.Add(functionScopedVariableName.Value.ToString(), UNINITIALIZED);
+                        if (x + 1 >= programData.Length)
+                            return new ForthWordResult(ForthErrorResult.SYNTAX_ERROR, "var must be followed by a variable name");
+
+                        var rawName = programData[x + 1].Value?.ToString();
+                        if (string.IsNullOrWhiteSpace(rawName))
+                            return new ForthWordResult(ForthErrorResult.SYNTAX_ERROR, "var name must be a non-empty identifier");
+
+                        functionScopedVariables[rawName.ToLowerInvariant()] = UNINITIALIZED;
                         x++; // Advance past the variable name since it's ahead.
                         continue;
                     }
@@ -315,10 +321,17 @@ namespace moo.common.Scripting
                     // VAR!
                     if (string.Compare("var!", datumLiteral, true) == 0)
                     {
-                        var functionScopedVariableName = programData[x + 1];
+                        if (x + 1 >= programData.Length)
+                            return new ForthWordResult(ForthErrorResult.SYNTAX_ERROR, "var! must be followed by a variable name");
+                        if (stack.Count < 1)
+                            return new ForthWordResult(ForthErrorResult.STACK_UNDERFLOW, "var! requires one value on the stack");
+
+                        var rawName = programData[x + 1].Value?.ToString();
+                        if (string.IsNullOrWhiteSpace(rawName))
+                            return new ForthWordResult(ForthErrorResult.SYNTAX_ERROR, "var! name must be a non-empty identifier");
+
                         var functionScopedVariableValue = stack.Pop();
-                        functionScopedVariables.Add(functionScopedVariableName.Value.ToString(),
-                            new ForthVariable(functionScopedVariableValue));
+                        functionScopedVariables[rawName.ToLowerInvariant()] = new ForthVariable(functionScopedVariableValue);
                         x++; // Advance past the variable name since it's ahead.
                         continue;
                     }
@@ -566,7 +579,7 @@ namespace moo.common.Scripting
                             {
                                 x = nextControl.Index - 1; // Go back to BEGIN, so it gets pushed back on the stack for the next iteration
                                 found = true;
-                                continue;
+                                break;
                             }
                         }
 
@@ -622,9 +635,9 @@ namespace moo.common.Scripting
                             if (nextControl.Element == ControlFlowElement.BeginMarker
                              || nextControl.Element == ControlFlowElement.ForMarker)
                             {
-                                x = nextControl.Index;
+                                x = nextControl.Index - 1;
                                 found = true;
-                                continue;
+                                break;
                             }
                         }
 
@@ -676,7 +689,7 @@ namespace moo.common.Scripting
 
                 if ((datum.Type == DatumType.Unknown || datum.Type == DatumType.Variable) &&
                     (string.Compare("me", datumLiteral, true) == 0
-                    || string.Compare("here", datumLiteral, true) == 0
+                    //|| string.Compare("here", datumLiteral, true) == 0
                     || string.Compare("loc", datumLiteral, true) == 0
                     || string.Compare("trigger", datumLiteral, true) == 0
                     || string.Compare("command", datumLiteral, true) == 0))
@@ -686,14 +699,34 @@ namespace moo.common.Scripting
                 }
 
                 if ((datum.Type == DatumType.Unknown || datum.Type == DatumType.Variable)
-                    && variables.TryGetValue(datumLiteral, out ForthVariable v))
+                    && variables.TryGetValue(datumLiteral?.ToLowerInvariant() ?? string.Empty, out ForthVariable v))
                 {
                     if (v.IsConstant)
-                        stack.Push(new ForthDatum(v.Value, v.Type == VariableType.String ? DatumType.String : (v.Type == VariableType.Float ? DatumType.Float : (v.Type == VariableType.Integer ? DatumType.Integer : (v.Type == VariableType.DbRef ? DatumType.DbRef : DatumType.Unknown)))));
+                    {
+                        var datumType = v.Type switch
+                        {
+                            VariableType.String  => DatumType.String,
+                            VariableType.Float   => DatumType.Float,
+                            VariableType.Integer => DatumType.Integer,
+                            VariableType.DbRef   => DatumType.DbRef,
+                            VariableType.Array   => DatumType.Array,
+                            _                    => DatumType.Unknown,
+                        };
+                        stack.Push(new ForthDatum(v.Value, datumType));
+                    }
                     else
                         stack.Push(new ForthDatum(datum.Value, DatumType.Variable, datum.FileLineNumber, datum.ColumnNumber, datum.WordName, datum.WordLineNumber));
                     continue;
                 }
+
+                // An Unknown datum that wasn't recognized as a control-flow
+                // keyword, callable word, built-in, or variable is a parse-time
+                // identifier the runtime cannot resolve. Silently pushing it as
+                // a literal hides the error; reject it here so the caller sees
+                // a clean SYNTAX_ERROR instead of either a successful no-op or
+                // a confusing failure on a later instruction.
+                if (datum.Type == DatumType.Unknown)
+                    return new ForthWordResult(ForthErrorResult.SYNTAX_ERROR, $"Unknown identifier: {datumLiteral}");
 
                 // Literals
                 switch (datum.Type)
@@ -701,7 +734,6 @@ namespace moo.common.Scripting
                     case DatumType.Float:
                     case DatumType.Integer:
                     case DatumType.String:
-                    case DatumType.Unknown:
                         stack.Push(datum);
                         continue;
                     case DatumType.DbRef:
@@ -716,10 +748,9 @@ namespace moo.common.Scripting
                 // Primatives
                 if (datum.Type == DatumType.Primitive)
                 {
-                    var callTableKey = callTable.Keys.FirstOrDefault(k => string.Compare(k, datumLiteral, StringComparison.InvariantCultureIgnoreCase) == 0);
-                    if (callTableKey != null)
+                    if (datumLiteral != null && callTable.TryGetValue(datumLiteral, out var matchingPrimative))
                     {
-                        var stackCopy = stack.ClonePreservingOrder();
+                        // For debugging only: var stackCopy = stack.ClonePreservingOrder();
                         var p = new ForthPrimativeParameters(process, stack, variables, player, location, trigger, command,
                             async (d, s) => await Server.NotifyAsync(d, s),
                             async (d, s, e) => await Server.NotifyRoomAsync(d, s, e),
@@ -727,10 +758,9 @@ namespace moo.common.Scripting
                             logger,
                             cancellationToken);
 
-                        var matchingPrimative = callTable[callTableKey];
-                        var result = matchingPrimative.Invoke(p);
+                        var result = await matchingPrimative.Invoke(p);
 
-                        lastPrimative = callTableKey;
+                        // For debugging only: lastPrimative = datumLiteral;
 
                         if (result.LastListItem.HasValue)
                             lastListItem = result.LastListItem.Value;
@@ -741,17 +771,22 @@ namespace moo.common.Scripting
                             var programLocalVariables = process.GetProgramLocalVariables();
                             foreach (var dirty in result.dirtyVariables)
                             {
-                                if (programLocalVariables.ContainsKey(dirty.Key))
+                                var key = dirty.Key; // already lowercase from Bang
+                                if (programLocalVariables.TryGetValue(key, out var vv))
                                 {
-                                    var vv = programLocalVariables[dirty.Key];
                                     if (vv.IsConstant)
-                                        return new ForthWordResult(ForthErrorResult.VARIABLE_IS_CONSTANT, $"Variable {dirty.Key} is a constant in this scope and cannot be changed.");
+                                        return new ForthWordResult(ForthErrorResult.VARIABLE_IS_CONSTANT, $"Variable {key} is a constant in this scope and cannot be changed.");
 
-                                    programLocalVariables[dirty.Key] = dirty.Value;
+                                    programLocalVariables[key] = dirty.Value;
                                 }
 
-                                if (functionScopedVariables.ContainsKey(dirty.Key))
-                                    functionScopedVariables[dirty.Key] = dirty.Value;
+                                if (functionScopedVariables.TryGetValue(key, out var fv))
+                                {
+                                    if (fv.IsConstant)
+                                        return new ForthWordResult(ForthErrorResult.VARIABLE_IS_CONSTANT,  $"Variable {key} is a constant in this scope and cannot be changed.");
+
+                                    functionScopedVariables[key] = dirty.Value;
+                                }
                             }
                         }
 
@@ -766,7 +801,7 @@ namespace moo.common.Scripting
                                 return new ForthWordResult("UNKNOWN ERROR");
                         }
 
-                        continue;
+                        continue;                        
                     }
 
                     // Unable to handle!

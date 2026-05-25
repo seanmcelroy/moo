@@ -24,18 +24,19 @@ namespace moo.common.Scripting.ForthPrimatives
                 if (string.IsNullOrWhiteSpace(variableName))
                     return new ForthPrimativeResult(ForthErrorResult.VARIABLE_NOT_FOUND, $"No variable name was found");
 
-                if (parameters.Variables == null)
+                var variables = parameters.Variables;
+                if (variables == null)
                     return new ForthPrimativeResult(ForthErrorResult.VARIABLE_NOT_FOUND, $"No variable named {variableName} was found");
 
-                var variable = At.ResolveVariableByName(parameters.Variables, parameters.Player, parameters.Location, parameters.Trigger, parameters.Command, variableName);
+                var variableValue = At.ResolveVariableByName(parameters.Variables, parameters.Player, parameters.Location, parameters.Trigger, parameters.Command, variableName);
 
-                if (default(ForthVariable).Equals(variable) && !parameters.Variables.ContainsKey(variableName))
+                if (default(ForthVariable).Equals(variableValue) && !variables.ContainsKey(variableName))
                     return new ForthPrimativeResult(ForthErrorResult.VARIABLE_NOT_FOUND, $"No variable named {variableName} was found");
 
-                if (default(ForthVariable).Equals(variable))
-                    return new ForthPrimativeResult(ForthErrorResult.UNKNOWN_TYPE, $"Unable to determine data type for: {variable.Value}");
+                if (default(ForthVariable).Equals(variableValue))
+                    return new ForthPrimativeResult(ForthErrorResult.UNKNOWN_TYPE, $"Unable to determine data type for: {variableValue.Value}");
 
-                datum = new ForthDatum(variable);
+                datum = new ForthDatum(variableValue);
             }
             else
             {

@@ -43,7 +43,7 @@ namespace moo.common.Scripting.ForthPrimatives
                 return ForthPrimativeResult.SUCCESS;
             }
 
-            if (n1.Type == DatumType.DbRef || n2.Type == DatumType.Integer)
+            if (n1.Type == DatumType.DbRef && n2.Type == DatumType.Integer)
             {
                 var n1v = n1.UnwrapDbref().ToInt32();
 

@@ -111,7 +111,7 @@ namespace moo.common.Models
             var result = await Server.ExecuteAsync(process, tokenized.Words,
                 id,
                 command.GetVerb(),
-                new[] { command.GetNonVerbPhrase() },
+                [command.GetNonVerbPhrase()],
                 logger,
                 cancellationToken);
             var scriptResult = new VerbResult(result.IsSuccessful, result.Reason?.ToString());

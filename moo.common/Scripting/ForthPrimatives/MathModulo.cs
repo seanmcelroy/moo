@@ -24,7 +24,11 @@ namespace moo.common.Scripting.ForthPrimatives
             if (n1.Type != DatumType.Integer)
                 return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "% requires arguments to be integers");
 
-            parameters.Stack.Push(new ForthDatum(n1.UnwrapInt() % n2.UnwrapInt()));
+            var n2v = n2.UnwrapInt();
+            if (n2v == 0)
+                return new ForthPrimativeResult(ForthErrorResult.DIVISION_BY_ZERO, "Attempt to divide by zero was aborted");
+
+            parameters.Stack.Push(new ForthDatum(n1.UnwrapInt() % n2v));
             return ForthPrimativeResult.SUCCESS;
         }
     }
