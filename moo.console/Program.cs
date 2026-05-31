@@ -66,18 +66,27 @@ namespace moo.console
                 $"scripts{System.IO.Path.DirectorySeparatorChar}lib-arrays.muf",
                 $"scripts{System.IO.Path.DirectorySeparatorChar}lib-bolding.muf",
                 $"scripts{System.IO.Path.DirectorySeparatorChar}lib-debug.muf",
-                //$"scripts{System.IO.Path.DirectorySeparatorChar}lib-mail-MOSS1.1.muf",
+                $"scripts{System.IO.Path.DirectorySeparatorChar}lib-mail-MOSS1.1.muf",
                 $"scripts{System.IO.Path.DirectorySeparatorChar}lib-optionsinfo.muf",
                 $"scripts{System.IO.Path.DirectorySeparatorChar}lib-optionsmisc.muf",
                 $"scripts{System.IO.Path.DirectorySeparatorChar}lib-optionsmenu.muf",
                 $"scripts{System.IO.Path.DirectorySeparatorChar}lib-optionsgui.muf",
                 $"scripts{System.IO.Path.DirectorySeparatorChar}cmd-@archive.muf",
+                $"scripts{System.IO.Path.DirectorySeparatorChar}cmd-@bansite.muf",
+                $"scripts{System.IO.Path.DirectorySeparatorChar}cmd-@bringitdown.muf",
+                $"scripts{System.IO.Path.DirectorySeparatorChar}cmd-@check.muf",
+                $"scripts{System.IO.Path.DirectorySeparatorChar}cmd-@doing.muf",
+                $"scripts{System.IO.Path.DirectorySeparatorChar}cmd-@exits.muf",
+                $"scripts{System.IO.Path.DirectorySeparatorChar}cmd-@ignore.muf",
+                $"scripts{System.IO.Path.DirectorySeparatorChar}cmd-@image.muf",
+                $"scripts{System.IO.Path.DirectorySeparatorChar}cmd-@muf.muf",
             };
                 var scriptsToLoad = scriptsToLoadInOrder
-                    .Union(System.IO.Directory.GetFiles("scripts", "*.muf")
-                    .OrderBy(f => f)
-                    .Except(scriptsToLoadInOrder))
-                    .Distinct();
+                    .Union(
+                        System.IO.Directory.GetFiles("scripts", "*.muf")
+                        .OrderBy(f => f)
+                        .Except(scriptsToLoadInOrder)
+                    );
 
                 foreach (var scriptPath in scriptsToLoad)
                 {

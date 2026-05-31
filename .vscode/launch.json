@@ -13,7 +13,7 @@
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/moo.console/bin/Debug/net7.0/moo.dll",
+            "program": "${workspaceFolder}/moo.console/bin/Debug/net10.0/moo.dll",
             "args": [],
             "cwd": "${workspaceFolder}/moo.console",
             // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
