@@ -15,12 +15,8 @@ namespace moo.common.Scripting.ForthPrimatives
             if (parameters.Stack.Count < 2)
                 return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, "ARRAY_GETITEM requires two parameters");
 
-            var sIndex = parameters.Stack.Pop();
-            if (
-                    (sIndex.Type != DatumType.Integer
-                    && sIndex.Type != DatumType.String) 
-                || sIndex.Value == null)
-                return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "ARRAY_GETITEM requires the top parameter on the stack to be an index");
+            if (!parameters.Stack.TryPopArrayIndex(out object? index, out ForthErrorResult? err))
+                return new ForthPrimativeResult(err.Value, "ARRAY_GETITEM requires the top parameter(s) to be an array index (an integer or string)");
 
             var sArray = parameters.Stack.Pop();
             if (sArray.Type != DatumType.Array)
@@ -34,8 +30,8 @@ namespace moo.common.Scripting.ForthPrimatives
 
             var value = sArray.Value switch
             {
-                ForthDictionaryArray da => da[sIndex.Value],
-                ForthListArray la => la[(int)sIndex.Value],
+                ForthDictionaryArray da => da[index],
+                ForthListArray la => la[(int)index],
                 _ => new ForthDatum(),
             };
 

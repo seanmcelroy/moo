@@ -80,14 +80,18 @@ namespace moo.common.Scripting
             callTable.Add("string?", (p) => new ValueTask<ForthPrimativeResult>(OpIsString.Execute(p)));
             callTable.Add("int?", (p) => new ValueTask<ForthPrimativeResult>(OpIsInt.Execute(p)));
             callTable.Add("float?", (p) => new ValueTask<ForthPrimativeResult>(OpIsFloat.Execute(p)));
+            callTable.Add("number?", (p) => new ValueTask<ForthPrimativeResult>(OpIsNumber.Execute(p)));
             callTable.Add("dbref?", (p) => new ValueTask<ForthPrimativeResult>(OpIsDbRef.Execute(p)));
             callTable.Add("array?", (p) => new ValueTask<ForthPrimativeResult>(OpIsArray.Execute(p)));
 
             // TODO ARRAY?
             callTable.Add("array_count", (p) => new ValueTask<ForthPrimativeResult>(ArrayCount.Execute(p)));
+            callTable.Add("array_getrange", (p) => new ValueTask<ForthPrimativeResult>(ArrayGetRange.Execute(p)));
+            callTable.Add("array_join", (p) => new ValueTask<ForthPrimativeResult>(ArrayJoin.Execute(p)));
             callTable.Add("array_keys", (p) => new ValueTask<ForthPrimativeResult>(ArrayKeys.Execute(p)));
             callTable.Add("array_make", (p) => new ValueTask<ForthPrimativeResult>(ArrayMake.Execute(p)));
             callTable.Add("array_make_dict", (p) => new ValueTask<ForthPrimativeResult>(ArrayMakeDict.Execute(p)));
+            callTable.Add("array_nintersect", (p) => new ValueTask<ForthPrimativeResult>(ArrayNIntersect.Execute(p)));
             callTable.Add("array_reverse", (p) => new ValueTask<ForthPrimativeResult>(ArrayReverse.Execute(p)));
             callTable.Add("array_union", (p) => new ValueTask<ForthPrimativeResult>(ArrayUnion.Execute(p)));
             callTable.Add("array_vals", (p) => new ValueTask<ForthPrimativeResult>(ArrayVals.Execute(p)));
@@ -128,6 +132,9 @@ namespace moo.common.Scripting
             callTable.Add("/", (p) => new ValueTask<ForthPrimativeResult>(MathDivide.Execute(p)));
             callTable.Add("%", (p) => new ValueTask<ForthPrimativeResult>(MathModulo.Execute(p)));
 
+            // FLOATING POINT OPERATIONS
+            callTable.Add("pi", (p) => new ValueTask<ForthPrimativeResult>(Pi.Execute(p)));
+
             // STRING MANIPULATION OPERATIONS
             callTable.Add("atoi", (p) => new ValueTask<ForthPrimativeResult>(AtoI.Execute(p)));
             callTable.Add("ctoi", (p) => new ValueTask<ForthPrimativeResult>(CtoI.Execute(p)));
@@ -163,6 +170,7 @@ namespace moo.common.Scripting
             callTable.Add("getpropfval", (p) => new ValueTask<ForthPrimativeResult>(GetPropFVal.ExecuteAsync(p)));
             callTable.Add("addprop", (p) => new ValueTask<ForthPrimativeResult>(AddProp.ExecuteAsync(p)));
             callTable.Add("setprop", (p) => new ValueTask<ForthPrimativeResult>(SetProp.ExecuteAsync(p)));
+            callTable.Add("remove_prop", (p) => new ValueTask<ForthPrimativeResult>(RemoveProp.ExecuteAsync(p)));
             callTable.Add("array_get_reflist", (p) => new ValueTask<ForthPrimativeResult>(ArrayGetReflist.ExecuteAsync(p)));
             callTable.Add("array_put_reflist", (p) => new ValueTask<ForthPrimativeResult>(ArrayPutReflist.ExecuteAsync(p)));
             callTable.Add("array_getitem", (p) => new ValueTask<ForthPrimativeResult>(ArrayGetItem.ExecuteAsync(p)));
@@ -408,22 +416,35 @@ namespace moo.common.Scripting
                     // THEN
                     if (string.Compare("then", datumLiteral, true) == 0)
                     {
-                        // I could be an 'else' inside a skipped branch.
                         if (controlFlow.Count > 0)
                         {
                             var controlCurrent = controlFlow.Peek();
-                            if (controlCurrent.Element == ControlFlowElement.SkippedBranch
-                             || controlCurrent.Element == ControlFlowElement.SkipToAfterNextUntilOrRepeat)
+                            if (controlCurrent.Element == ControlFlowElement.SkippedBranch)
                             {
                                 if (verbosity >= 2)
                                     await DumpStackToDebugAsync(stack, player, lineCount, datum, "(skipped)");
-                                // A skipped if will push a SkippedBranch, so we should pop it.
+                                // A skipped if pushed a SkippedBranch — pop it.
                                 controlFlow.Pop();
+                                continue;
+                            }
+                            if (controlCurrent.Element == ControlFlowElement.SkipToAfterNextUntilOrRepeat)
+                            {
+                                if (verbosity >= 2)
+                                    await DumpStackToDebugAsync(stack, player, lineCount, datum, "(skipped)");
+                                // The skip was pushed by BREAK or WHILE-false inside
+                                // the if-body and targets the enclosing REPEAT/UNTIL.
+                                // Clean up the IF marker beneath the skip without
+                                // disturbing the skip itself.
+                                var skip = controlFlow.Pop();
+                                if (controlFlow.Count == 0)
+                                    return new ForthWordResult(ForthErrorResult.STACK_UNDERFLOW,
+                                        "THEN encountered with a pass-through skip but no preceding IF");
+                                controlFlow.Pop();
+                                controlFlow.Push(skip);
                                 continue;
                             }
                         }
 
-                        // Debug, print stack
                         if (verbosity >= 2) await DumpStackToDebugAsync(stack, player, lineCount, datum);
 
                         if (controlFlow.Count == 0)
@@ -483,6 +504,155 @@ namespace moo.common.Scripting
                         continue;
                     }
 
+                    // FOREACH
+                    if (string.Compare("foreach", datumLiteral, true) == 0)
+                    {
+                        if (controlFlow.Count > 0)
+                        {
+                            var controlCurrent = controlFlow.Peek();
+                            if (controlCurrent.Element == ControlFlowElement.InIfAndSkip
+                             || controlCurrent.Element == ControlFlowElement.InElseAndSkip
+                             || controlCurrent.Element == ControlFlowElement.SkippedBranch
+                             || controlCurrent.Element == ControlFlowElement.SkipToAfterNextUntilOrRepeat)
+                            {
+                                if (verbosity >= 2)
+                                    await DumpStackToDebugAsync(stack, player, lineCount, datum, "(skipped)");
+                                continue;
+                            }
+                        }
+
+                        if (verbosity >= 2)
+                            await DumpStackToDebugAsync(stack, player, lineCount, datum);
+
+                        // Re-entry: REPEAT's peek-not-pop left our marker on top with our x.
+                        if (controlFlow.Count > 0
+                         && controlFlow.Peek().Element == ControlFlowElement.ForEachMarker
+                         && controlFlow.Peek().Index == x)
+                        {
+                            var stateExisting = (ForeachLoopState)controlFlow.Peek().Loop!;
+                            if (!stateExisting.Advance())
+                            {
+                                // Iterator exhausted. Pop the marker and jump past
+                                // the matching REPEAT. We cannot use the skip
+                                // mechanism here because a stale REPEAT inside
+                                // our body (from an inner loop already completed)
+                                // would consume it.
+                                controlFlow.Pop();
+                                int endPos = FindMatchingLoopEnd(programData, x);
+                                if (endPos < 0)
+                                    return new ForthWordResult(ForthErrorResult.SYNTAX_ERROR,
+                                        "FOREACH without matching REPEAT or UNTIL");
+                                x = endPos;
+                                continue;
+                            }
+                            var kvNext = stateExisting.Current;
+                            stack.Push(KeyToDatum(kvNext.Key));
+                            stack.Push(kvNext.Value);
+                            continue;
+                        }
+
+                        // Fresh entry: pop array and build state.
+                        if (stack.Count == 0)
+                            return new ForthWordResult(ForthErrorResult.STACK_UNDERFLOW,
+                                "FOREACH requires an array on the stack");
+
+                        var arrayDatum = stack.Pop();
+                        if (arrayDatum.Type != DatumType.Array)
+                            return new ForthWordResult(ForthErrorResult.TYPE_MISMATCH,
+                                "FOREACH requires an array");
+
+                        var iterator = BuildForeachIterator(arrayDatum);
+                        var stateFresh = new ForeachLoopState(iterator);
+
+                        if (!stateFresh.Advance())
+                        {
+                            // Empty array: jump straight past the matching REPEAT
+                            // without pushing a marker.
+                            int endPos = FindMatchingLoopEnd(programData, x);
+                            if (endPos < 0)
+                                return new ForthWordResult(ForthErrorResult.SYNTAX_ERROR,
+                                    "FOREACH without matching REPEAT or UNTIL");
+                            x = endPos;
+                            continue;
+                        }
+
+                        controlFlow.Push(new ControlFlowMarker(
+                            ControlFlowElement.ForEachMarker, x, stateFresh));
+                        var kvFirst = stateFresh.Current;
+                        stack.Push(KeyToDatum(kvFirst.Key));
+                        stack.Push(kvFirst.Value);
+                        continue;
+                    }
+
+                    // FOR
+                    if (string.Compare("for", datumLiteral, true) == 0)
+                    {
+                        if (controlFlow.Count > 0)
+                        {
+                            var controlCurrent = controlFlow.Peek();
+                            if (controlCurrent.Element == ControlFlowElement.InIfAndSkip
+                             || controlCurrent.Element == ControlFlowElement.InElseAndSkip
+                             || controlCurrent.Element == ControlFlowElement.SkippedBranch
+                             || controlCurrent.Element == ControlFlowElement.SkipToAfterNextUntilOrRepeat)
+                            {
+                                if (verbosity >= 2)
+                                    await DumpStackToDebugAsync(stack, player, lineCount, datum, "(skipped)");
+                                continue;
+                            }
+                        }
+
+                        if (verbosity >= 2)
+                            await DumpStackToDebugAsync(stack, player, lineCount, datum);
+
+                        // Re-entry.
+                        if (controlFlow.Count > 0
+                         && controlFlow.Peek().Element == ControlFlowElement.ForMarker
+                         && controlFlow.Peek().Index == x)
+                        {
+                            var stateExisting = (ForLoopState)controlFlow.Peek().Loop!;
+                            if (!stateExisting.Advance())
+                            {
+                                controlFlow.Pop();
+                                int endPos = FindMatchingLoopEnd(programData, x);
+                                if (endPos < 0)
+                                    return new ForthWordResult(ForthErrorResult.SYNTAX_ERROR,
+                                        "FOR without matching REPEAT or UNTIL");
+                                x = endPos;
+                            }
+                            // FOR's counter is read via `i` (PR3); no data-stack push.
+                            continue;
+                        }
+
+                        // Fresh entry: pop start, end.
+                        if (stack.Count < 2)
+                            return new ForthWordResult(ForthErrorResult.STACK_UNDERFLOW,
+                                "FOR requires start and end on the stack");
+
+                        var endDatum = stack.Pop();
+                        var startDatum = stack.Pop();
+                        if (endDatum.Type != DatumType.Integer
+                         || startDatum.Type != DatumType.Integer)
+                            return new ForthWordResult(ForthErrorResult.TYPE_MISMATCH,
+                                "FOR requires integer start and end");
+
+                        var stateFresh = new ForLoopState((int)startDatum.Value!, (int)endDatum.Value!);
+
+                        if (!stateFresh.Advance())
+                        {
+                            // Empty range: jump straight past the matching REPEAT.
+                            int endPos = FindMatchingLoopEnd(programData, x);
+                            if (endPos < 0)
+                                return new ForthWordResult(ForthErrorResult.SYNTAX_ERROR,
+                                    "FOR without matching REPEAT or UNTIL");
+                            x = endPos;
+                            continue;
+                        }
+
+                        controlFlow.Push(new ControlFlowMarker(
+                            ControlFlowElement.ForMarker, x, stateFresh));
+                        continue;
+                    }
+
                     // WHILE
                     if (string.Compare("while", datumLiteral, true) == 0)
                     {
@@ -527,7 +697,9 @@ namespace moo.common.Scripting
                         {
                             var controlCurrent = controlFlow.Peek();
 
-                            if (controlCurrent.Element == ControlFlowElement.SkippedBranch
+                            if (controlCurrent.Element == ControlFlowElement.InIfAndSkip
+                             || controlCurrent.Element == ControlFlowElement.InElseAndSkip
+                             || controlCurrent.Element == ControlFlowElement.SkippedBranch
                              || controlCurrent.Element == ControlFlowElement.SkipToAfterNextUntilOrRepeat)
                             {
                                 if (verbosity >= 2)
@@ -536,8 +708,58 @@ namespace moo.common.Scripting
                             }
                         }
 
-                        //await DumpStackToDebugAsync(stack, connection, lineCount, datum);
                         controlFlow.Push(new ControlFlowMarker(ControlFlowElement.SkipToAfterNextUntilOrRepeat, x));
+                        continue;
+                    }
+
+                    // CONTINUE
+                    if (string.Compare("continue", datumLiteral, true) == 0)
+                    {
+                        if (controlFlow.Count > 0)
+                        {
+                            var controlCurrent = controlFlow.Peek();
+                            if (controlCurrent.Element == ControlFlowElement.InIfAndSkip
+                             || controlCurrent.Element == ControlFlowElement.InElseAndSkip
+                             || controlCurrent.Element == ControlFlowElement.SkippedBranch
+                             || controlCurrent.Element == ControlFlowElement.SkipToAfterNextUntilOrRepeat)
+                            {
+                                if (verbosity >= 2)
+                                    await DumpStackToDebugAsync(stack, player, lineCount, datum, "(skipped)");
+                                continue;
+                            }
+                        }
+
+                        // Find the innermost loop marker, popping intermediate
+                        // IF/ELSE markers above it. Their THEN tokens are past
+                        // the jump target and would leave dangling markers
+                        // otherwise.
+                        ControlFlowMarker? loopMarker = null;
+                        while (controlFlow.Count > 0)
+                        {
+                            var top = controlFlow.Peek();
+                            if (top.Element == ControlFlowElement.ForEachMarker
+                             || top.Element == ControlFlowElement.ForMarker
+                             || top.Element == ControlFlowElement.BeginMarker)
+                            {
+                                loopMarker = top;
+                                break;
+                            }
+                            controlFlow.Pop();
+                        }
+                        if (loopMarker == null)
+                            return new ForthWordResult(ForthErrorResult.STACK_UNDERFLOW,
+                                "CONTINUE outside of a loop");
+
+                        if (loopMarker.Value.Element == ControlFlowElement.BeginMarker)
+                            // BEGIN is stateless: jump to the token after the
+                            // opener so the body re-runs without re-pushing
+                            // the marker.
+                            x = loopMarker.Value.Index;
+                        else
+                            // FOR/FOREACH carry iterator state on the opener.
+                            // Jump to one before the opener so x++ lands on it
+                            // and its re-entry path advances state.
+                            x = loopMarker.Value.Index - 1;
                         continue;
                     }
 
@@ -577,7 +799,17 @@ namespace moo.common.Scripting
                              || nextControl.Element == ControlFlowElement.ForEachMarker
                              || nextControl.Element == ControlFlowElement.ForMarker)
                             {
-                                x = nextControl.Index - 1; // Go back to BEGIN, so it gets pushed back on the stack for the next iteration
+                                x = nextControl.Index - 1;
+                                // BEGIN is single-shot: the outer loop re-pushes it
+                                // when the BEGIN token is re-executed. FOREACH/FOR
+                                // carry iterator state on the marker, so re-push
+                                // the same marker so the loop primitive can advance
+                                // its existing state on the next iteration.
+                                if (nextControl.Element == ControlFlowElement.ForEachMarker
+                                 || nextControl.Element == ControlFlowElement.ForMarker)
+                                {
+                                    controlFlow.Push(nextControl);
+                                }
                                 found = true;
                                 break;
                             }
@@ -627,15 +859,25 @@ namespace moo.common.Scripting
                         if (eval.IsTrue())
                             continue;
 
-                        // Go back to previous BEGIN or FOR
+                        // Go back to previous BEGIN, FOR, or FOREACH
                         var found = false;
                         while (controlFlow.Count > 0)
                         {
                             var nextControl = controlFlow.Pop();
                             if (nextControl.Element == ControlFlowElement.BeginMarker
-                             || nextControl.Element == ControlFlowElement.ForMarker)
+                             || nextControl.Element == ControlFlowElement.ForMarker
+                             || nextControl.Element == ControlFlowElement.ForEachMarker)
                             {
                                 x = nextControl.Index - 1;
+                                // FOREACH/FOR carry iterator state on the marker;
+                                // re-push so the loop primitive can advance on the
+                                // next iteration. BEGIN is stateless and is
+                                // re-pushed by re-execution of the BEGIN token.
+                                if (nextControl.Element == ControlFlowElement.ForEachMarker
+                                 || nextControl.Element == ControlFlowElement.ForMarker)
+                                {
+                                    controlFlow.Push(nextControl);
+                                }
                                 found = true;
                                 break;
                             }
@@ -646,7 +888,7 @@ namespace moo.common.Scripting
 
                         if (verbosity >= 2)
                             await DumpStackToDebugAsync(stack, player, lineCount, datum);
-                        return new ForthWordResult(ForthErrorResult.STACK_UNDERFLOW, "UNTIL but no previous BEGIN or FOR");
+                        return new ForthWordResult(ForthErrorResult.STACK_UNDERFLOW, "UNTIL but no previous BEGIN, FOR, or FOREACH");
                     }
                 }
 
@@ -849,5 +1091,65 @@ namespace moo.common.Scripting
                 await Server.NotifyAsync(player, $"VAR {local.Key}={local.Value}");
             }
         }
+
+        private static IEnumerator<KeyValuePair<object, ForthDatum>> BuildForeachIterator(ForthDatum arrayDatum)
+        {
+            if (arrayDatum.Value is ForthDictionaryArray)
+            {
+                var dict = arrayDatum.UnwrapDictionaryArray();
+                return EnumerateDictionary(dict).GetEnumerator();
+            }
+            var list = arrayDatum.UnwrapListArray();
+            return EnumerateList(list).GetEnumerator();
+        }
+
+        // Scans programData forward from the position immediately after a loop
+        // opener (FOREACH/FOR/BEGIN at openerX) and returns the index of the
+        // matching REPEAT/UNTIL, accounting for nesting. Used by FOREACH/FOR
+        // exhaustion to jump past their matching REPEAT without pushing a
+        // skip marker — a stale REPEAT from an inner loop body would
+        // otherwise consume the skip and corrupt control-flow state.
+        private static int FindMatchingLoopEnd(ImmutableArray<ForthDatum> programData, int openerX)
+        {
+            int depth = 1;
+            for (int i = openerX + 1; i < programData.Length; i++)
+            {
+                var datum = programData[i];
+                if (datum.Type != DatumType.Unknown) continue;
+                var literal = datum.Value?.ToString();
+                if (literal == null) continue;
+                if (string.Compare(literal, "foreach", true) == 0
+                 || string.Compare(literal, "for", true) == 0
+                 || string.Compare(literal, "begin", true) == 0)
+                    depth++;
+                else if (string.Compare(literal, "repeat", true) == 0
+                      || string.Compare(literal, "until", true) == 0)
+                {
+                    depth--;
+                    if (depth == 0) return i;
+                }
+            }
+            return -1;
+        }
+
+        private static IEnumerable<KeyValuePair<object, ForthDatum>> EnumerateList(ForthListArray list)
+        {
+            for (int i = 0; i < list.Count; i++)
+                yield return new KeyValuePair<object, ForthDatum>(i, list[i]);
+        }
+
+        private static IEnumerable<KeyValuePair<object, ForthDatum>> EnumerateDictionary(ForthDictionaryArray dict)
+        {
+            foreach (var kv in (IEnumerable<KeyValuePair<object, ForthDatum>>)dict)
+                yield return kv;
+        }
+
+        private static ForthDatum KeyToDatum(object key) => key switch
+        {
+            int i => new ForthDatum(i),
+            string s => new ForthDatum(s),
+            Dbref d => new ForthDatum(d),
+            _ => new ForthDatum(key?.ToString() ?? string.Empty),
+        };
     }
 }

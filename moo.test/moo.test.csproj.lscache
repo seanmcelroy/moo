@@ -59,6 +59,7 @@ TemporaryDependencyNodeTargetIdentifier=net10.0
 AbsTest.cs
 AddPropTest.cs
 ArrayGetReflistTest.cs
+ArrayJoinTest.cs
 ArrayTest.cs
 BitwiseTests.cs
 ExecutionTestHelpers.cs
@@ -68,7 +69,9 @@ ForthTokenizerTests.cs
 ForthWordTests.cs
 GetPropTest.cs
 LockTest.cs
+LoopContinueTests.cs
 LoopExecutionTests.cs
+LoopForeachAndForTests.cs
 MathTests.cs
 NotifierTests.cs
 obj/Debug/net10.0/
@@ -86,7 +89,7 @@ VariableExecutionTests.cs
 
 [metadataReferences]
 ../moo.common/obj/Debug/net10.0/ref/moo.common.dll
-<DOTNET>/packs/Microsoft.NETCore.App.Ref/10.0.7/ref/net10.0/
+<DOTNET>/packs/Microsoft.NETCore.App.Ref/10.0.8/ref/net10.0/
  Microsoft.CSharp.dll
  Microsoft.VisualBasic.Core.dll
  Microsoft.VisualBasic.dll
@@ -312,14 +315,14 @@ VariableExecutionTests.cs
  system.diagnostics.eventlog/10.0.8/lib/net10.0/System.Diagnostics.EventLog.dll
 
 [analyzerReferences]
-<DOTNET>/packs/Microsoft.NETCore.App.Ref/10.0.7/analyzers/dotnet/cs/
+<DOTNET>/packs/Microsoft.NETCore.App.Ref/10.0.8/analyzers/dotnet/cs/
  Microsoft.Interop.ComInterfaceGenerator.dll
  Microsoft.Interop.JavaScript.JSImportGenerator.dll
  Microsoft.Interop.LibraryImportGenerator.dll
  Microsoft.Interop.SourceGeneration.dll
  System.Text.Json.SourceGeneration.dll
  System.Text.RegularExpressions.Generator.dll
-<DOTNET>/sdk/10.0.107/Sdks/Microsoft.NET.Sdk/analyzers/
+<DOTNET>/sdk/10.0.108/Sdks/Microsoft.NET.Sdk/analyzers/
  Microsoft.CodeAnalysis.CSharp.NetAnalyzers.dll
  Microsoft.CodeAnalysis.NetAnalyzers.dll
 <NUGET>/
@@ -331,6 +334,6 @@ VariableExecutionTests.cs
 
 [analyzerConfigFiles]
 ../.editorconfig
-<DOTNET>/sdk/10.0.107/Sdks/Microsoft.NET.Sdk/analyzers/build/config/analysislevel_10_default.globalconfig
+<DOTNET>/sdk/10.0.108/Sdks/Microsoft.NET.Sdk/analyzers/build/config/analysislevel_10_default.globalconfig
 <NUGET>/mstest.analyzers/4.2.3/globalconfigs/mstest-default.globalconfig
 obj/Debug/net10.0/moo.test.GeneratedMSBuildEditorConfig.editorconfig

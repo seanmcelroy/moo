@@ -8,7 +8,7 @@ using moo.common.Models;
 
 namespace moo.common.Scripting
 {
-    public readonly record struct ForthDictionaryArray(IEnumerable<KeyValuePair<object, ForthDatum>> Pairs) : IReadOnlyDictionary<object, ForthDatum>, IReadOnlyList<ForthDatum>
+    public readonly record struct ForthDictionaryArray(IEnumerable<KeyValuePair<object, ForthDatum>> Pairs) : IReadOnlyDictionary<object, ForthDatum> //, IReadOnlyList<ForthDatum>
     {
         public readonly static ForthDictionaryArray EMPTY = new();
 
@@ -87,12 +87,12 @@ namespace moo.common.Scripting
 
         public readonly int Count => inner.Count;
 
-        public ForthDatum this[int index] => inner.ElementAt(index).Value;
+        //public ForthDatum this[int index] => inner.ElementAt(index).Value;
         public ForthDatum this[object key] => inner[key];
 
         public readonly bool ContainsKey(object key) => inner.ContainsKey(key);
 
-        readonly IEnumerator<ForthDatum> IEnumerable<ForthDatum>.GetEnumerator() => inner.Values.GetEnumerator();
+        //readonly IEnumerator<ForthDatum> IEnumerable<ForthDatum>.GetEnumerator() => inner.Values.GetEnumerator();
 
         readonly bool IReadOnlyDictionary<object, ForthDatum>.ContainsKey(object key) => inner.ContainsKey(key);
 

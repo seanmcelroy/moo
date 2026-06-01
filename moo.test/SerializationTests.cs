@@ -191,7 +191,7 @@ namespace moo.Test
             Assert.IsNotNull(deserializedResult);
             var deserializedResultArray = deserializedResult.ToArray();
             Assert.IsNotNull(deserializedResultArray);
-            Assert.AreEqual(1, deserializedResultArray.Length);
+            Assert.HasCount(1, deserializedResultArray);
             Assert.AreEqual(string.Empty, deserializedResultArray[0].Item2);
             var deserialized = deserializedResultArray[0].Item1;
             Assert.IsNotNull(deserialized);
@@ -210,7 +210,7 @@ namespace moo.Test
             Assert.IsNotNull(deserializedResult);
             var deserializedResultArray = deserializedResult.ToArray();
             Assert.IsNotNull(deserializedResultArray);
-            Assert.AreEqual(1, deserializedResultArray.Length);
+            Assert.HasCount(1, deserializedResultArray);
             Assert.AreEqual(string.Empty, deserializedResultArray[0].Item2);
             var deserialized = deserializedResultArray[0].Item1;
             Assert.IsNotNull(deserialized);
@@ -229,7 +229,7 @@ namespace moo.Test
             Assert.IsNotNull(deserializedResult);
             var deserializedResultArray = deserializedResult.ToArray();
             Assert.IsNotNull(deserializedResultArray);
-            Assert.AreEqual(1, deserializedResultArray.Length);
+            Assert.HasCount(1, deserializedResultArray);
             Assert.AreEqual(string.Empty, deserializedResultArray[0].Item2);
             var deserialized = deserializedResultArray[0].Item1;
             Assert.IsNull(deserialized);
@@ -246,7 +246,7 @@ namespace moo.Test
             Assert.IsNotNull(deserializedResult);
             var deserializedResultArray = deserializedResult.ToArray();
             Assert.IsNotNull(deserializedResultArray);
-            Assert.AreEqual(1, deserializedResultArray.Length);
+            Assert.HasCount(1, deserializedResultArray);
             Assert.AreEqual(string.Empty, deserializedResultArray[0].Item2);
             var deserialized = deserializedResultArray[0].Item1;
             Assert.IsNotNull(deserialized);
@@ -263,7 +263,7 @@ namespace moo.Test
             Assert.IsNotNull(deserializedResult);
             var deserializedResultArray = deserializedResult.ToArray();
             Assert.IsNotNull(deserializedResultArray);
-            Assert.AreEqual(1, deserializedResultArray.Length);
+            Assert.HasCount(1, deserializedResultArray);
             Assert.AreEqual(string.Empty, deserializedResultArray[0].Item2);
             var deserialized = deserializedResultArray[0].Item1;
             Assert.IsNull(deserialized);
@@ -282,7 +282,7 @@ namespace moo.Test
             Assert.IsNotNull(deserializedResult);
             var deserializedResultArray = deserializedResult.ToArray();
             Assert.IsNotNull(deserializedResultArray);
-            Assert.AreEqual(1, deserializedResultArray.Length);
+            Assert.HasCount(1, deserializedResultArray);
             Assert.AreEqual(string.Empty, deserializedResultArray[0].Item2);
             var deserialized = deserializedResultArray[0].Item1;
             Assert.IsNotNull(deserialized);
@@ -301,7 +301,7 @@ namespace moo.Test
             Assert.IsNotNull(deserializedResult);
             var deserializedResultArray = deserializedResult.ToArray();
             Assert.IsNotNull(deserializedResultArray);
-            Assert.AreEqual(1, deserializedResultArray.Length);
+            Assert.HasCount(1, deserializedResultArray);
             Assert.AreEqual(string.Empty, deserializedResultArray[0].Item2);
             var deserialized = deserializedResultArray[0].Item1;
             Assert.IsNull(deserialized);
@@ -317,7 +317,7 @@ namespace moo.Test
             Assert.IsNotNull(deserializedResult);
             var deserializedResultArray = deserializedResult.ToArray();
             Assert.IsNotNull(deserializedResultArray);
-            Assert.AreEqual(1, deserializedResultArray.Length);
+            Assert.HasCount(1, deserializedResultArray);
             Assert.AreEqual(string.Empty, deserializedResultArray[0].Item2);
             var deserialized = deserializedResultArray[0].Item1;
             Assert.IsNotNull(deserialized);
@@ -334,7 +334,7 @@ namespace moo.Test
             Assert.IsNotNull(deserializedResult);
             var deserializedResultArray = deserializedResult.ToArray();
             Assert.IsNotNull(deserializedResultArray);
-            Assert.AreEqual(1, deserializedResultArray.Length);
+            Assert.HasCount(1, deserializedResultArray);
             Assert.AreEqual(string.Empty, deserializedResultArray[0].Item2);
             var deserialized = deserializedResultArray[0].Item1;
             Assert.IsNull(deserialized);
@@ -351,7 +351,7 @@ namespace moo.Test
             Assert.IsNotNull(deserializedResult);
             var deserializedResultArray = deserializedResult.ToArray();
             Assert.IsNotNull(deserializedResultArray);
-            Assert.AreEqual(1, deserializedResultArray.Length);
+            Assert.HasCount(1, deserializedResultArray);
             Assert.AreEqual(string.Empty, deserializedResultArray[0].Item2);
             var deserialized = deserializedResultArray[0].Item1;
             Assert.IsNotNull(deserialized);
@@ -371,7 +371,7 @@ namespace moo.Test
             Assert.IsNotNull(deserializedResult);
             var deserializedResultArray = deserializedResult.ToArray();
             Assert.IsNotNull(deserializedResultArray);
-            Assert.AreEqual(1, deserializedResultArray.Length);
+            Assert.HasCount(1, deserializedResultArray);
             Assert.AreEqual(string.Empty, deserializedResultArray[0].Item2);
             var deserialized = deserializedResultArray[0].Item1;
             Assert.IsNotNull(deserialized);
@@ -422,7 +422,7 @@ namespace moo.Test
             var deserialized = Thing.Deserialize<Thing>(serialized);
             Assert.IsNotNull(deserialized);
             Assert.IsNotNull(deserialized!.properties);
-            Assert.AreEqual(testObj.properties.Count, deserialized.properties.Count);
+            Assert.HasCount(testObj.properties.Count, deserialized.properties);
             Assert.AreEqual(testObj.properties, deserialized.properties);
             Assert.AreEqual(testObj.externalDescription, deserialized.externalDescription);
             CollectionAssert.AreEqual(testObj.flags, deserialized.flags);
@@ -477,7 +477,7 @@ namespace moo.Test
             CollectionAssert.AreEqual(testExitAliasesToColl, deserializedToColl);
             Assert.AreEqual(testExit.contents.Count, deserialized.contents.Count);
             Assert.AreEqual(testExit.contents, deserialized.contents);
-            Assert.AreEqual(testExit.properties.Count, deserialized.properties.Count);
+            Assert.HasCount(testExit.properties.Count, deserialized.properties);
             Assert.AreEqual(testExit.properties, deserialized.properties);
             Assert.AreEqual(testExit.externalDescription, deserialized.externalDescription);
             CollectionAssert.AreEqual(testExit.flags, deserialized.flags);
@@ -517,7 +517,7 @@ namespace moo.Test
 
             var deserialized = Thing.Deserialize<HumanPlayer>(serialized);
             Assert.IsNotNull(deserialized);
-            Assert.AreEqual(player.properties.Count, deserialized.properties.Count);
+            Assert.HasCount(player.properties.Count, deserialized.properties);
             Assert.AreEqual(player.properties, deserialized.properties);
 
             Assert.IsFalse(deserialized.CheckPassword("hunter2"));

@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using static moo.common.Scripting.ForthDatum;
+using moo.common.Scripting;
 
 namespace moo.common.Scripting.ForthPrimatives
 {
@@ -12,23 +12,12 @@ namespace moo.common.Scripting.ForthPrimatives
 
             Creates a list type array from a stackrange.
             */
-            if (parameters.Stack.Count < 1)
-                return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, "ARRAY_MAKE requires at LEAST one parameter");
+            if (!parameters.Stack.TryPopStackRange(out List<ForthDatum>? stackrange, out ForthErrorResult? err))
+                return new ForthPrimativeResult(err.Value, "ARRAY_MAKE requires the top parameter(s) to be a stackrange (an integer followed by that many items)");
+            
+            stackrange.Reverse();
 
-            var n1 = parameters.Stack.Pop();
-            if (n1.Type != DatumType.Integer)
-                return new ForthPrimativeResult(ForthErrorResult.TYPE_MISMATCH, "ARRAY_MAKE requires the top parameter on the stack to be an integer");
-
-            if (parameters.Stack.Count < n1.UnwrapInt())
-                return new ForthPrimativeResult(ForthErrorResult.STACK_UNDERFLOW, $"ARRAY_MAKE has fewer than requested {n1.UnwrapInt()} items on the stack");
-
-            var arrayList = new List<ForthDatum>(parameters.Stack.Count);
-            for (int i = 0; i < n1.UnwrapInt(); i++)
-                arrayList.Add(parameters.Stack.Pop());
-
-            arrayList.Reverse();
-
-            var list = new ForthListArray(arrayList);
+            var list = new ForthListArray(stackrange);
             parameters.Stack.Push(new ForthDatum(list));
             return ForthPrimativeResult.SUCCESS;
         }

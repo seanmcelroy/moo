@@ -8,11 +8,11 @@ using moo.common.Models;
 
 namespace moo.common.Scripting
 {
-    public readonly record struct ForthListArray(IEnumerable<ForthDatum> Pairs) : IReadOnlyList<ForthDatum>
+    public readonly record struct ForthListArray(IEnumerable<ForthDatum> Items) : IReadOnlyList<ForthDatum>
     {
-        public readonly static ForthListArray EMPTY = new();
+        public readonly static ForthListArray EMPTY = new([]);
 
-        private readonly List<ForthDatum> inner = [.. Pairs];
+        private readonly List<ForthDatum> inner = [.. Items];
 
         public static bool TryParse([NotNullWhen(true)] string? s, [NotNullWhen(true)] out ForthListArray? result)
         {

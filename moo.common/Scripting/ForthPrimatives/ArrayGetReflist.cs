@@ -33,7 +33,7 @@ namespace moo.common.Scripting.ForthPrimatives
             var property = await targetResult.value.GetPropertyPathValueAsync((string)sPath.Value, parameters.CancellationToken);
             if (property.Equals(default(Property)) || property.Type != PropertyType.Array || property.Value == null)
             {
-                parameters.Stack.Push(new ForthDatum([], sTarget.FileLineNumber, null, sTarget.WordName, sTarget.WordLineNumber));
+                parameters.Stack.Push(new ForthDatum(ForthListArray.EMPTY, sTarget.FileLineNumber, null, sTarget.WordName, sTarget.WordLineNumber));
                 return ForthPrimativeResult.SUCCESS;
             }
 

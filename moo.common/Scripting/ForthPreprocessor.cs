@@ -255,14 +255,20 @@ namespace moo.common.Scripting
                                     var defValue = defMatch.Groups["defValue"].Value;
 
                                     // The define value could be a primitive with an inserver definition, so replace here.
-                                    foreach (var define in defines.Where(d => d.Value != null))
-                                        if (defValue.Contains(define.Key, StringComparison.OrdinalIgnoreCase))
-                                            defValue = Regex.Replace(defValue, $@"(?<=\s|^){Regex.Escape(define.Key)}(?=\s|$)", define.Value ?? string.Empty, RegexOptions.IgnoreCase);
-
-                                    if (defines.ContainsKey(key))
-                                        defines[key] = defValue;
-                                    else
-                                        defines.Add(key, defValue);
+                                    bool changed;
+                                    do
+                                    {
+                                        changed = false;
+                                        foreach (var define in defines.Where(d => d.Value != null))
+                                            if (defValue.Contains(define.Key, StringComparison.OrdinalIgnoreCase))
+                                            {
+                                                var originalDefValue = defValue;
+                                                defValue = Regex.Replace(defValue, $@"(?<=\s|^){Regex.Escape(define.Key)}(?=\s|$)", define.Value ?? string.Empty, RegexOptions.IgnoreCase);
+                                                changed = string.CompareOrdinal(originalDefValue, defValue) != 0;
+                                            }
+                                    } while (changed);
+            
+                                    defines.TryAdd(key, defValue);
                                 }
 
                                 tokenHandled = true;
@@ -402,7 +408,7 @@ namespace moo.common.Scripting
                                      || controlCurrent.Element == ControlFlowElement.SkipToAfterNextUntilOrRepeat)
                                     {
                                         if (verbosity >= 2 && verbosity <= 3)
-                                            await Server.NotifyAsync(player, $"SKIPPED LINE: {line}");
+                                               await Server.NotifyAsync(player, $"SKIPPED LINE: {line}");
                                         // A skipped if will push a SkippedBranch, so we should pop it.
                                         controlFlow.Pop();
                                         continue;
@@ -610,9 +616,20 @@ namespace moo.common.Scripting
                         line2 = stripCommentsRegex.Replace(line2, "");
 
                     if (line2.Length > 0)
-                        foreach (var define in defines.Where(d => d.Value != null))
-                            if (line2.Contains(define.Key, StringComparison.OrdinalIgnoreCase))
-                                line2 = Regex.Replace(line2, $@"(?<=\s|^){Regex.Escape(define.Key)}(?=\s|$)", define.Value ?? string.Empty, RegexOptions.IgnoreCase);
+                    {
+                        bool changed;
+                        do
+                        {
+                            changed = false;
+                            foreach (var define in defines.Where(d => d.Value != null))
+                                if (line2.Contains(define.Key, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    var originalLine2 = line2;
+                                    line2 = Regex.Replace(line2, $@"(?<=\s|^){Regex.Escape(define.Key)}(?=\s|$)", define.Value ?? string.Empty, RegexOptions.IgnoreCase);
+                                    changed = string.CompareOrdinal(originalLine2, line2) != 0;
+                                }
+                        } while (changed);
+                    }
 
                     if (line2.Length > 0)
                         foreach (var hold in holdingPen)
