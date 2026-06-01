@@ -240,7 +240,7 @@ namespace moo.common.Models
                     directory.Add(lastPathPart, (Lock)value);
                     break;
                 default:
-                    throw new System.InvalidOperationException($"Unable to handle property type: {type}");
+                    throw new InvalidOperationException($"Unable to handle property type: {type}");
             }
         }
 

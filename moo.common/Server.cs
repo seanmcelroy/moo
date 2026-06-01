@@ -268,7 +268,7 @@ namespace moo.common
                 .Result();
 
             // Todo, everything below here needs to be checked against Fuzzball
-            if (matchResult.IsValid())
+            if (matchResult.IsValid() && matchResult.Type == Dbref.DbrefObjectType.Exit)
             {
                 var matchedLookup = await ThingRepository.Instance.GetAsync(matchResult, cancellationToken);
                 if (!matchedLookup.isSuccess || matchedLookup.value == null)
@@ -278,25 +278,19 @@ namespace moo.common
                     return;
                 }
 
-                if (matchResult.Type == Dbref.DbrefObjectType.Exit)
+                var exit = (Exit)matchedLookup.value!;
+                if (!exit.CanProcess(player, command).Item1)
                 {
-                    var exit = (Exit)matchedLookup.value!;
-                    if (!exit.CanProcess(player, command).Item1)
-                    {
-                        if (connection != null)
-                            await connection.SendOutput($"Locked.");
-                        return;
-                    }
-
-                    await exit.Process(player, connection, command, logger, cancellationToken);
+                    if (connection != null)
+                        await connection.SendOutput($"Locked.");
                     return;
                 }
 
-                if (connection != null)
-                    await connection.SendOutput($"I don't know how to process {await matchedLookup.value.UnparseObject(player, cancellationToken)}");
+                await exit.Process(player, connection, command, logger, cancellationToken);
+                return;
             }
 
-            if (command.Raw.StartsWith("@"))
+            if (command.Raw.StartsWith('@'))
                 logger?.LogWarning("Unknown at-command: {raw}", command.Raw);
 
             if (connection != null)

@@ -80,6 +80,15 @@ namespace moo.console
                 $"scripts{System.IO.Path.DirectorySeparatorChar}cmd-@ignore.muf",
                 $"scripts{System.IO.Path.DirectorySeparatorChar}cmd-@image.muf",
                 $"scripts{System.IO.Path.DirectorySeparatorChar}cmd-@muf.muf",
+                $"scripts{System.IO.Path.DirectorySeparatorChar}cmd-@objeditgui.muf",
+                $"scripts{System.IO.Path.DirectorySeparatorChar}cmd-@purge.muf",
+                $"scripts{System.IO.Path.DirectorySeparatorChar}cmd-@restart.muf",
+                $"scripts{System.IO.Path.DirectorySeparatorChar}cmd-@sizer.muf",
+                $"scripts{System.IO.Path.DirectorySeparatorChar}cmd-@tunegui.muf",
+                $"scripts{System.IO.Path.DirectorySeparatorChar}cmd-@view.muf",
+                $"scripts{System.IO.Path.DirectorySeparatorChar}cmd-@wall.muf",
+                $"scripts{System.IO.Path.DirectorySeparatorChar}cmd-@when.muf",
+                $"scripts{System.IO.Path.DirectorySeparatorChar}cmd-3who.muf",
             };
                 var scriptsToLoad = scriptsToLoadInOrder
                     .Union(
